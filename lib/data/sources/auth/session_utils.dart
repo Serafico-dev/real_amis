@@ -3,10 +3,10 @@ import 'dart:convert';
 String buildSupabaseSessionJson({
   required String accessToken,
   String? refreshToken,
-  int? expiresAtSeconds, // unix seconds
+  int? expiresAtSeconds,
   String? tokenType,
   String? providerToken,
-  Map<String, dynamic>? user, // opzionale se vuoi includere user
+  Map<String, dynamic>? user,
 }) {
   final session = <String, dynamic>{
     'access_token': accessToken,
