@@ -1,7 +1,7 @@
 name: real_amis
-description: "A new Flutter project."
+description: "Gestionale personalizzato per la squadra di calcio Real Amis"
 publish_to: 'none'
-version: 0.1.0
+version: 1.0.0+1
 
 environment:
   sdk: ^3.9.2
