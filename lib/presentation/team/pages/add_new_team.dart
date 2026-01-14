@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:real_amis/common/widgets/appBar/app_bar_yes_nav.dart';
 import 'package:real_amis/common/widgets/loader/loader.dart';
+import 'package:real_amis/common/widgets/textFields/number_field_nullable.dart';
 import 'package:real_amis/common/widgets/textFields/text_field_required.dart';
 import 'package:real_amis/core/configs/theme/app_colors.dart';
 import 'package:real_amis/core/utils/pick_image.dart';
@@ -22,6 +23,7 @@ class AddNewTeamPage extends StatefulWidget {
 
 class _AddNewTeamPageState extends State<AddNewTeamPage> {
   final nameController = TextEditingController();
+  final scoreController = TextEditingController();
   final formKey = GlobalKey<FormState>();
   File? image;
 
@@ -37,7 +39,13 @@ class _AddNewTeamPageState extends State<AddNewTeamPage> {
   void uploadTeam() {
     if (formKey.currentState!.validate() && image != null) {
       context.read<TeamBloc>().add(
-        TeamUpload(name: nameController.text.trim(), image: image!),
+        TeamUpload(
+          name: nameController.text.trim(),
+          image: image!,
+          score: scoreController.text.trim().isNotEmpty
+              ? int.parse(scoreController.text.trim())
+              : 0,
+        ),
       );
     }
   }
@@ -46,6 +54,7 @@ class _AddNewTeamPageState extends State<AddNewTeamPage> {
   void dispose() {
     super.dispose();
     nameController.dispose();
+    scoreController.dispose();
   }
 
   @override
@@ -126,6 +135,11 @@ class _AddNewTeamPageState extends State<AddNewTeamPage> {
                     TextFieldRequired(
                       controller: nameController,
                       hintText: 'Nome',
+                    ),
+                    SizedBox(height: 15),
+                    NumberFieldNullable(
+                      controller: scoreController,
+                      hintText: 'Punteggio',
                     ),
                   ],
                 ),

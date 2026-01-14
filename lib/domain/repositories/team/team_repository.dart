@@ -8,6 +8,7 @@ abstract interface class TeamRepository {
   Future<Either<Failure, TeamEntity>> uploadTeam({
     required String name,
     required File image,
+    int? score,
   });
 
   Future<Either<Failure, List<TeamEntity>>> getAllTeams();
@@ -16,6 +17,7 @@ abstract interface class TeamRepository {
     required TeamEntity team,
     String? name,
     File? image,
+    int? score,
   });
 
   Future<Either<Failure, TeamEntity>> deleteTeam({required String teamId});

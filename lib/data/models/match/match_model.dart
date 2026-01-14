@@ -39,8 +39,8 @@ class MatchModel extends MatchEntity {
           : DateTime.parse(map['match_date']),
       homeTeamId: map['home_team_id'] ?? '',
       awayTeamId: map['away_team_id'] ?? '',
-      homeTeamScore: map['home_team_score'] ?? '',
-      awayTeamScore: map['away_team_score'] ?? '',
+      homeTeamScore: map['home_team_score'] ?? 0,
+      awayTeamScore: map['away_team_score'] ?? 0,
       matchDay: map['match_day'] ?? '',
       homeTeam: map['HomeTeam'] != null
           ? TeamModel.fromJson(map['HomeTeam'] as Map<String, dynamic>)

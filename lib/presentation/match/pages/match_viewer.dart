@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:real_amis/common/cubits/app_user/app_user_cubit.dart';
@@ -7,6 +8,7 @@ import 'package:real_amis/core/configs/theme/app_colors.dart';
 import 'package:real_amis/core/utils/format_data.dart';
 import 'package:real_amis/core/utils/show_snackbar.dart';
 import 'package:real_amis/domain/entities/match/match_entity.dart';
+import 'package:real_amis/presentation/event/pages/add_event_modal.dart';
 import 'package:real_amis/presentation/match/bloc/match_bloc.dart';
 import 'package:real_amis/presentation/match/pages/edit_match.dart';
 
@@ -85,81 +87,125 @@ class MatchViewerPage extends StatelessWidget {
 
           return Scrollbar(
             child: SingleChildScrollView(
-              child: Container(
-                margin: EdgeInsets.all(16.0),
-                padding: const EdgeInsets.all(16.0),
-                decoration: BoxDecoration(
-                  color: AppColors.tertiary,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        Text(
-                          match.matchDay ?? '',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 20,
-                          ),
-                        ),
-                      ],
+              child: Column(
+                children: [
+                  Container(
+                    margin: EdgeInsets.all(16.0),
+                    padding: const EdgeInsets.all(16.0),
+                    decoration: BoxDecoration(
+                      color: AppColors.tertiary,
+                      borderRadius: BorderRadius.circular(10),
                     ),
-                    Text(
-                      formatDateByddMMYYYYnHHmm(match.matchDate),
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
-                    ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        Column(
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
                           children: [
-                            Image.network(match.homeTeam!.imageUrl, width: 100),
-                            SizedBox(height: 10),
                             Text(
-                              match.homeTeamScore.toString(),
+                              match.matchDay ?? '',
                               style: TextStyle(
                                 fontWeight: FontWeight.bold,
-                                fontSize: 24,
+                                fontSize: 20,
                               ),
                             ),
                           ],
                         ),
                         Text(
-                          'VS',
+                          formatDateByddMMYYYYnHHmm(match.matchDate),
+                          textAlign: TextAlign.center,
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
-                            fontSize: 24,
+                            fontSize: 16,
                           ),
                         ),
-                        Column(
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
                           children: [
-                            Image.network(match.awayTeam!.imageUrl, width: 100),
-                            SizedBox(height: 10),
+                            Column(
+                              children: [
+                                CachedNetworkImage(
+                                  imageUrl: match.homeTeam!.imageUrl,
+                                  width: 100,
+                                  fit: BoxFit.cover,
+                                ),
+                                SizedBox(height: 10),
+                                Text(
+                                  match.homeTeamScore.toString(),
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 24,
+                                  ),
+                                ),
+                              ],
+                            ),
                             Text(
-                              match.awayTeamScore.toString(),
+                              'VS',
                               style: TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 24,
                               ),
                             ),
+                            Column(
+                              children: [
+                                CachedNetworkImage(
+                                  imageUrl: match.awayTeam!.imageUrl,
+                                  width: 100,
+                                  fit: BoxFit.cover,
+                                ),
+                                SizedBox(height: 10),
+                                Text(
+                                  match.awayTeamScore.toString(),
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 24,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ],
                         ),
+                        if (match.matchDate.isBefore(DateTime.now()))
+                          Text(
+                            'FULL TIME',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 20,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
                       ],
                     ),
-                  ],
-                ),
+                  ),
+                  BlocSelector<AppUserCubit, AppUserState, bool?>(
+                    selector: (s) =>
+                        s is AppUserLoggedIn ? s.user.isAdmin : false,
+                    builder: (context, isAdmin) {
+                      if (isAdmin != true) return SizedBox.shrink();
+                      return ElevatedButton.icon(
+                        onPressed: () => _showAddEventModal(context, match!),
+                        icon: Icon(Icons.add),
+                        label: Text('Aggiungi evento'),
+                      );
+                    },
+                  ),
+                ],
               ),
             ),
           );
         },
       ),
+    );
+  }
+
+  Future<void> _showAddEventModal(BuildContext context, MatchEntity match) {
+    return showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (_) => AddEventModal(match: match),
     );
   }
 }

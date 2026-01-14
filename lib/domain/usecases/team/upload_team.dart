@@ -15,6 +15,7 @@ class UploadTeam implements UseCase<TeamEntity, UploadTeamParams> {
     return await teamRepository.uploadTeam(
       name: params.name,
       image: params.image,
+      score: params.score,
     );
   }
 }
@@ -22,6 +23,7 @@ class UploadTeam implements UseCase<TeamEntity, UploadTeamParams> {
 class UploadTeamParams {
   final String name;
   final File image;
+  final int? score;
 
-  UploadTeamParams({required this.name, required this.image});
+  UploadTeamParams({required this.name, required this.image, this.score});
 }

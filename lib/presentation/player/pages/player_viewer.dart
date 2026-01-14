@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -108,7 +109,11 @@ class PlayerViewerPage extends StatelessWidget {
                     Text("'${player.userName}'"),
                     ClipRRect(
                       borderRadius: BorderRadiusGeometry.circular(10),
-                      child: Image.network(player.imageUrl),
+                      child: CachedNetworkImage(
+                        imageUrl: player.imageUrl,
+
+                        fit: BoxFit.cover,
+                      ),
                     ),
                     SizedBox(height: 30),
                     Row(

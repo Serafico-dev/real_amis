@@ -1,14 +1,14 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:real_amis/common/cubits/app_user/app_user_cubit.dart';
 import 'package:real_amis/common/widgets/appBar/app_bar_no_nav.dart';
 import 'package:real_amis/common/widgets/loader/loader.dart';
-import 'package:real_amis/core/configs/theme/app_colors.dart';
 import 'package:real_amis/core/utils/show_snackbar.dart';
 import 'package:real_amis/domain/entities/team/team_entity.dart';
 import 'package:real_amis/presentation/team/bloc/team_bloc.dart';
 import 'package:real_amis/presentation/team/pages/add_new_team.dart';
-import 'package:real_amis/presentation/team/widgets/team_card.dart';
+import 'package:real_amis/presentation/team/pages/edit_team.dart';
 
 class TeamsPage extends StatefulWidget {
   const TeamsPage({super.key});
@@ -70,8 +70,7 @@ class _TeamsPageState extends State<TeamsPage> {
           }
           if (state is TeamDisplaySuccess) {
             final sortedTeams = List<TeamEntity>.from(state.teams)
-              ..sort((a, b) => a.name.compareTo(b.name));
-
+              ..sort((a, b) => b.score!.compareTo(a.score!));
             return RefreshIndicator(
               onRefresh: _refreshTeams,
               child: sortedTeams.isEmpty
@@ -82,26 +81,92 @@ class _TeamsPageState extends State<TeamsPage> {
                         Center(child: Text('Nessuna squadra trovata')),
                       ],
                     )
-                  : GridView.builder(
-                      padding: EdgeInsets.all(12),
-                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        mainAxisSpacing: 1,
-                        crossAxisSpacing: 1,
-                        childAspectRatio: 1 / 1,
-                      ),
-                      itemCount: sortedTeams.length,
+                  : ListView.builder(
+                      padding: EdgeInsets.all(20),
+                      itemCount: sortedTeams.length + 1,
                       itemBuilder: (context, index) {
-                        final team = sortedTeams[index];
+                        if (index == 0) {
+                          return Container(
+                            padding: EdgeInsets.all(10),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    'Squadra',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                                Expanded(
+                                  child: Text(
+                                    'Punteggio',
+                                    textAlign: TextAlign.right,
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }
+                        final team = sortedTeams[index - 1];
                         return BlocSelector<AppUserCubit, AppUserState, bool?>(
                           selector: (state) => state is AppUserLoggedIn
                               ? state.user.isAdmin
                               : false,
                           builder: (context, isAdmin) {
-                            return TeamCard(
-                              team: team,
-                              color: AppColors.quaternary,
-                              isAdmin: isAdmin == true,
+                            return InkWell(
+                              onTap: () async {
+                                await Navigator.push(
+                                  context,
+                                  EditTeamPage.route(team),
+                                );
+                                context.read<TeamBloc>().add(
+                                  TeamFetchAllTeams(),
+                                );
+                              },
+                              child: Container(
+                                padding: EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  border: Border(
+                                    bottom: BorderSide(
+                                      color: Colors.grey.shade300,
+                                    ),
+                                  ),
+                                ),
+                                child: Row(
+                                  children: [
+                                    ClipRRect(
+                                      borderRadius: BorderRadius.circular(10),
+                                      child: CachedNetworkImage(
+                                        imageUrl: team.imageUrl,
+                                        height: 35,
+                                        fit: BoxFit.cover,
+                                      ),
+                                    ),
+                                    SizedBox(width: 15),
+                                    Expanded(
+                                      flex: 6,
+                                      child: Text(
+                                        team.name,
+                                        style: TextStyle(fontSize: 16),
+                                      ),
+                                    ),
+                                    Expanded(
+                                      flex: 2,
+                                      child: Text(
+                                        team.score!.toString(),
+                                        textAlign: TextAlign.right,
+                                        style: TextStyle(fontSize: 16),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
                             );
                           },
                         );

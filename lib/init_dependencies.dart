@@ -9,10 +9,13 @@ import 'package:real_amis/common/cubits/app_user/app_user_cubit.dart';
 import 'package:real_amis/core/secrets/app_secrets.dart';
 import 'package:real_amis/core/network/connection_checker.dart';
 import 'package:real_amis/data/repositories/auth/auth_repository_impl.dart';
+import 'package:real_amis/data/repositories/event/event_repository_impl.dart';
 import 'package:real_amis/data/repositories/match/match_repository_impl.dart';
 import 'package:real_amis/data/repositories/player/player_repository_impl.dart';
 import 'package:real_amis/data/repositories/team/team_repository_impl.dart';
 import 'package:real_amis/data/sources/auth/auth_supabase_data_source.dart';
+import 'package:real_amis/data/sources/event/event_local_data_source.dart';
+import 'package:real_amis/data/sources/event/event_supabase_data_source.dart';
 import 'package:real_amis/data/sources/match/match_local_data_source.dart';
 import 'package:real_amis/data/sources/match/match_supabase_data_source.dart';
 import 'package:real_amis/data/sources/player/player_local_data_source.dart';
@@ -20,6 +23,7 @@ import 'package:real_amis/data/sources/player/player_supabase_data_source.dart';
 import 'package:real_amis/data/sources/team/team_local_data_source.dart';
 import 'package:real_amis/data/sources/team/team_supabase_data_source.dart';
 import 'package:real_amis/domain/repositories/auth/auth_repository.dart';
+import 'package:real_amis/domain/repositories/event/event_repository.dart';
 import 'package:real_amis/domain/repositories/match/match_repository.dart';
 import 'package:real_amis/domain/repositories/player/player_repository.dart';
 import 'package:real_amis/domain/repositories/team/team_repository.dart';
@@ -29,6 +33,10 @@ import 'package:real_amis/domain/usecases/auth/password_reset_complete.dart';
 import 'package:real_amis/domain/usecases/auth/user_login.dart';
 import 'package:real_amis/domain/usecases/auth/user_logout.dart';
 import 'package:real_amis/domain/usecases/auth/user_sign_up.dart';
+import 'package:real_amis/domain/usecases/event/delete_event.dart';
+import 'package:real_amis/domain/usecases/event/get_all_events.dart';
+import 'package:real_amis/domain/usecases/event/update_event.dart';
+import 'package:real_amis/domain/usecases/event/upload_event.dart';
 import 'package:real_amis/domain/usecases/match/delete_match.dart';
 import 'package:real_amis/domain/usecases/match/get_all_matches.dart';
 import 'package:real_amis/domain/usecases/match/update_match.dart';
@@ -43,6 +51,7 @@ import 'package:real_amis/domain/usecases/team/update_team.dart';
 import 'package:real_amis/domain/usecases/team/upload_team.dart';
 import 'package:real_amis/presentation/auth/bloc/auth_bloc.dart';
 import 'package:real_amis/presentation/choose_mode/bloc/theme_cubit.dart';
+import 'package:real_amis/presentation/event/bloc/event_bloc.dart';
 import 'package:real_amis/presentation/match/bloc/match_bloc.dart';
 import 'package:real_amis/presentation/player/bloc/player_bloc.dart';
 import 'package:real_amis/presentation/team/bloc/team_bloc.dart';
@@ -56,6 +65,7 @@ Future<void> initDependencies() async {
   _initPlayer();
   _initMatch();
   _initTeam();
+  _initEvent();
 
   final supabase = await Supabase.initialize(
     url: AppSecrets.url,
@@ -207,6 +217,39 @@ void _initTeam() {
       getAllTeams: serviceLocator(),
       updateTeam: serviceLocator(),
       deleteTeam: serviceLocator(),
+    ),
+  );
+}
+
+void _initEvent() {
+  // Datasource
+  serviceLocator.registerFactory<EventSupabaseDataSource>(
+    () => EventSupabaseDataSourceImpl(serviceLocator()),
+  );
+  serviceLocator.registerFactory<EventLocalDataSource>(
+    () => EventLocalDataSourceImpl(serviceLocator()),
+  );
+  // Repository
+  serviceLocator.registerFactory<EventRepository>(
+    () => EventRepositoryImpl(
+      serviceLocator(),
+      serviceLocator(),
+      serviceLocator(),
+    ),
+  );
+  // Usecases
+  serviceLocator.registerFactory(() => UploadEvent(serviceLocator()));
+  serviceLocator.registerFactory(() => GetAllEvents(serviceLocator()));
+  serviceLocator.registerFactory(() => UpdateEvent(serviceLocator()));
+  serviceLocator.registerFactory(() => DeleteEvent(serviceLocator()));
+
+  // Bloc
+  serviceLocator.registerLazySingleton(
+    () => EventBloc(
+      uploadEvent: serviceLocator(),
+      getAllEvents: serviceLocator(),
+      updateEvent: serviceLocator(),
+      deleteEvent: serviceLocator(),
     ),
   );
 }

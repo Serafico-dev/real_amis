@@ -6,8 +6,9 @@ sealed class TeamEvent {}
 final class TeamUpload extends TeamEvent {
   final String name;
   final File image;
+  final int? score;
 
-  TeamUpload({required this.name, required this.image});
+  TeamUpload({required this.name, required this.image, this.score});
 }
 
 final class TeamFetchAllTeams extends TeamEvent {}
@@ -16,8 +17,9 @@ final class TeamUpdate extends TeamEvent {
   final TeamEntity team;
   final String? name;
   final File? image;
+  final int? score;
 
-  TeamUpdate({required this.team, this.name, this.image});
+  TeamUpdate({required this.team, this.name, this.image, this.score});
 }
 
 final class TeamDelete extends TeamEvent {

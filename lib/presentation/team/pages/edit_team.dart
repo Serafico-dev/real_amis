@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:real_amis/common/widgets/appBar/app_bar_yes_nav.dart';
@@ -24,6 +25,7 @@ class EditTeamPage extends StatefulWidget {
 
 class _EditTeamState extends State<EditTeamPage> {
   final nameController = TextEditingController();
+  final scoreController = TextEditingController();
   final formKey = GlobalKey<FormState>();
   File? image;
 
@@ -44,6 +46,9 @@ class _EditTeamState extends State<EditTeamPage> {
             ? nameController.text.trim()
             : widget.team.name,
         image: image,
+        score: scoreController.text.trim().isNotEmpty
+            ? int.parse(scoreController.text.trim())
+            : widget.team.score,
       ),
     );
   }
@@ -52,6 +57,7 @@ class _EditTeamState extends State<EditTeamPage> {
   void dispose() {
     super.dispose();
     nameController.dispose();
+    scoreController.dispose();
   }
 
   @override
@@ -92,8 +98,9 @@ class _EditTeamState extends State<EditTeamPage> {
                   children: [
                     ClipRRect(
                       borderRadius: BorderRadius.circular(10),
-                      child: Image.network(
-                        widget.team.imageUrl,
+                      child: CachedNetworkImage(
+                        imageUrl: widget.team.imageUrl,
+                        height: 250,
                         fit: BoxFit.cover,
                       ),
                     ),
@@ -111,6 +118,11 @@ class _EditTeamState extends State<EditTeamPage> {
                     TextFieldNullable(
                       controller: nameController,
                       hintText: '${widget.team.name} (Nome)',
+                    ),
+                    SizedBox(height: 15),
+                    TextFieldNullable(
+                      controller: scoreController,
+                      hintText: '${widget.team.score} (Punteggio)',
                     ),
                     SizedBox(height: 15),
                     BlocBuilder<TeamBloc, TeamState>(

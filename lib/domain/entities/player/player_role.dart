@@ -1,21 +1,22 @@
 enum PlayerRole {
-  presidente,
-  vicePresidente,
-  dirigente,
-  direttoreSportivo,
-  allenatore,
-  portiere,
+  ala,
+  attaccante,
+  centravanti,
+  centrocampista,
+  centrocampistaCentrale,
   difensore,
   difensoreCentrale,
   difensoreTerzino,
-  centrocampista,
   mediano,
-  centrocampistaCentrale,
+  portiere,
   trequartista,
-  attaccante,
-  centravanti,
-  ala,
   riserva,
+  allenatore,
+  dirigente,
+  direttoreSportivo,
+  presidente,
+  vicePresidente,
+  leggenda,
   nessuno,
 }
 
@@ -56,6 +57,8 @@ extension PlayerRoleX on PlayerRole {
         return 'Ala';
       case PlayerRole.riserva:
         return 'Riserva';
+      case PlayerRole.leggenda:
+        return 'Leggenda';
       case PlayerRole.nessuno:
         return 'Nessun ruolo';
     }
@@ -98,6 +101,8 @@ extension PlayerRoleX on PlayerRole {
         return PlayerRole.ala;
       case 'Riserva':
         return PlayerRole.riserva;
+      case 'Leggenda':
+        return PlayerRole.leggenda;
       default:
         return PlayerRole.nessuno;
     }

@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:real_amis/core/utils/format_data.dart';
@@ -43,10 +44,15 @@ class MatchCard extends StatelessWidget {
             ),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Column(
                   children: [
-                    Image.network(match.homeTeam!.imageUrl, width: 100),
+                    CachedNetworkImage(
+                      imageUrl: match.homeTeam!.imageUrl,
+                      width: 100,
+                      fit: BoxFit.cover,
+                    ),
                     SizedBox(height: 10),
                     Text(
                       match.homeTeamScore.toString(),
@@ -63,7 +69,11 @@ class MatchCard extends StatelessWidget {
                 ),
                 Column(
                   children: [
-                    Image.network(match.awayTeam!.imageUrl, width: 100),
+                    CachedNetworkImage(
+                      imageUrl: match.awayTeam!.imageUrl,
+                      width: 100,
+                      fit: BoxFit.cover,
+                    ),
                     SizedBox(height: 10),
                     Text(
                       match.awayTeamScore.toString(),
@@ -76,6 +86,12 @@ class MatchCard extends StatelessWidget {
                 ),
               ],
             ),
+            if (match.matchDate.isBefore(DateTime.now()))
+              Text(
+                'FULL TIME',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+                textAlign: TextAlign.center,
+              ),
           ],
         ),
       ),

@@ -34,19 +34,19 @@ class PlayerModel extends PlayerEntity {
 
   factory PlayerModel.fromJson(Map<String, dynamic> map) {
     return PlayerModel(
-      id: map['id'] as String,
+      id: map['id'] ?? '',
       updatedAt: map['updated_at'] == null
           ? DateTime.now()
           : DateTime.parse(map['updated_at']),
-      userName: map['username'] as String,
-      fullName: map['full_name'] as String,
-      imageUrl: map['image_url'] as String,
-      role: PlayerRoleX.fromString(map['role'] as String),
-      attendances: map['attendances'] as int,
-      goals: map['goals'] as int,
-      yellowCards: map['yellow_cards'] as int,
-      redCards: map['red_cards'] as int,
-      active: map['active'] as bool,
+      userName: map['username'] ?? '',
+      fullName: map['full_name'] ?? '',
+      imageUrl: map['image_url'] ?? '',
+      role: PlayerRoleX.fromString(map['role'] ?? ''),
+      attendances: map['attendances'] ?? 0,
+      goals: map['goals'] ?? 0,
+      yellowCards: map['yellow_cards'] ?? 0,
+      redCards: map['red_cards'] ?? 0,
+      active: map['active'] ?? false,
     );
   }
 

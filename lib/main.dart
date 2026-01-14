@@ -7,6 +7,7 @@ import 'package:real_amis/core/configs/theme/app_theme.dart';
 import 'package:real_amis/init_dependencies.dart';
 import 'package:real_amis/presentation/auth/bloc/auth_bloc.dart';
 import 'package:real_amis/presentation/choose_mode/bloc/theme_cubit.dart';
+import 'package:real_amis/presentation/event/bloc/event_bloc.dart';
 import 'package:real_amis/presentation/match/bloc/match_bloc.dart';
 import 'package:real_amis/presentation/player/bloc/player_bloc.dart';
 import 'package:real_amis/presentation/splash/pages/splash.dart';
@@ -27,6 +28,7 @@ void main() async {
         BlocProvider(create: (_) => serviceLocator<PlayerBloc>()),
         BlocProvider(create: (_) => serviceLocator<MatchBloc>()),
         BlocProvider(create: (_) => serviceLocator<TeamBloc>()),
+        BlocProvider(create: (_) => serviceLocator<EventBloc>()),
       ],
       child: MainApp(),
     ),
@@ -93,4 +95,10 @@ To Do:
 - Gestire meglio eliminazione squadre (problema quando sono in match già creati)
 - Refactor generale
 - Aggiornare design
+*/
+
+
+/*
+- PARTITE 
+In questa slide aggiungerei la possibilità di mettere chi ha fatto goal ed in quale minuto dell’incontro, magari anche mettere chi ha preso cartellini ed in quale minuto.
 */

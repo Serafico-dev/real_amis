@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:real_amis/domain/entities/player/player_entity.dart';
@@ -25,39 +26,57 @@ class PlayerCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(10),
         ),
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(player.role.value),
-                Text(
-                  player.fullName,
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                ),
-                Text("'${player.userName}'"),
-                SizedBox(height: 10),
-                Row(
-                  children: [
-                    Text(player.attendances.toString()),
-                    SizedBox(width: 4),
-                    Icon(Icons.stadium),
-                    SizedBox(width: 10),
-                    Text(player.goals.toString()),
-                    SizedBox(width: 4),
-                    Icon(Icons.sports_soccer),
-                  ],
-                ),
-              ],
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(player.role.value, overflow: TextOverflow.ellipsis),
+                  SizedBox(height: 4),
+                  Text(
+                    player.fullName,
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  Text(
+                    "'${player.userName}'",
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  SizedBox(height: 10),
+                  Row(
+                    children: [
+                      Text(player.attendances.toString()),
+                      SizedBox(width: 4),
+                      Icon(Icons.stadium, size: 16),
+                      SizedBox(width: 10),
+                      Text(player.goals.toString()),
+                      SizedBox(width: 4),
+                      Icon(Icons.sports_soccer, size: 16),
+                    ],
+                  ),
+                ],
+              ),
             ),
-            Spacer(),
+            SizedBox(width: 12),
             ClipRRect(
-              borderRadius: BorderRadiusGeometry.circular(10),
-              child: Image.network(player.imageUrl, width: 125),
+              borderRadius: BorderRadius.circular(10),
+              child: CachedNetworkImage(
+                imageUrl: player.imageUrl,
+                width: 80,
+                height: 80,
+                fit: BoxFit.cover,
+              ),
             ),
-            player.active == true
-                ? Icon(Icons.check_circle_outline, color: Colors.green)
-                : Icon(Icons.not_interested, color: Colors.red),
+            SizedBox(width: 8),
+            ConstrainedBox(
+              constraints: BoxConstraints(minWidth: 24),
+              child: player.active == true
+                  ? Icon(Icons.check_circle_outline, color: Colors.green)
+                  : Icon(Icons.not_interested, color: Colors.red),
+            ),
           ],
         ),
       ),
