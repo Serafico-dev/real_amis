@@ -94,8 +94,30 @@ class _SettingsPageState extends State<SettingsPage> {
                     style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                   ),
                   trailing: IconButton(
-                    onPressed: () {
-                      context.read<AuthBloc>().add(AuthLogout());
+                    onPressed: () async {
+                      final confirm = await showDialog<bool>(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          title: const Text('Conferma'),
+                          content: const Text(
+                            'Sei sicuro di voler effettuare il logout?',
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.of(context).pop(false),
+                              child: const Text('Annulla'),
+                            ),
+                            TextButton(
+                              onPressed: () => Navigator.of(context).pop(true),
+                              child: const Text('Disconnettiti'),
+                            ),
+                          ],
+                        ),
+                      );
+
+                      if (confirm == true) {
+                        context.read<AuthBloc>().add(AuthLogout());
+                      }
                     },
                     icon: Icon(Icons.exit_to_app, size: 30),
                   ),

@@ -39,7 +39,10 @@ flutter:
 
   assets:
     - assets/fonts/
+<<<<<<< HEAD
     - assets/images/
+=======
+>>>>>>> 74c152b (Boh)
     - assets/vectors/
 
   fonts:

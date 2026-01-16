@@ -35,6 +35,7 @@ import 'package:real_amis/domain/usecases/auth/user_logout.dart';
 import 'package:real_amis/domain/usecases/auth/user_sign_up.dart';
 import 'package:real_amis/domain/usecases/event/delete_event.dart';
 import 'package:real_amis/domain/usecases/event/get_all_events.dart';
+import 'package:real_amis/domain/usecases/event/get_events_by_match.dart';
 import 'package:real_amis/domain/usecases/event/update_event.dart';
 import 'package:real_amis/domain/usecases/event/upload_event.dart';
 import 'package:real_amis/domain/usecases/match/delete_match.dart';
@@ -240,6 +241,7 @@ void _initEvent() {
   // Usecases
   serviceLocator.registerFactory(() => UploadEvent(serviceLocator()));
   serviceLocator.registerFactory(() => GetAllEvents(serviceLocator()));
+  serviceLocator.registerFactory(() => GetEventsByMatch(serviceLocator()));
   serviceLocator.registerFactory(() => UpdateEvent(serviceLocator()));
   serviceLocator.registerFactory(() => DeleteEvent(serviceLocator()));
 
@@ -248,6 +250,7 @@ void _initEvent() {
     () => EventBloc(
       uploadEvent: serviceLocator(),
       getAllEvents: serviceLocator(),
+      getEventsByMatch: serviceLocator(),
       updateEvent: serviceLocator(),
       deleteEvent: serviceLocator(),
     ),

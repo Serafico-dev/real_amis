@@ -13,6 +13,7 @@ class UpdateEvent implements UseCase<EventEntity, UpdateEventParams> {
   Future<Either<Failure, EventEntity>> call(UpdateEventParams params) async {
     return await eventRepository.updateEvent(
       event: params.event,
+      matchId: params.matchId,
       teamId: params.teamId,
       player: params.player,
       minutes: params.minutes,
@@ -23,6 +24,7 @@ class UpdateEvent implements UseCase<EventEntity, UpdateEventParams> {
 
 class UpdateEventParams {
   final EventEntity event;
+  final String? matchId;
   final String? teamId;
   final String? player;
   final int? minutes;
@@ -30,6 +32,7 @@ class UpdateEventParams {
 
   UpdateEventParams({
     required this.event,
+    this.matchId,
     this.teamId,
     this.player,
     this.minutes,

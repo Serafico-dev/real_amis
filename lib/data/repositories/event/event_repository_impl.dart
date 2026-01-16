@@ -25,6 +25,7 @@ class EventRepositoryImpl implements EventRepository {
 
   @override
   Future<Either<Failure, EventEntity>> uploadEvent({
+    required String matchId,
     required String teamId,
     required String player,
     required int minutes,
@@ -36,6 +37,7 @@ class EventRepositoryImpl implements EventRepository {
       }
       EventModel eventModel = EventModel(
         id: Uuid().v1(),
+        matchId: matchId,
         teamId: teamId,
         player: player,
         minutes: minutes,
@@ -64,8 +66,31 @@ class EventRepositoryImpl implements EventRepository {
   }
 
   @override
+  Future<Either<Failure, List<EventEntity>>> getEventsByMatch({
+    required String matchId,
+  }) async {
+    try {
+      if (!await (connectionChecker.isConnected)) {
+        final events = eventLocalDataSource
+            .loadEvents()
+            .where((e) => e.matchId == matchId)
+            .toList();
+        return right(events);
+      }
+      final events = await eventSupabaseDataSource.getEventsByMatch(
+        matchId: matchId,
+      );
+      eventLocalDataSource.uploadLocalEvents(events: events);
+      return right(events);
+    } on ServerException catch (e) {
+      return left(Failure(e.message));
+    }
+  }
+
+  @override
   Future<Either<Failure, EventEntity>> updateEvent({
     required EventEntity event,
+    String? matchId,
     String? teamId,
     String? player,
     int? minutes,
@@ -78,6 +103,7 @@ class EventRepositoryImpl implements EventRepository {
       }
       EventModel eventModel = EventModel(
         id: event.id,
+        matchId: matchId ?? event.matchId,
         teamId: teamId ?? event.teamId,
         player: player ?? event.player,
         minutes: minutes ?? event.minutes,

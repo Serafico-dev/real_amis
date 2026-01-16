@@ -12,6 +12,7 @@ class UploadEvent implements UseCase<EventEntity, UploadEventParams> {
   @override
   Future<Either<Failure, EventEntity>> call(UploadEventParams params) async {
     return await eventRepository.uploadEvent(
+      matchId: params.matchId,
       teamId: params.teamId,
       player: params.player,
       minutes: params.minutes,
@@ -21,12 +22,14 @@ class UploadEvent implements UseCase<EventEntity, UploadEventParams> {
 }
 
 class UploadEventParams {
+  final String matchId;
   final String teamId;
   final String player;
   final int minutes;
   final EventType eventType;
 
   UploadEventParams({
+    required this.matchId,
     required this.teamId,
     required this.player,
     required this.minutes,

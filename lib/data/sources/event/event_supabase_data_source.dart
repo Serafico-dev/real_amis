@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 abstract interface class EventSupabaseDataSource {
   Future<EventModel> uploadEvent(EventModel event);
   Future<List<EventModel>> getAllEvents();
+  Future<List<EventModel>> getEventsByMatch({required String matchId});
   Future<EventModel> updateEvent(EventModel event);
   Future<EventModel> deleteEvent({required String eventId});
 }
@@ -35,6 +36,22 @@ class EventSupabaseDataSourceImpl implements EventSupabaseDataSource {
           .from('events')
           .select('*, team:team_id(name,image_url)');
       return events.map((event) => EventModel.fromJson(event)).toList();
+    } on PostgrestException catch (e) {
+      throw ServerException(e.message);
+    } catch (e) {
+      throw ServerException(e.toString());
+    }
+  }
+
+  @override
+  Future<List<EventModel>> getEventsByMatch({required String matchId}) async {
+    try {
+      final events = await supabaseClient
+          .from('events')
+          .select()
+          .eq('match_id', matchId)
+          .order('minutes', ascending: true);
+      return events.map((m) => EventModel.fromJson(m)).toList();
     } on PostgrestException catch (e) {
       throw ServerException(e.message);
     } catch (e) {

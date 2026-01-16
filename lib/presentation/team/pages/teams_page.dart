@@ -120,15 +120,17 @@ class _TeamsPageState extends State<TeamsPage> {
                               : false,
                           builder: (context, isAdmin) {
                             return InkWell(
-                              onTap: () async {
-                                await Navigator.push(
-                                  context,
-                                  EditTeamPage.route(team),
-                                );
-                                context.read<TeamBloc>().add(
-                                  TeamFetchAllTeams(),
-                                );
-                              },
+                              onTap: isAdmin == true
+                                  ? () async {
+                                      await Navigator.push(
+                                        context,
+                                        EditTeamPage.route(team),
+                                      );
+                                      context.read<TeamBloc>().add(
+                                        TeamFetchAllTeams(),
+                                      );
+                                    }
+                                  : null,
                               child: Container(
                                 padding: EdgeInsets.all(12),
                                 decoration: BoxDecoration(

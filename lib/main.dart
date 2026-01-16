@@ -96,9 +96,3 @@ To Do:
 - Refactor generale
 - Aggiornare design
 */
-
-
-/*
-- PARTITE 
-In questa slide aggiungerei la possibilità di mettere chi ha fatto goal ed in quale minuto dell’incontro, magari anche mettere chi ha preso cartellini ed in quale minuto.
-*/

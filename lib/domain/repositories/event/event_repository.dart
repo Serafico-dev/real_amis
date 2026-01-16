@@ -5,6 +5,7 @@ import 'package:real_amis/domain/entities/event/event_type.dart';
 
 abstract interface class EventRepository {
   Future<Either<Failure, EventEntity>> uploadEvent({
+    required String matchId,
     required String teamId,
     required String player,
     required int minutes,
@@ -13,8 +14,13 @@ abstract interface class EventRepository {
 
   Future<Either<Failure, List<EventEntity>>> getAllEvents();
 
+  Future<Either<Failure, List<EventEntity>>> getEventsByMatch({
+    required String matchId,
+  });
+
   Future<Either<Failure, EventEntity>> updateEvent({
     required EventEntity event,
+    String? matchId,
     String? teamId,
     String? player,
     int? minutes,

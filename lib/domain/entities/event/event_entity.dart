@@ -3,6 +3,7 @@ import 'package:real_amis/domain/entities/team/team_entity.dart';
 
 class EventEntity {
   final String id;
+  final String matchId;
   final String teamId;
   final String player;
   final int minutes;
@@ -11,6 +12,7 @@ class EventEntity {
 
   EventEntity({
     required this.id,
+    required this.matchId,
     required this.teamId,
     required this.player,
     required this.minutes,

@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:real_amis/domain/entities/event/event_type.dart';
 import 'package:real_amis/domain/entities/match/match_entity.dart';
-import 'package:real_amis/presentation/match/bloc/match_bloc.dart';
 import 'package:real_amis/core/utils/show_snackbar.dart';
 import 'package:real_amis/presentation/event/bloc/event_bloc.dart';
 
@@ -35,13 +34,12 @@ class _AddEventModalState extends State<AddEventModal> {
     if (!_formKey.currentState!.validate()) return;
 
     final isHome = teamSide == 'home';
-    final teamId = isHome
-        ? widget.match.homeTeam!.id
-        : widget.match.awayTeam!.id;
+    final teamId = isHome ? widget.match.homeTeamId : widget.match.awayTeamId;
     final eventType = selectedType;
 
     context.read<EventBloc>().add(
       EventUpload(
+        matchId: widget.match.id,
         teamId: teamId,
         player: playerController.text.trim(),
         minutes: int.parse(minuteController.text.trim()),
@@ -57,15 +55,17 @@ class _AddEventModalState extends State<AddEventModal> {
       if (state is EventUploadSuccess) {
         showSnackBar(
           context,
-          'Evento aggiunto: ${eventType.value} ${isHome ? widget.match.homeTeam?.name : widget.match.awayTeam?.name} (${int.parse(minuteController.text.trim())}\')',
+          'Evento aggiunto: ${eventType.value} di ${playerController.text.trim()} - ${isHome ? widget.match.homeTeam?.name : widget.match.awayTeam?.name} (${int.parse(minuteController.text.trim())}\')',
         );
-        Navigator.of(context).pop();
+        sub.cancel();
+        setState(() => _submitting = false);
+        Navigator.of(context).pop('created');
       } else if (state is EventFailure) {
         showSnackBar(context, 'Errore: ${state.error}');
+        sub.cancel();
+        setState(() => _submitting = false);
+        Navigator.of(context).pop(null);
       }
-      setState(() => _submitting = false);
-      sub.cancel();
-      context.read<MatchBloc>().add(MatchFetchAllMatches());
     });
   }
 
@@ -94,29 +94,26 @@ class _AddEventModalState extends State<AddEventModal> {
             SizedBox(height: 12),
             Column(
               children: [
-                ListTile(
-                  leading: Radio<String>(
-                    value: 'home',
-                    groupValue: teamSide,
-                    onChanged: (v) {
-                      if (v == null) return;
-                      setState(() => teamSide = v);
-                    },
+                RadioGroup<String>(
+                  groupValue: teamSide,
+                  onChanged: (String? v) {
+                    if (v == null) return;
+                    setState(() => teamSide = v);
+                  },
+                  child: Column(
+                    children: [
+                      ListTile(
+                        leading: Radio<String>(value: 'home'),
+                        title: Text(widget.match.homeTeam?.name ?? 'Home'),
+                        onTap: () => setState(() => teamSide = 'home'),
+                      ),
+                      ListTile(
+                        leading: Radio<String>(value: 'away'),
+                        title: Text(widget.match.awayTeam?.name ?? 'Away'),
+                        onTap: () => setState(() => teamSide = 'away'),
+                      ),
+                    ],
                   ),
-                  title: Text(widget.match.homeTeam?.name ?? 'Home'),
-                  onTap: () => setState(() => teamSide = 'home'),
-                ),
-                ListTile(
-                  leading: Radio<String>(
-                    value: 'away',
-                    groupValue: teamSide,
-                    onChanged: (v) {
-                      if (v == null) return;
-                      setState(() => teamSide = v);
-                    },
-                  ),
-                  title: Text(widget.match.awayTeam?.name ?? 'Away'),
-                  onTap: () => setState(() => teamSide = 'away'),
                 ),
               ],
             ),
@@ -190,7 +187,10 @@ class _AddEventModalState extends State<AddEventModal> {
                                     strokeWidth: 2,
                                   ),
                                 )
-                              : Text('Aggiungi'),
+                              : Text(
+                                  'Aggiungi',
+                                  style: TextStyle(color: Colors.white),
+                                ),
                         ),
                       ),
                     ],

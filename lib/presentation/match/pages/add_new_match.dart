@@ -162,7 +162,10 @@ class _AddNewMatchPageState extends State<AddNewMatchPage> {
                               : formatDateByddMMYYYYHHmm(date),
                         ),
                         ElevatedButton.icon(
-                          icon: const Icon(Icons.calendar_today),
+                          icon: const Icon(
+                            Icons.calendar_today,
+                            color: Colors.white,
+                          ),
                           onPressed: () async {
                             var pickedDate =
                                 await DatePicker.showDateTimePicker(
@@ -177,7 +180,10 @@ class _AddNewMatchPageState extends State<AddNewMatchPage> {
                               selectedDate = pickedDate;
                             });
                           },
-                          label: Text('Scegli una data'),
+                          label: Text(
+                            'Scegli una data',
+                            style: TextStyle(color: Colors.white),
+                          ),
                         ),
                         SizedBox(height: 15),
                         TextFieldNullable(

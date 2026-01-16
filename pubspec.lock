@@ -433,10 +433,17 @@ packages:
     dependency: transitive
     description:
       name: hive_ce
+<<<<<<< HEAD
       sha256: "29f8791bf13fa6cf7435a58f1f82a7c9706973c867affa77c34d91e105762664"
       url: "https://pub.dev"
     source: hosted
     version: "2.17.0"
+=======
+      sha256: b01cb16fc79cd4f63344d63f197d921eeb6c5bf1b5db6a21d0c21db0ec021516
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.18.0"
+>>>>>>> 74c152b (Boh)
   http:
     dependency: transitive
     description:
