@@ -36,3 +36,9 @@ final class AuthCompletePasswordReset extends AuthEvent {
     required this.newPassword,
   });
 }
+
+final class AuthDeleteAccount extends AuthEvent {
+  final String id;
+
+  AuthDeleteAccount({required this.id});
+}

@@ -77,7 +77,10 @@ class _EditTeamState extends State<EditTeamPage> {
       body: BlocConsumer<TeamBloc, TeamState>(
         listener: (context, state) {
           if (state is TeamFailure) {
-            showSnackBar(context, state.error);
+            showSnackBar(
+              context,
+              'Non è possibile eliminare una squadra con delle partite giocate',
+            );
           } else if (state is TeamUpdateSuccess) {
             Navigator.pop(context, state.updatedTeam);
           } else if (state is TeamDeleteSuccess) {
@@ -156,7 +159,7 @@ class _EditTeamState extends State<EditTeamPage> {
                                       ],
                                     ),
                                   );
-                                  if (confirmed == true) {
+                                  if (confirmed == true && context.mounted) {
                                     context.read<TeamBloc>().add(
                                       TeamDelete(teamId: widget.team.id),
                                     );

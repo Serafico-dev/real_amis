@@ -54,6 +54,7 @@ class _MatchViewerPageState extends State<MatchViewerPage> {
       builder: (_) => AddEventModal(match: match),
     );
     if (result == 'created' || result == 'updated' || result == 'deleted') {
+      if (!mounted) return;
       context.read<EventBloc>().add(
         EventFetchMatchEvents(matchId: widget.matchId),
       );
@@ -71,6 +72,7 @@ class _MatchViewerPageState extends State<MatchViewerPage> {
       builder: (_) => EditEventModal(event: ev),
     );
     if (result == 'updated' || result == 'deleted' || result == 'created') {
+      if (!mounted) return;
       context.read<EventBloc>().add(
         EventFetchMatchEvents(matchId: widget.matchId),
       );
@@ -116,7 +118,9 @@ class _MatchViewerPageState extends State<MatchViewerPage> {
                     context,
                     EditMatchPage.route(matchToEdit),
                   );
-                  context.read<MatchBloc>().add(MatchFetchAllMatches());
+                  if (context.mounted) {
+                    context.read<MatchBloc>().add(MatchFetchAllMatches());
+                  }
                 },
                 icon: Icon(Icons.edit, size: 25),
               );

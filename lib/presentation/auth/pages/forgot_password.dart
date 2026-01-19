@@ -10,7 +10,7 @@ import 'package:real_amis/presentation/auth/bloc/auth_bloc.dart';
 class ForgotPasswordPage extends StatefulWidget {
   const ForgotPasswordPage({super.key});
   static MaterialPageRoute route() =>
-      MaterialPageRoute(builder: (context) => const ForgotPasswordPage());
+      MaterialPageRoute(builder: (_) => const ForgotPasswordPage());
 
   @override
   State<ForgotPasswordPage> createState() => _ForgotPasswordPageState();
@@ -30,53 +30,64 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBarYesNav(title: Image.asset(AppVectors.logo, width: 50)),
-      body: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: BlocConsumer<AuthBloc, AuthState>(
-          listener: (context, state) {
-            if (state is AuthPasswordResetEmailSent) {
-              showSnackBar(
-                context,
-                'Email inviata: controlla la tua casella di posta',
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(20.0),
+          child: BlocConsumer<AuthBloc, AuthState>(
+            listener: (context, state) {
+              if (state is AuthPasswordResetEmailSent) {
+                if (context.mounted) {
+                  showSnackBar(
+                    context,
+                    'Email inviata: controlla la tua casella di posta',
+                  );
+                  Navigator.pop(context);
+                }
+              } else if (state is AuthPasswordResetFailure) {
+                if (context.mounted) {
+                  showSnackBar(context, state.message);
+                }
+              }
+            },
+            builder: (context, state) {
+              if (state is AuthLoading) return const Loader();
+              return Form(
+                key: _formKey,
+                child: Column(
+                  children: [
+                    const SizedBox(height: 48),
+                    const Text(
+                      'Inserisci la tua email per ricevere il link di reset',
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: _emailController,
+                      keyboardType: TextInputType.emailAddress,
+                      decoration: const InputDecoration(hintText: 'Email'),
+                      validator: (v) => v == null || v.trim().isEmpty
+                          ? 'Inserisci email'
+                          : null,
+                    ),
+                    const SizedBox(height: 12),
+                    BasicAppButton(
+                      title: 'Invia email di recupero',
+                      onPressed: () {
+                        if (_formKey.currentState!.validate()) {
+                          context.read<AuthBloc>().add(
+                            AuthSendPasswordResetEmail(
+                              email: _emailController.text.trim(),
+                            ),
+                          );
+                        }
+                      },
+                    ),
+                    const SizedBox(height: 48),
+                  ],
+                ),
               );
-              Navigator.pop(context);
-            } else if (state is AuthPasswordResetFailure) {
-              showSnackBar(context, state.message);
-            }
-          },
-          builder: (context, state) {
-            if (state is AuthLoading) return const Loader();
-            return Form(
-              key: _formKey,
-              child: Column(
-                children: [
-                  Spacer(flex: 1),
-                  Text('Inserisci la tua email per ricevere il link di reset'),
-                  SizedBox(height: 12),
-                  TextFormField(
-                    controller: _emailController,
-                    decoration: InputDecoration(hintText: 'Email'),
-                    validator: (v) =>
-                        v == null || v.isEmpty ? 'Inserisci email' : null,
-                  ),
-                  SizedBox(height: 12),
-                  BasicAppButton(
-                    title: 'Invia email di recupero',
-                    onPressed: () {
-                      if (_formKey.currentState!.validate()) {
-                        context.read<AuthBloc>().add(
-                          AuthSendPasswordResetEmail(
-                            email: _emailController.text.trim(),
-                          ),
-                        );
-                      }
-                    },
-                  ),
-                  Spacer(flex: 2),
-                ],
-              ),
-            );
-          },
+            },
+          ),
         ),
       ),
     );

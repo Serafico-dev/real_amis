@@ -20,7 +20,7 @@ class EventModel extends EventEntity {
       'team_id': teamId,
       'player': player,
       'minutes': minutes,
-      'event': eventType.value, // serializza come String
+      'event': eventType.value,
     };
   }
 

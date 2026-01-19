@@ -45,7 +45,9 @@ class _TeamsPageState extends State<TeamsPage> {
               return IconButton(
                 onPressed: () async {
                   await Navigator.push(context, AddNewTeamPage.route());
-                  context.read<TeamBloc>().add(TeamFetchAllTeams());
+                  if (context.mounted) {
+                    context.read<TeamBloc>().add(TeamFetchAllTeams());
+                  }
                 },
                 icon: Icon(Icons.add, size: 30),
               );
@@ -126,9 +128,11 @@ class _TeamsPageState extends State<TeamsPage> {
                                         context,
                                         EditTeamPage.route(team),
                                       );
-                                      context.read<TeamBloc>().add(
-                                        TeamFetchAllTeams(),
-                                      );
+                                      if (context.mounted) {
+                                        context.read<TeamBloc>().add(
+                                          TeamFetchAllTeams(),
+                                        );
+                                      }
                                     }
                                   : null,
                               child: Container(

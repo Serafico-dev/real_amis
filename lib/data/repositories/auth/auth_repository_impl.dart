@@ -121,4 +121,16 @@ class AuthRepositoryImpl implements AuthRepository {
       return left(Failure(e.message));
     }
   }
+
+  @override
+  Future<Either<Failure, UserEntity>> deleteAccount({
+    required String id,
+  }) async {
+    try {
+      await authSupabaseDataSource.deleteAccount(id: id);
+      return right(UserEntity(id: '', email: '', isAdmin: false));
+    } on ServerException catch (e) {
+      return left(Failure(e.message));
+    }
+  }
 }

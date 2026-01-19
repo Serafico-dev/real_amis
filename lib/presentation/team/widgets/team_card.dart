@@ -21,7 +21,9 @@ class TeamCard extends StatelessWidget {
       onTap: isAdmin
           ? () async {
               await Navigator.push(context, EditTeamPage.route(team));
-              context.read<TeamBloc>().add(TeamFetchAllTeams());
+              if (context.mounted) {
+                context.read<TeamBloc>().add(TeamFetchAllTeams());
+              }
             }
           : null,
       child: Container(

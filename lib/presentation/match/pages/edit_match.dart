@@ -245,7 +245,8 @@ class _EditMatchState extends State<EditMatchPage> {
                                           ],
                                         ),
                                       );
-                                      if (confirmed == true) {
+                                      if (confirmed == true &&
+                                          context.mounted) {
                                         context.read<MatchBloc>().add(
                                           MatchDelete(matchId: widget.match.id),
                                         );

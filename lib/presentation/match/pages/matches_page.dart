@@ -44,7 +44,9 @@ class _MatchesPageState extends State<MatchesPage> {
               return IconButton(
                 onPressed: () async {
                   await Navigator.push(context, AddNewMatchPage.route());
-                  context.read<MatchBloc>().add(MatchFetchAllMatches());
+                  if (context.mounted) {
+                    context.read<MatchBloc>().add(MatchFetchAllMatches());
+                  }
                 },
                 icon: Icon(Icons.add, size: 30),
               );

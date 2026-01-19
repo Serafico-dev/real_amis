@@ -16,7 +16,9 @@ class MatchCard extends StatelessWidget {
     return GestureDetector(
       onTap: () async {
         await Navigator.push(context, MatchViewerPage.route(match.id));
-        context.read().add(MatchFetchAllMatches());
+        if (context.mounted) {
+          context.read().add(MatchFetchAllMatches());
+        }
       },
       child: Container(
         margin: EdgeInsets.all(16).copyWith(bottom: 4),

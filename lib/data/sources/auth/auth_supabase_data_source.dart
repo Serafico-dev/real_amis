@@ -27,6 +27,8 @@ abstract interface class AuthSupabaseDataSource {
     required String accessToken,
     required String newPassword,
   });
+
+  Future<void> deleteAccount({required String id});
 }
 
 class AuthSupabaseDataSourceImpl implements AuthSupabaseDataSource {
@@ -145,6 +147,17 @@ class AuthSupabaseDataSourceImpl implements AuthSupabaseDataSource {
         UserAttributes(password: newPassword),
       );
       await supabaseClient.auth.signOut();
+    } on AuthException catch (e) {
+      throw ServerException(e.message);
+    } catch (e) {
+      throw ServerException(e.toString());
+    }
+  }
+
+  @override
+  Future<void> deleteAccount({required String id}) async {
+    try {
+      await supabaseClient.auth.admin.deleteUser(id);
     } on AuthException catch (e) {
       throw ServerException(e.message);
     } catch (e) {

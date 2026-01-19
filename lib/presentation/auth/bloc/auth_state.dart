@@ -34,3 +34,5 @@ final class AuthPasswordResetFailure extends AuthState {
   final String message;
   const AuthPasswordResetFailure(this.message);
 }
+
+final class AuthAccountDeleted extends AuthState {}

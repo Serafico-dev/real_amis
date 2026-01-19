@@ -39,7 +39,7 @@ class MainApp extends StatefulWidget {
   const MainApp({super.key});
 
   static MaterialPageRoute route() =>
-      MaterialPageRoute(builder: (context) => MainApp());
+      MaterialPageRoute(builder: (context) => const MainApp());
 
   @override
   State<MainApp> createState() => _MainAppState();
@@ -48,16 +48,22 @@ class MainApp extends StatefulWidget {
 class _MainAppState extends State<MainApp> {
   @override
   void initState() {
+    super.initState();
     localization.init(
       mapLocales: [
-        const MapLocale('en', AppLocale.EN),
-        const MapLocale('it', AppLocale.IT),
+        const MapLocale('en', AppLocale.english),
+        const MapLocale('it', AppLocale.italian),
       ],
       initLanguageCode: 'it',
     );
     localization.onTranslatedLanguage = _onTranslatedLanguage;
     context.read<AuthBloc>().add(AuthIsUserLoggedIn());
-    super.initState();
+  }
+
+  @override
+  void dispose() {
+    localization.onTranslatedLanguage = null;
+    super.dispose();
   }
 
   void _onTranslatedLanguage(Locale? locale) {
@@ -93,6 +99,6 @@ class _MainAppState extends State<MainApp> {
 /*
 To Do:
 - Gestire meglio eliminazione squadre (problema quando sono in match già creati)
-- Refactor generale
+- Refactor generale (mancano le cartelle: event, history, main, match, player e team)
 - Aggiornare design
 */

@@ -84,7 +84,9 @@ class _PlayersPageState extends State<PlayersPage>
               return IconButton(
                 onPressed: () async {
                   await Navigator.push(context, AddNewPlayerPage.route());
-                  context.read<PlayerBloc>().add(PlayerFetchAllPlayers());
+                  if (context.mounted) {
+                    context.read<PlayerBloc>().add(PlayerFetchAllPlayers());
+                  }
                 },
                 icon: Icon(Icons.add, size: 30),
               );

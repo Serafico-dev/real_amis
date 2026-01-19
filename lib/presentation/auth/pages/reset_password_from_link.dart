@@ -122,7 +122,7 @@ class _ResetPasswordFromLinkPageState extends State<ResetPasswordFromLinkPage> {
 
     try {
       await Supabase.instance.client.auth.setSession(sessionJson);
-
+      if (!mounted) return;
       context.read<AuthBloc>().add(
         AuthCompletePasswordReset(
           accessToken: _accessToken!,
@@ -171,7 +171,7 @@ class _ResetPasswordFromLinkPageState extends State<ResetPasswordFromLinkPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        const SizedBox(height: 12),
+                        SizedBox(height: 12),
                         TextFormField(
                           controller: _pwController,
                           decoration: const InputDecoration(
@@ -182,7 +182,7 @@ class _ResetPasswordFromLinkPageState extends State<ResetPasswordFromLinkPage> {
                               ? 'Minimo 6 caratteri'
                               : null,
                         ),
-                        const SizedBox(height: 16),
+                        SizedBox(height: 16),
                         BasicAppButton(
                           title: 'Aggiorna password',
                           onPressed: _onSubmit,

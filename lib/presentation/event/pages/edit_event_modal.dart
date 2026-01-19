@@ -40,17 +40,19 @@ class _EditEventModalState extends State<EditEventModal> {
     _sub = context.read<EventBloc>().stream.listen((state) {
       if (state is EventLoading) return;
       if (state is EventUpdateSuccess) {
+        if (!mounted) return;
         showSnackBar(context, 'Evento aggiornato');
         _sub.cancel();
         Navigator.of(context).pop('updated');
       } else if (state is EventDeleteSuccess) {
+        if (!mounted) return;
         showSnackBar(context, 'Evento eliminato');
         _sub.cancel();
         Navigator.of(context).pop('deleted');
       } else if (state is EventFailure) {
+        if (!mounted) return;
         showSnackBar(context, 'Errore: ${state.error}');
-        // non chiudere il modal: lascia l'utente correggere
-        _sub.cancel(); // opzionale: puoi mantenere la subscription se vuoi permettere retry
+        _sub.cancel();
       }
     });
   }
@@ -216,7 +218,7 @@ class _EditEventModalState extends State<EditEventModal> {
                                 ],
                               ),
                             );
-                            if (confirm == true) {
+                            if (confirm == true && context.mounted) {
                               Navigator.of(context).pop(null);
                             }
                           },

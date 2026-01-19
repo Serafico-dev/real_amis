@@ -15,7 +15,7 @@ import 'package:real_amis/presentation/main/pages/main_page.dart';
 class SigninPage extends StatefulWidget {
   const SigninPage({super.key});
   static MaterialPageRoute route() =>
-      MaterialPageRoute(builder: (context) => SigninPage());
+      MaterialPageRoute(builder: (_) => const SigninPage());
 
   @override
   State<SigninPage> createState() => _SigninPageState();
@@ -37,68 +37,73 @@ class _SigninPageState extends State<SigninPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBarNoNav(title: Image.asset(AppVectors.logo, width: 50)),
-      body: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: BlocConsumer<AuthBloc, AuthState>(
-          listener: (context, state) {
-            if (state is AuthFailure) {
-              showSnackBar(context, state.message);
-            } else if (state is AuthSuccess) {
-              context.read<AuthBloc>().add(AuthIsUserLoggedIn());
-              Navigator.pushAndRemoveUntil(
-                context,
-                MainPage.route(),
-                (route) => false,
-              );
-            }
-          },
-          builder: (context, state) {
-            if (state is AuthLoading) {
-              return const Loader();
-            }
-            return Form(
-              key: formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Spacer(),
-                  _registerText(),
-                  SizedBox(height: 10),
-                  _emailField(context),
-                  SizedBox(height: 10),
-                  _passwordField(context),
-                  SizedBox(height: 10),
-                  BasicAppButton(
-                    onPressed: () {
-                      if (formKey.currentState!.validate()) {
-                        context.read<AuthBloc>().add(
-                          AuthLogin(
-                            email: _email.text.trim(),
-                            password: _password.text.trim(),
-                          ),
-                        );
-                      }
-                    },
-                    title: 'Accedi',
-                  ),
-                  TextButton(
-                    onPressed: () {
-                      Navigator.push(context, ForgotPasswordPage.route());
-                    },
-                    child: Text(
-                      'Password dimenticata?',
-                      style: TextStyle(
-                        color: context.isDarkMode
-                            ? AppColors.tertiary
-                            : AppColors.primary,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(20.0),
+          child: BlocConsumer<AuthBloc, AuthState>(
+            listener: (context, state) {
+              if (state is AuthFailure) {
+                if (context.mounted) showSnackBar(context, state.message);
+              } else if (state is AuthSuccess) {
+                if (!context.mounted) return;
+                context.read<AuthBloc>().add(AuthIsUserLoggedIn());
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MainPage.route(),
+                  (route) => false,
+                );
+              }
+            },
+            builder: (context, state) {
+              if (state is AuthLoading) {
+                return const Loader();
+              }
+              return Form(
+                key: formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    SizedBox(height: 60),
+                    _registerText(),
+                    SizedBox(height: 20),
+                    _emailField(context),
+                    SizedBox(height: 20),
+                    _passwordField(context),
+                    SizedBox(height: 20),
+                    BasicAppButton(
+                      onPressed: () {
+                        if (formKey.currentState!.validate()) {
+                          context.read<AuthBloc>().add(
+                            AuthLogin(
+                              email: _email.text.trim(),
+                              password: _password.text.trim(),
+                            ),
+                          );
+                        }
+                      },
+                      title: 'Accedi',
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        if (context.mounted) {
+                          Navigator.push(context, ForgotPasswordPage.route());
+                        }
+                      },
+                      child: Text(
+                        'Password dimenticata?',
+                        style: TextStyle(
+                          color: context.isDarkMode
+                              ? AppColors.tertiary
+                              : AppColors.primary,
+                        ),
                       ),
                     ),
-                  ),
-                  Spacer(),
-                ],
-              ),
-            );
-          },
+                    SizedBox(height: 60),
+                  ],
+                ),
+              );
+            },
+          ),
         ),
       ),
       bottomNavigationBar: _signupText(context),
@@ -106,28 +111,33 @@ class _SigninPageState extends State<SigninPage> {
   }
 
   Widget _registerText() {
-    return Text(
+    return const Text(
       'Accedi',
       style: TextStyle(fontWeight: FontWeight.bold, fontSize: 25),
     );
   }
 
   Widget _emailField(BuildContext context) {
-    return TextField(
+    return TextFormField(
       controller: _email,
+      keyboardType: TextInputType.emailAddress,
       decoration: InputDecoration(
         hintText: 'Email',
       ).applyDefaults(Theme.of(context).inputDecorationTheme),
+      validator: (v) =>
+          v == null || v.trim().isEmpty ? 'Inserisci una email valida' : null,
     );
   }
 
   Widget _passwordField(BuildContext context) {
-    return TextField(
+    return TextFormField(
       controller: _password,
       decoration: InputDecoration(
         hintText: 'Password',
       ).applyDefaults(Theme.of(context).inputDecorationTheme),
       obscureText: true,
+      validator: (v) =>
+          v == null || v.trim().length < 6 ? 'Inserisci una password' : null,
     );
   }
 
@@ -137,13 +147,15 @@ class _SigninPageState extends State<SigninPage> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(
+          const Text(
             'Non sei ancora un membro?',
             style: TextStyle(fontWeight: FontWeight.w500, fontSize: 14),
           ),
           TextButton(
             onPressed: () {
-              Navigator.pushReplacement(context, SignupPage.route());
+              if (context.mounted) {
+                Navigator.pushReplacement(context, SignupPage.route());
+              }
             },
             child: Text(
               'Registrati subito',

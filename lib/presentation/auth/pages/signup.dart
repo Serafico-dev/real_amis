@@ -14,7 +14,7 @@ import 'package:real_amis/presentation/main/pages/main_page.dart';
 class SignupPage extends StatefulWidget {
   const SignupPage({super.key});
   static MaterialPageRoute route() =>
-      MaterialPageRoute(builder: (context) => SignupPage());
+      MaterialPageRoute(builder: (_) => const SignupPage());
 
   @override
   State<SignupPage> createState() => _SignupPageState();
@@ -36,55 +36,57 @@ class _SignupPageState extends State<SignupPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBarNoNav(title: Image.asset(AppVectors.logo, width: 50)),
-      body: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 50, horizontal: 30),
-        child: BlocConsumer<AuthBloc, AuthState>(
-          listener: (context, state) {
-            if (state is AuthFailure) {
-              showSnackBar(context, state.message);
-            } else if (state is AuthSuccess) {
-              Navigator.pushAndRemoveUntil(
-                context,
-                MainPage.route(),
-                (route) => false,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(vertical: 50, horizontal: 30),
+          child: BlocConsumer<AuthBloc, AuthState>(
+            listener: (context, state) {
+              if (state is AuthFailure) {
+                if (context.mounted) showSnackBar(context, state.message);
+              } else if (state is AuthSuccess) {
+                if (!context.mounted) return;
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MainPage.route(),
+                  (route) => false,
+                );
+              }
+            },
+            builder: (context, state) {
+              if (state is AuthLoading) {
+                return const Loader();
+              }
+              return Form(
+                key: formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    const SizedBox(height: 60),
+                    _registerText(),
+                    const SizedBox(height: 20),
+                    _emailField(context),
+                    const SizedBox(height: 20),
+                    _passwordField(context),
+                    const SizedBox(height: 20),
+                    BasicAppButton(
+                      onPressed: () {
+                        if (formKey.currentState!.validate()) {
+                          context.read<AuthBloc>().add(
+                            AuthSignUp(
+                              email: _email.text.trim(),
+                              password: _password.text.trim(),
+                            ),
+                          );
+                        }
+                      },
+                      title: 'Registrati',
+                    ),
+                    const SizedBox(height: 60),
+                  ],
+                ),
               );
-            }
-          },
-          builder: (context, state) {
-            if (state is AuthLoading) {
-              return const Loader();
-            }
-            return Form(
-              key: formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Spacer(),
-                  _registerText(),
-                  SizedBox(height: 10),
-                  _emailField(context),
-                  SizedBox(height: 10),
-                  _passwordField(context),
-                  SizedBox(height: 10),
-
-                  BasicAppButton(
-                    onPressed: () {
-                      if (formKey.currentState!.validate()) {
-                        context.read<AuthBloc>().add(
-                          AuthSignUp(
-                            email: _email.text.trim(),
-                            password: _password.text.trim(),
-                          ),
-                        );
-                      }
-                    },
-                    title: 'Registrati',
-                  ),
-                  Spacer(),
-                ],
-              ),
-            );
-          },
+            },
+          ),
         ),
       ),
       bottomNavigationBar: _signinText(context),
@@ -92,28 +94,34 @@ class _SignupPageState extends State<SignupPage> {
   }
 
   Widget _registerText() {
-    return Text(
+    return const Text(
       'Unisciti al club',
       style: TextStyle(fontWeight: FontWeight.bold, fontSize: 25),
     );
   }
 
   Widget _emailField(BuildContext context) {
-    return TextField(
+    return TextFormField(
       controller: _email,
+      keyboardType: TextInputType.emailAddress,
       decoration: InputDecoration(
         hintText: 'Email',
       ).applyDefaults(Theme.of(context).inputDecorationTheme),
+      validator: (v) =>
+          v == null || v.trim().isEmpty ? 'Inserisci una email valida' : null,
     );
   }
 
   Widget _passwordField(BuildContext context) {
-    return TextField(
+    return TextFormField(
       controller: _password,
       decoration: InputDecoration(
         hintText: 'Password',
       ).applyDefaults(Theme.of(context).inputDecorationTheme),
       obscureText: true,
+      validator: (v) => v == null || v.trim().length < 6
+          ? 'Inserisci una password di almeno 6 caratteri'
+          : null,
     );
   }
 
@@ -123,13 +131,15 @@ class _SignupPageState extends State<SignupPage> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(
+          const Text(
             'Fai già parte del club?',
             style: TextStyle(fontWeight: FontWeight.w500, fontSize: 14),
           ),
           TextButton(
             onPressed: () {
-              Navigator.pushReplacement(context, SigninPage.route());
+              if (context.mounted) {
+                Navigator.pushReplacement(context, SigninPage.route());
+              }
             },
             child: Text(
               'Accedi',

@@ -2,7 +2,6 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_svg/svg.dart';
 import 'package:real_amis/common/helpers/is_dark_mode.dart';
 import 'package:real_amis/common/widgets/button/basic_app_button.dart';
 import 'package:real_amis/core/configs/assets/app_vectors.dart';
@@ -13,7 +12,7 @@ class ChooseModePage extends StatelessWidget {
   const ChooseModePage({super.key});
 
   static MaterialPageRoute route() =>
-      MaterialPageRoute(builder: (context) => ChooseModePage());
+      MaterialPageRoute(builder: (context) => const ChooseModePage());
 
   @override
   Widget build(BuildContext context) {
@@ -42,88 +41,22 @@ class ChooseModePage extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Column(
-                      children: [
-                        GestureDetector(
-                          onTap: () {
-                            context.read<ThemeCubit>().updateTheme(
-                              ThemeMode.dark,
-                            );
-                          },
-                          child: ClipOval(
-                            child: BackdropFilter(
-                              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                              child: Container(
-                                height: 80,
-                                width: 80,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: Color(
-                                    0xff30393C,
-                                  ).withValues(alpha: 0.5),
-                                ),
-                                child: SvgPicture.asset(
-                                  AppVectors.moon,
-                                  fit: BoxFit.none,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                        SizedBox(height: 15),
-                        Text(
-                          'Scuro',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w500,
-                            fontSize: 17,
-                            color: context.isDarkMode
-                                ? Colors.white
-                                : Colors.black,
-                          ),
-                        ),
-                      ],
+                    _modeCircle(
+                      icon: Icons.dark_mode,
+                      label: 'Scuro',
+                      isDarkMode: context.isDarkMode,
+                      onTap: () {
+                        context.read<ThemeCubit>().updateTheme(ThemeMode.dark);
+                      },
                     ),
                     SizedBox(width: 40),
-                    Column(
-                      children: [
-                        GestureDetector(
-                          onTap: () {
-                            context.read<ThemeCubit>().updateTheme(
-                              ThemeMode.light,
-                            );
-                          },
-                          child: ClipOval(
-                            child: BackdropFilter(
-                              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                              child: Container(
-                                height: 80,
-                                width: 80,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: Color(
-                                    0xff30393C,
-                                  ).withValues(alpha: 0.5),
-                                ),
-                                child: SvgPicture.asset(
-                                  AppVectors.sun,
-                                  fit: BoxFit.none,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                        SizedBox(height: 15),
-                        Text(
-                          'Chiaro',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w500,
-                            fontSize: 17,
-                            color: context.isDarkMode
-                                ? Colors.white
-                                : Colors.black,
-                          ),
-                        ),
-                      ],
+                    _modeCircle(
+                      icon: Icons.light_mode,
+                      label: 'Chiaro',
+                      isDarkMode: context.isDarkMode,
+                      onTap: () {
+                        context.read<ThemeCubit>().updateTheme(ThemeMode.light);
+                      },
                     ),
                   ],
                 ),
@@ -139,6 +72,50 @@ class ChooseModePage extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _modeCircle({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+    required bool isDarkMode,
+  }) {
+    return Column(
+      children: [
+        Material(
+          color: Colors.transparent,
+          shape: const CircleBorder(),
+          child: InkWell(
+            onTap: onTap,
+            customBorder: const CircleBorder(),
+            child: ClipOval(
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                child: Container(
+                  height: 80,
+                  width: 80,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Color(0xff30393C).withValues(alpha: 0.5),
+                  ),
+                  alignment: Alignment.center,
+                  child: Icon(icon, semanticLabel: label),
+                ),
+              ),
+            ),
+          ),
+        ),
+        SizedBox(height: 15),
+        Text(
+          label,
+          style: TextStyle(
+            fontWeight: FontWeight.w500,
+            fontSize: 17,
+            color: isDarkMode ? Colors.white : Colors.black,
+          ),
+        ),
+      ],
     );
   }
 }

@@ -30,6 +30,7 @@ import 'package:real_amis/domain/repositories/team/team_repository.dart';
 import 'package:real_amis/domain/usecases/auth/current_user.dart';
 import 'package:real_amis/domain/usecases/auth/password_reset.dart';
 import 'package:real_amis/domain/usecases/auth/password_reset_complete.dart';
+import 'package:real_amis/domain/usecases/auth/user_delete.dart';
 import 'package:real_amis/domain/usecases/auth/user_login.dart';
 import 'package:real_amis/domain/usecases/auth/user_logout.dart';
 import 'package:real_amis/domain/usecases/auth/user_sign_up.dart';
@@ -62,16 +63,13 @@ final serviceLocator = GetIt.instance;
 final FlutterLocalization localization = FlutterLocalization.instance;
 
 Future<void> initDependencies() async {
-  _initAuth();
-  _initPlayer();
-  _initMatch();
-  _initTeam();
-  _initEvent();
+  Hive.defaultDirectory = (await getApplicationDocumentsDirectory()).path;
 
   final supabase = await Supabase.initialize(
     url: AppSecrets.url,
     anonKey: AppSecrets.anonKey,
   );
+  serviceLocator.registerLazySingleton(() => supabase.client);
 
   HydratedBloc.storage = await HydratedStorage.build(
     storageDirectory: kIsWeb
@@ -79,18 +77,22 @@ Future<void> initDependencies() async {
         : HydratedStorageDirectory((await getTemporaryDirectory()).path),
   );
 
-  Hive.defaultDirectory = (await getApplicationDocumentsDirectory()).path;
-
-  serviceLocator.registerLazySingleton(() => supabase.client);
   serviceLocator.registerLazySingleton(() => Hive.box(name: 'localStorage'));
   serviceLocator.registerFactory(() => InternetConnection());
 
   // core
   serviceLocator.registerLazySingleton(() => AppUserCubit());
   serviceLocator.registerLazySingleton(() => ThemeCubit());
+
   serviceLocator.registerFactory<ConnectionChecker>(
     () => ConnectionCheckerImpl(serviceLocator()),
   );
+
+  _initAuth();
+  _initPlayer();
+  _initMatch();
+  _initTeam();
+  _initEvent();
 }
 
 void _initAuth() {
@@ -109,6 +111,7 @@ void _initAuth() {
   serviceLocator.registerFactory(() => UserLogout(serviceLocator()));
   serviceLocator.registerFactory(() => PasswordReset(serviceLocator()));
   serviceLocator.registerFactory(() => PasswordResetComplete(serviceLocator()));
+  serviceLocator.registerFactory(() => UserDelete(serviceLocator()));
   // Bloc
   serviceLocator.registerLazySingleton(
     () => AuthBloc(
@@ -118,6 +121,7 @@ void _initAuth() {
       userLogout: serviceLocator(),
       passwordReset: serviceLocator(),
       passwordResetComplete: serviceLocator(),
+      userDelete: serviceLocator(),
       appUserCubit: serviceLocator(),
     ),
   );

@@ -6,6 +6,7 @@ import 'package:real_amis/domain/entities/auth/user_entity.dart';
 import 'package:real_amis/domain/usecases/auth/current_user.dart';
 import 'package:real_amis/domain/usecases/auth/password_reset.dart';
 import 'package:real_amis/domain/usecases/auth/password_reset_complete.dart';
+import 'package:real_amis/domain/usecases/auth/user_delete.dart';
 import 'package:real_amis/domain/usecases/auth/user_login.dart';
 import 'package:real_amis/domain/usecases/auth/user_logout.dart';
 import 'package:real_amis/domain/usecases/auth/user_sign_up.dart';
@@ -20,6 +21,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final UserLogout _userLogout;
   final PasswordReset _passwordReset;
   final PasswordResetComplete _passwordResetComplete;
+  final UserDelete _userDelete;
   final AppUserCubit _appUserCubit;
 
   AuthBloc({
@@ -29,6 +31,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     required UserLogout userLogout,
     required PasswordReset passwordReset,
     required PasswordResetComplete passwordResetComplete,
+    required UserDelete userDelete,
     required AppUserCubit appUserCubit,
   }) : _userSignUp = userSignUp,
        _userLogin = userLogin,
@@ -36,6 +39,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
        _userLogout = userLogout,
        _passwordReset = passwordReset,
        _passwordResetComplete = passwordResetComplete,
+       _userDelete = userDelete,
        _appUserCubit = appUserCubit,
        super(AuthInitial()) {
     on<AuthSignUp>(_onAuthSignUp);
@@ -44,6 +48,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<AuthLogout>(_onAuthLogout);
     on<AuthSendPasswordResetEmail>(_onPasswordReset);
     on<AuthCompletePasswordReset>(_onPasswordUpdate);
+    on<AuthDeleteAccount>(_onAuthDeleteAccount);
   }
 
   Future<void> _onAuthSignUp(AuthSignUp event, Emitter<AuthState> emit) async {
@@ -145,6 +150,25 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       },
       (r) {
         emit(AuthPasswordResetCompleted());
+      },
+    );
+  }
+
+  Future<void> _onAuthDeleteAccount(
+    AuthDeleteAccount event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(AuthLoading());
+
+    final res = await _userDelete(UserDeleteParams(id: event.id));
+
+    res.fold(
+      (l) {
+        _appUserCubit.clearUser();
+        emit(AuthFailure(l.message));
+      },
+      (r) {
+        emit(AuthAccountDeleted());
       },
     );
   }

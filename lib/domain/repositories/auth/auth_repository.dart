@@ -26,4 +26,6 @@ abstract interface class AuthRepository {
     required String accessToken,
     required String newPassword,
   });
+
+  Future<Either<Failure, UserEntity>> deleteAccount({required String id});
 }

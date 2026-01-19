@@ -235,7 +235,7 @@ class _EditPlayerState extends State<EditPlayerPage> {
                                       ],
                                     ),
                                   );
-                                  if (confirmed == true) {
+                                  if (confirmed == true && context.mounted) {
                                     context.read<PlayerBloc>().add(
                                       PlayerDelete(playerId: widget.player.id),
                                     );

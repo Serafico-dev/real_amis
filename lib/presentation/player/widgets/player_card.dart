@@ -16,7 +16,9 @@ class PlayerCard extends StatelessWidget {
     return GestureDetector(
       onTap: () async {
         await Navigator.push(context, PlayerViewerPage.route(player.id));
-        context.read().add(PlayerFetchAllPlayers());
+        if (context.mounted) {
+          context.read().add(PlayerFetchAllPlayers());
+        }
       },
       child: Container(
         margin: EdgeInsets.all(16).copyWith(bottom: 4),

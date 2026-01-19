@@ -53,6 +53,7 @@ class _AddEventModalState extends State<AddEventModal> {
     sub = context.read<EventBloc>().stream.listen((state) {
       if (state is EventLoading) return;
       if (state is EventUploadSuccess) {
+        if (!mounted) return;
         showSnackBar(
           context,
           'Evento aggiunto: ${eventType.value} di ${playerController.text.trim()} - ${isHome ? widget.match.homeTeam?.name : widget.match.awayTeam?.name} (${int.parse(minuteController.text.trim())}\')',
@@ -61,6 +62,7 @@ class _AddEventModalState extends State<AddEventModal> {
         setState(() => _submitting = false);
         Navigator.of(context).pop('created');
       } else if (state is EventFailure) {
+        if (!mounted) return;
         showSnackBar(context, 'Errore: ${state.error}');
         sub.cancel();
         setState(() => _submitting = false);
