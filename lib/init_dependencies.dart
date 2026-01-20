@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_localization/flutter_localization.dart';
 import 'package:get_it/get_it.dart';
@@ -8,6 +9,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:real_amis/common/cubits/app_user/app_user_cubit.dart';
 import 'package:real_amis/core/secrets/app_secrets.dart';
 import 'package:real_amis/core/network/connection_checker.dart';
+import 'package:real_amis/core/utils/secure_storage.dart';
 import 'package:real_amis/data/repositories/auth/auth_repository_impl.dart';
 import 'package:real_amis/data/repositories/event/event_repository_impl.dart';
 import 'package:real_amis/data/repositories/match/match_repository_impl.dart';
@@ -79,6 +81,29 @@ Future<void> initDependencies() async {
 
   serviceLocator.registerLazySingleton(() => Hive.box(name: 'localStorage'));
   serviceLocator.registerFactory(() => InternetConnection());
+
+  final secureStorage = SecureStorage();
+  serviceLocator.registerLazySingleton<SecureStorage>(() => secureStorage);
+  final savedSessionJson = await secureStorage.readSession();
+  if (savedSessionJson != null) {
+    try {
+      await supabase.client.auth.setInitialSession(savedSessionJson);
+    } catch (_) {
+      final access = await secureStorage.readToken();
+      final refresh = await secureStorage.readRefreshToken();
+      final expiresAt = await secureStorage.readExpiresAt();
+      if (access != null) {
+        final sessionMap = <String, dynamic>{
+          'access_token': access,
+          if (refresh != null) 'refresh_token': refresh,
+          if (expiresAt != null) 'expires_at': expiresAt,
+          'token_type': 'bearer',
+          'user': {},
+        };
+        await supabase.client.auth.setSession(jsonEncode(sessionMap));
+      }
+    }
+  }
 
   // core
   serviceLocator.registerLazySingleton(() => AppUserCubit());

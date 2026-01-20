@@ -1,7 +1,9 @@
 import 'dart:convert';
 
 import 'package:real_amis/core/errors/exceptions.dart';
+import 'package:real_amis/core/utils/secure_storage.dart';
 import 'package:real_amis/data/models/auth/user_model.dart';
+import 'package:real_amis/init_dependencies.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 abstract interface class AuthSupabaseDataSource {
@@ -48,6 +50,22 @@ class AuthSupabaseDataSourceImpl implements AuthSupabaseDataSource {
         password: password,
         email: email,
       );
+      final session = supabaseClient.auth.currentSession;
+      if (session != null) {
+        final sessionJson = jsonEncode(session.toJson());
+        await serviceLocator<SecureStorage>().saveSession(sessionJson);
+        await serviceLocator<SecureStorage>().saveToken(session.accessToken);
+        if (session.refreshToken != null) {
+          await serviceLocator<SecureStorage>().saveRefreshToken(
+            session.refreshToken!,
+          );
+        }
+        if (session.expiresAt != null) {
+          await serviceLocator<SecureStorage>().saveExpiresAt(
+            session.expiresAt!,
+          );
+        }
+      }
       if (response.user == null) {
         throw ServerException('User is null!');
       }
@@ -69,6 +87,11 @@ class AuthSupabaseDataSourceImpl implements AuthSupabaseDataSource {
         password: password,
         email: email,
       );
+      final session = supabaseClient.auth.currentSession;
+      if (session != null) {
+        final sessionJson = jsonEncode(session.toJson());
+        await serviceLocator<SecureStorage>().saveSession(sessionJson);
+      }
       if (response.user == null) {
         throw ServerException('User is null!');
       }
@@ -102,6 +125,7 @@ class AuthSupabaseDataSourceImpl implements AuthSupabaseDataSource {
   Future<void> logOut() async {
     try {
       await supabaseClient.auth.signOut(scope: SignOutScope.global);
+      await serviceLocator<SecureStorage>().clearAll();
     } on AuthException catch (e) {
       throw ServerException(e.message);
     } catch (e) {
@@ -158,6 +182,7 @@ class AuthSupabaseDataSourceImpl implements AuthSupabaseDataSource {
   Future<void> deleteAccount({required String id}) async {
     try {
       await supabaseClient.auth.admin.deleteUser(id);
+      await serviceLocator<SecureStorage>().clearAll();
     } on AuthException catch (e) {
       throw ServerException(e.message);
     } catch (e) {

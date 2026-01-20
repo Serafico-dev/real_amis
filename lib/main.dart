@@ -74,8 +74,8 @@ class _MainAppState extends State<MainApp> {
   Widget build(BuildContext context) {
     return BlocBuilder<ThemeCubit, ThemeMode>(
       builder: (context, mode) => MaterialApp(
-        theme: AppTheme.lightTheme,
-        darkTheme: AppTheme.darkTheme,
+        theme: AppTheme.light(),
+        darkTheme: AppTheme.dark(),
         themeMode: mode,
         supportedLocales: localization.supportedLocales,
         localizationsDelegates: localization.localizationsDelegates,
@@ -97,8 +97,7 @@ class _MainAppState extends State<MainApp> {
 }
 
 /*
-To Do:
+TODO
 - Gestire meglio eliminazione squadre (problema quando sono in match già creati)
-- Refactor generale (mancano le cartelle: event, history, main, match, player e team)
-- Aggiornare design
+Theme.of(context).brightness
 */

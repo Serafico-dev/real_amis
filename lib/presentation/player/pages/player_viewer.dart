@@ -14,52 +14,64 @@ import 'package:real_amis/presentation/player/pages/edit_player.dart';
 import 'package:real_amis/presentation/player/bloc/player_bloc.dart';
 
 class PlayerViewerPage extends StatelessWidget {
-  static MaterialPageRoute route(String playerId) => MaterialPageRoute(
-    builder: (context) => PlayerViewerPage(playerId: playerId),
-  );
+  static MaterialPageRoute route(String playerId) =>
+      MaterialPageRoute(builder: (_) => PlayerViewerPage(playerId: playerId));
+
   final String playerId;
   const PlayerViewerPage({super.key, required this.playerId});
+
+  PlayerEntity? _findCurrentPlayer(PlayerState state) {
+    if (state is PlayerUpdateSuccess) return state.updatedPlayer;
+    if (state is PlayerDisplaySuccess) {
+      final players = state.players.where((p) => p.id == playerId);
+      return players.isEmpty ? null : players.first;
+    }
+    return null;
+  }
+
+  Widget _statTile(BuildContext context, String value, Widget icon) => Column(
+    children: [
+      Text(
+        value,
+        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+          fontWeight: FontWeight.bold,
+          fontSize: 16,
+        ),
+      ),
+      const SizedBox(height: 4),
+      icon,
+    ],
+  );
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBarYesNav(
-        title: Text('Dettaglio giocatore'),
+        title: const Text('Dettaglio giocatore'),
         actions: [
           BlocSelector<AppUserCubit, AppUserState, bool?>(
             selector: (state) =>
                 state is AppUserLoggedIn ? state.user.isAdmin : false,
             builder: (context, isAdmin) {
-              if (isAdmin != true) return SizedBox.shrink();
+              if (isAdmin != true) return const SizedBox.shrink();
               return IconButton(
                 onPressed: () async {
                   final bloc = context.read<PlayerBloc>();
-                  final currentState = bloc.state;
-                  PlayerEntity? currentPlayer;
-                  if (currentState is PlayerDisplaySuccess) {
-                    final players = currentState.players.where(
-                      (p) => p.id == playerId,
-                    );
-                    if (players.isEmpty) {
-                      currentPlayer = null;
-                    } else {
-                      currentPlayer = players.first;
-                    }
-                  }
-                  if (currentState is PlayerUpdateSuccess) {
-                    currentPlayer = currentState.updatedPlayer;
-                  }
-                  final playerToEdit = currentPlayer;
-                  if (playerToEdit == null) {
+                  final currentPlayer = _findCurrentPlayer(bloc.state);
+                  if (currentPlayer == null) {
                     showSnackBar(context, 'Giocatore non trovato');
                     return;
                   }
                   await Navigator.push(
                     context,
-                    EditPlayerPage.route(playerToEdit),
+                    EditPlayerPage.route(currentPlayer),
                   );
+                  if (context.mounted) {
+                    bloc.add(PlayerFetchAllPlayers());
+                  }
                 },
-                icon: Icon(Icons.edit, size: 25),
+                icon: const Icon(Icons.edit, size: 25),
+                tooltip: 'Modifica giocatore',
               );
             },
           ),
@@ -67,97 +79,108 @@ class PlayerViewerPage extends StatelessWidget {
       ),
       body: BlocBuilder<PlayerBloc, PlayerState>(
         builder: (context, state) {
-          if (state is PlayerLoading) {
-            return Loader();
-          }
-          PlayerEntity? player;
-          if (state is PlayerDisplaySuccess) {
-            final players = state.players.where((p) => p.id == playerId);
-            if (players.isEmpty) {
-              player = null;
-            } else {
-              player = players.first;
-            }
-          }
-          if (state is PlayerUpdateSuccess) {
-            player = state.updatedPlayer;
-          }
+          if (state is PlayerLoading) return const Loader();
+
+          final player = _findCurrentPlayer(state);
           if (player == null || state is PlayerDeleteSuccess) {
-            return Center(child: Text('Giocatore non trovato.'));
+            return Center(
+              child: Text(
+                'Giocatore non trovato.',
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+            );
           }
 
           return Scrollbar(
             child: SingleChildScrollView(
+              padding: const EdgeInsets.all(16.0),
               child: Container(
-                margin: EdgeInsets.all(16.0),
                 padding: const EdgeInsets.all(16.0),
                 decoration: BoxDecoration(
-                  color: AppColors.tertiary,
+                  color: Theme.of(context).cardColor,
                   borderRadius: BorderRadius.circular(10),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Theme.of(context).shadowColor,
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(player.role.value, style: TextStyle(fontSize: 16)),
+                    Text(
+                      player.role.value,
+                      style: Theme.of(
+                        context,
+                      ).textTheme.bodySmall?.copyWith(fontSize: 16),
+                    ),
+                    const SizedBox(height: 4),
                     Text(
                       player.fullName,
-                      style: TextStyle(
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    Text("'${player.userName}'"),
-                    ClipRRect(
-                      borderRadius: BorderRadiusGeometry.circular(10),
-                      child: CachedNetworkImage(
-                        imageUrl: player.imageUrl,
-
-                        fit: BoxFit.cover,
+                    const SizedBox(height: 4),
+                    Text(
+                      '@${player.userName}',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                    const SizedBox(height: 12),
+                    Center(
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(10),
+                        child: CachedNetworkImage(
+                          imageUrl: player.imageUrl,
+                          height: 200,
+                          fit: BoxFit.cover,
+                          placeholder: (context, url) => Container(
+                            height: 200,
+                            color: AppColors.primary,
+                            child: const Center(
+                              child: CircularProgressIndicator(),
+                            ),
+                          ),
+                          errorWidget: (context, url, error) => Container(
+                            height: 200,
+                            color: AppColors.primary,
+                            child: const Center(
+                              child: Icon(Icons.broken_image, size: 40),
+                            ),
+                          ),
+                        ),
                       ),
                     ),
-                    SizedBox(height: 30),
+                    const SizedBox(height: 30),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Text(
+                        _statTile(
+                          context,
                           player.attendances.toString(),
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                          ),
+                          const Icon(Icons.stadium, size: 28),
                         ),
-                        SizedBox(width: 5),
-                        Icon(Icons.stadium, size: 40),
-                        SizedBox(width: 30),
-                        Text(
+                        const SizedBox(width: 30),
+                        _statTile(
+                          context,
                           player.goals.toString(),
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                          ),
+                          const Icon(Icons.sports_soccer, size: 28),
                         ),
-                        SizedBox(width: 5),
-                        Icon(Icons.sports_soccer, size: 40),
-                        SizedBox(width: 30),
-                        Text(
+                        const SizedBox(width: 30),
+                        _statTile(
+                          context,
                           player.yellowCards.toString(),
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                          ),
+                          SvgPicture.asset(AppVectors.yellowCard, width: 28),
                         ),
-                        SizedBox(width: 5),
-                        SvgPicture.asset(AppVectors.yellowCard, width: 30),
-                        SizedBox(width: 30),
-                        Text(
+                        const SizedBox(width: 30),
+                        _statTile(
+                          context,
                           player.redCards.toString(),
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                          ),
+                          SvgPicture.asset(AppVectors.redCard, width: 28),
                         ),
-                        SizedBox(width: 5),
-                        SvgPicture.asset(AppVectors.redCard, width: 30),
                       ],
                     ),
                   ],

@@ -3,7 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:real_amis/common/helpers/is_dark_mode.dart';
 import 'package:real_amis/common/widgets/appBar/app_bar_no_nav.dart';
 import 'package:real_amis/common/widgets/button/basic_app_button.dart';
-import 'package:real_amis/common/widgets/loader/loader.dart';
 import 'package:real_amis/core/configs/assets/app_vectors.dart';
 import 'package:real_amis/core/configs/theme/app_colors.dart';
 import 'package:real_amis/core/utils/show_snackbar.dart';
@@ -21,67 +20,79 @@ class SignupPage extends StatefulWidget {
 }
 
 class _SignupPageState extends State<SignupPage> {
-  final TextEditingController _email = TextEditingController();
-  final TextEditingController _password = TextEditingController();
-  final formKey = GlobalKey<FormState>();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
 
   @override
   void dispose() {
-    _email.dispose();
-    _password.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
     super.dispose();
+  }
+
+  void _handleAuthSuccess() {
+    if (!mounted) return;
+    Navigator.pushAndRemoveUntil(context, MainPage.route(), (route) => false);
   }
 
   @override
   Widget build(BuildContext context) {
+    final isDark = context.isDarkMode;
+    final textPrimary = isDark
+        ? AppColors.textDarkPrimary
+        : AppColors.textLightPrimary;
+
     return Scaffold(
       appBar: AppBarNoNav(title: Image.asset(AppVectors.logo, width: 50)),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(vertical: 50, horizontal: 30),
+          padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 50),
           child: BlocConsumer<AuthBloc, AuthState>(
             listener: (context, state) {
               if (state is AuthFailure) {
-                if (context.mounted) showSnackBar(context, state.message);
+                if (mounted) showSnackBar(context, state.message);
               } else if (state is AuthSuccess) {
-                if (!context.mounted) return;
-                Navigator.pushAndRemoveUntil(
-                  context,
-                  MainPage.route(),
-                  (route) => false,
-                );
+                _handleAuthSuccess();
               }
             },
             builder: (context, state) {
-              if (state is AuthLoading) {
-                return const Loader();
-              }
+              final isLoading = state is AuthLoading;
+
               return Form(
-                key: formKey,
+                key: _formKey,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     const SizedBox(height: 60),
-                    _registerText(),
-                    const SizedBox(height: 20),
-                    _emailField(context),
-                    const SizedBox(height: 20),
-                    _passwordField(context),
-                    const SizedBox(height: 20),
-                    BasicAppButton(
-                      onPressed: () {
-                        if (formKey.currentState!.validate()) {
-                          context.read<AuthBloc>().add(
-                            AuthSignUp(
-                              email: _email.text.trim(),
-                              password: _password.text.trim(),
-                            ),
-                          );
-                        }
-                      },
-                      title: 'Registrati',
+                    Text(
+                      'Unisciti al club',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 25,
+                        color: textPrimary,
+                      ),
                     ),
-                    const SizedBox(height: 60),
+                    const SizedBox(height: 20),
+                    _EmailField(controller: _emailController),
+                    const SizedBox(height: 20),
+                    _PasswordField(controller: _passwordController),
+                    const SizedBox(height: 30),
+                    BasicAppButton(
+                      onPressed: isLoading
+                          ? null
+                          : () {
+                              if (_formKey.currentState!.validate()) {
+                                context.read<AuthBloc>().add(
+                                  AuthSignUp(
+                                    email: _emailController.text.trim(),
+                                    password: _passwordController.text.trim(),
+                                  ),
+                                );
+                              }
+                            },
+                      title: isLoading ? 'Caricamento...' : 'Registrati',
+                    ),
                   ],
                 ),
               );
@@ -89,51 +100,85 @@ class _SignupPageState extends State<SignupPage> {
           ),
         ),
       ),
-      bottomNavigationBar: _signinText(context),
+      bottomNavigationBar: const _SigninText(),
     );
   }
+}
 
-  Widget _registerText() {
-    return const Text(
-      'Unisciti al club',
-      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 25),
-    );
-  }
+class _EmailField extends StatelessWidget {
+  final TextEditingController controller;
+  const _EmailField({required this.controller});
 
-  Widget _emailField(BuildContext context) {
+  @override
+  Widget build(BuildContext context) {
     return TextFormField(
-      controller: _email,
+      controller: controller,
       keyboardType: TextInputType.emailAddress,
       decoration: InputDecoration(
         hintText: 'Email',
+        filled: true,
+        fillColor: context.isDarkMode
+            ? AppColors.inputFillDark
+            : AppColors.inputFillLight,
       ).applyDefaults(Theme.of(context).inputDecorationTheme),
+      style: TextStyle(
+        color: context.isDarkMode
+            ? AppColors.textDarkPrimary
+            : AppColors.textLightPrimary,
+      ),
       validator: (v) =>
           v == null || v.trim().isEmpty ? 'Inserisci una email valida' : null,
     );
   }
+}
 
-  Widget _passwordField(BuildContext context) {
+class _PasswordField extends StatelessWidget {
+  final TextEditingController controller;
+  const _PasswordField({required this.controller});
+
+  @override
+  Widget build(BuildContext context) {
     return TextFormField(
-      controller: _password,
+      controller: controller,
+      obscureText: true,
       decoration: InputDecoration(
         hintText: 'Password',
+        filled: true,
+        fillColor: context.isDarkMode
+            ? AppColors.inputFillDark
+            : AppColors.inputFillLight,
       ).applyDefaults(Theme.of(context).inputDecorationTheme),
-      obscureText: true,
+      style: TextStyle(
+        color: context.isDarkMode
+            ? AppColors.textDarkPrimary
+            : AppColors.textLightPrimary,
+      ),
       validator: (v) => v == null || v.trim().length < 6
           ? 'Inserisci una password di almeno 6 caratteri'
           : null,
     );
   }
+}
 
-  Widget _signinText(BuildContext context) {
+class _SigninText extends StatelessWidget {
+  const _SigninText();
+
+  @override
+  Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 30),
+      padding: const EdgeInsets.symmetric(vertical: 30, horizontal: 20),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Text(
+          Text(
             'Fai già parte del club?',
-            style: TextStyle(fontWeight: FontWeight.w500, fontSize: 14),
+            style: TextStyle(
+              fontWeight: FontWeight.w500,
+              fontSize: 14,
+              color: context.isDarkMode
+                  ? AppColors.textDarkSecondary
+                  : AppColors.textLightSecondary,
+            ),
           ),
           TextButton(
             onPressed: () {

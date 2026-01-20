@@ -32,8 +32,19 @@ class AuthRepositoryImpl implements AuthRepository {
       }
       final user = await authSupabaseDataSource.getCurrentUserData();
       if (user == null) {
+        final session = authSupabaseDataSource.currentUserSession;
+        if (session != null) {
+          return right(
+            UserModel(
+              id: session.user.id,
+              email: session.user.email ?? '',
+              isAdmin: false,
+            ),
+          );
+        }
         return left(Failure('User not logged in!'));
       }
+
       return right(user);
     } on ServerException catch (e) {
       return left(Failure(e.message));

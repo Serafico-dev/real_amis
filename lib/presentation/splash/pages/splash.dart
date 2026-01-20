@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:real_amis/common/helpers/is_dark_mode.dart';
 import 'package:real_amis/core/configs/assets/app_vectors.dart';
+import 'package:real_amis/core/configs/theme/app_colors.dart';
 import 'package:real_amis/presentation/choose_mode/pages/choose_mode.dart';
 
 class SplashPage extends StatefulWidget {
@@ -14,41 +16,48 @@ class SplashPage extends StatefulWidget {
 
 class _SplashPageState extends State<SplashPage>
     with SingleTickerProviderStateMixin {
-  late final AnimationController _ctrl;
-  late final Animation<double> _opacity;
+  static const _logoWidth = 250.0;
+  static const _fadeDuration = Duration(milliseconds: 800);
+  static const _splashDuration = Duration(seconds: 2);
+
+  late final AnimationController _controller;
+  late final Animation<double> _opacityAnimation;
 
   @override
   void initState() {
     super.initState();
-    _ctrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 800),
+    _controller = AnimationController(vsync: this, duration: _fadeDuration);
+    _opacityAnimation = CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeIn,
     );
-    _opacity = CurvedAnimation(parent: _ctrl, curve: Curves.easeIn);
-    _ctrl.forward();
-    _startRedirect();
+    _controller.forward();
+    _navigateAfterDelay();
   }
 
   @override
   void dispose() {
-    _ctrl.dispose();
+    _controller.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = context.isDarkMode;
+
     return Scaffold(
+      backgroundColor: isDarkMode ? AppColors.bgDark : AppColors.bgLight,
       body: Center(
         child: FadeTransition(
-          opacity: _opacity,
-          child: Image.asset(AppVectors.logo, width: 250),
+          opacity: _opacityAnimation,
+          child: Image.asset(AppVectors.logo, width: _logoWidth),
         ),
       ),
     );
   }
 
-  Future<void> _startRedirect() async {
-    await Future.delayed(const Duration(seconds: 2));
+  Future<void> _navigateAfterDelay() async {
+    await Future.delayed(_splashDuration);
     if (!mounted) return;
     Navigator.pushReplacement(context, ChooseModePage.route());
   }

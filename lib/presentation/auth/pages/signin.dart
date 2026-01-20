@@ -3,7 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:real_amis/common/helpers/is_dark_mode.dart';
 import 'package:real_amis/common/widgets/appBar/app_bar_no_nav.dart';
 import 'package:real_amis/common/widgets/button/basic_app_button.dart';
-import 'package:real_amis/common/widgets/loader/loader.dart';
 import 'package:real_amis/core/configs/assets/app_vectors.dart';
 import 'package:real_amis/core/configs/theme/app_colors.dart';
 import 'package:real_amis/core/utils/show_snackbar.dart';
@@ -22,83 +21,89 @@ class SigninPage extends StatefulWidget {
 }
 
 class _SigninPageState extends State<SigninPage> {
-  final TextEditingController _email = TextEditingController();
-  final TextEditingController _password = TextEditingController();
-  final formKey = GlobalKey<FormState>();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
 
   @override
   void dispose() {
-    _email.dispose();
-    _password.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
     super.dispose();
+  }
+
+  void _handleAuthSuccess() {
+    if (!mounted) return;
+    context.read<AuthBloc>().add(AuthIsUserLoggedIn());
+    Navigator.pushAndRemoveUntil(context, MainPage.route(), (route) => false);
   }
 
   @override
   Widget build(BuildContext context) {
+    final isDark = context.isDarkMode;
+    final textPrimary = isDark
+        ? AppColors.textDarkPrimary
+        : AppColors.textLightPrimary;
+    final inputFill = isDark
+        ? AppColors.inputFillDark
+        : AppColors.inputFillLight;
+
     return Scaffold(
       appBar: AppBarNoNav(title: Image.asset(AppVectors.logo, width: 50)),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20.0),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 40),
           child: BlocConsumer<AuthBloc, AuthState>(
             listener: (context, state) {
               if (state is AuthFailure) {
-                if (context.mounted) showSnackBar(context, state.message);
+                if (mounted) showSnackBar(context, state.message);
               } else if (state is AuthSuccess) {
-                if (!context.mounted) return;
-                context.read<AuthBloc>().add(AuthIsUserLoggedIn());
-                Navigator.pushAndRemoveUntil(
-                  context,
-                  MainPage.route(),
-                  (route) => false,
-                );
+                _handleAuthSuccess();
               }
             },
             builder: (context, state) {
-              if (state is AuthLoading) {
-                return const Loader();
-              }
+              final isLoading = state is AuthLoading;
+
               return Form(
-                key: formKey,
+                key: _formKey,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    SizedBox(height: 60),
-                    _registerText(),
-                    SizedBox(height: 20),
-                    _emailField(context),
-                    SizedBox(height: 20),
-                    _passwordField(context),
-                    SizedBox(height: 20),
-                    BasicAppButton(
+                    const Text(
+                      'Accedi',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 25,
+                      ),
+                    ),
+                    const SizedBox(height: 40),
+                    _EmailField(
+                      controller: _emailController,
+                      inputFill: inputFill,
+                      textColor: textPrimary,
+                    ),
+                    const SizedBox(height: 20),
+                    _PasswordField(
+                      controller: _passwordController,
+                      inputFill: inputFill,
+                      textColor: textPrimary,
+                    ),
+                    const SizedBox(height: 30),
+                    _LoginButton(
+                      isLoading: isLoading,
                       onPressed: () {
-                        if (formKey.currentState!.validate()) {
+                        if (_formKey.currentState!.validate()) {
                           context.read<AuthBloc>().add(
                             AuthLogin(
-                              email: _email.text.trim(),
-                              password: _password.text.trim(),
+                              email: _emailController.text.trim(),
+                              password: _passwordController.text.trim(),
                             ),
                           );
                         }
                       },
-                      title: 'Accedi',
                     ),
-                    TextButton(
-                      onPressed: () {
-                        if (context.mounted) {
-                          Navigator.push(context, ForgotPasswordPage.route());
-                        }
-                      },
-                      child: Text(
-                        'Password dimenticata?',
-                        style: TextStyle(
-                          color: context.isDarkMode
-                              ? AppColors.tertiary
-                              : AppColors.primary,
-                        ),
-                      ),
-                    ),
-                    SizedBox(height: 60),
+                    const SizedBox(height: 10),
+                    const _ForgotPasswordButton(),
                   ],
                 ),
               );
@@ -106,42 +111,109 @@ class _SigninPageState extends State<SigninPage> {
           ),
         ),
       ),
-      bottomNavigationBar: _signupText(context),
+      bottomNavigationBar: const _SignupText(),
     );
   }
+}
 
-  Widget _registerText() {
-    return const Text(
-      'Accedi',
-      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 25),
-    );
-  }
+/// Widget privati
+class _EmailField extends StatelessWidget {
+  final TextEditingController controller;
+  final Color inputFill;
+  final Color textColor;
 
-  Widget _emailField(BuildContext context) {
+  const _EmailField({
+    required this.controller,
+    required this.inputFill,
+    required this.textColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     return TextFormField(
-      controller: _email,
+      controller: controller,
       keyboardType: TextInputType.emailAddress,
+      style: TextStyle(color: textColor),
       decoration: InputDecoration(
         hintText: 'Email',
+        filled: true,
+        fillColor: inputFill,
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
       ).applyDefaults(Theme.of(context).inputDecorationTheme),
       validator: (v) =>
           v == null || v.trim().isEmpty ? 'Inserisci una email valida' : null,
     );
   }
+}
 
-  Widget _passwordField(BuildContext context) {
+class _PasswordField extends StatelessWidget {
+  final TextEditingController controller;
+  final Color inputFill;
+  final Color textColor;
+
+  const _PasswordField({
+    required this.controller,
+    required this.inputFill,
+    required this.textColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     return TextFormField(
-      controller: _password,
+      controller: controller,
+      obscureText: true,
+      style: TextStyle(color: textColor),
       decoration: InputDecoration(
         hintText: 'Password',
+        filled: true,
+        fillColor: inputFill,
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
       ).applyDefaults(Theme.of(context).inputDecorationTheme),
-      obscureText: true,
       validator: (v) =>
           v == null || v.trim().length < 6 ? 'Inserisci una password' : null,
     );
   }
+}
 
-  Widget _signupText(BuildContext context) {
+class _LoginButton extends StatelessWidget {
+  final bool isLoading;
+  final VoidCallback onPressed;
+  const _LoginButton({required this.isLoading, required this.onPressed});
+
+  @override
+  Widget build(BuildContext context) {
+    return BasicAppButton(
+      onPressed: isLoading ? null : onPressed,
+      title: isLoading ? 'Caricamento...' : 'Accedi',
+    );
+  }
+}
+
+class _ForgotPasswordButton extends StatelessWidget {
+  const _ForgotPasswordButton();
+
+  @override
+  Widget build(BuildContext context) {
+    final color = context.isDarkMode ? AppColors.tertiary : AppColors.primary;
+
+    return TextButton(
+      onPressed: () {
+        if (context.mounted) {
+          Navigator.push(context, ForgotPasswordPage.route());
+        }
+      },
+      child: Text('Password dimenticata?', style: TextStyle(color: color)),
+    );
+  }
+}
+
+class _SignupText extends StatelessWidget {
+  const _SignupText();
+
+  @override
+  Widget build(BuildContext context) {
+    final color = context.isDarkMode ? AppColors.tertiary : AppColors.primary;
+
     return Padding(
       padding: const EdgeInsets.all(30.0),
       child: Row(
@@ -157,14 +229,7 @@ class _SigninPageState extends State<SigninPage> {
                 Navigator.pushReplacement(context, SignupPage.route());
               }
             },
-            child: Text(
-              'Registrati subito',
-              style: TextStyle(
-                color: context.isDarkMode
-                    ? AppColors.tertiary
-                    : AppColors.primary,
-              ),
-            ),
+            child: Text('Registrati subito', style: TextStyle(color: color)),
           ),
         ],
       ),

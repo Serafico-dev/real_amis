@@ -16,6 +16,7 @@ dependencies:
   flutter_bloc: ^9.1.1
   flutter_datetime_picker_plus: ^2.2.0
   flutter_localization: ^0.3.3
+  flutter_secure_storage: ^10.0.0
   flutter_svg: ^2.2.1
   fpdart: ^1.1.1
   get_it: ^9.0.5

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:real_amis/common/helpers/is_dark_mode.dart';
+import 'package:real_amis/core/configs/theme/app_colors.dart';
 import 'package:real_amis/domain/entities/team/team_entity.dart';
 import 'package:real_amis/presentation/team/bloc/team_bloc.dart';
 import 'package:real_amis/presentation/team/pages/edit_team.dart';
@@ -17,6 +19,10 @@ class TeamCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final textColor = context.isDarkMode
+        ? AppColors.textDarkPrimary
+        : AppColors.textLightPrimary;
+
     return GestureDetector(
       onTap: isAdmin
           ? () async {
@@ -27,7 +33,7 @@ class TeamCard extends StatelessWidget {
             }
           : null,
       child: Container(
-        margin: EdgeInsets.all(8).copyWith(bottom: 4),
+        margin: const EdgeInsets.all(8).copyWith(bottom: 4),
         decoration: BoxDecoration(
           color: color,
           borderRadius: BorderRadius.circular(10),
@@ -35,13 +41,26 @@ class TeamCard extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Image.network(team.imageUrl, height: 100),
+            Image.network(
+              team.imageUrl,
+              height: 100,
+              errorBuilder: (_, _, _) => Icon(
+                Icons.broken_image,
+                size: 64,
+                color: textColor.withValues(alpha: 0.6),
+              ),
+            ),
+            const SizedBox(height: 8),
             Text(
               team.name,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
               textAlign: TextAlign.center,
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 20,
+                color: textColor,
+              ),
             ),
           ],
         ),

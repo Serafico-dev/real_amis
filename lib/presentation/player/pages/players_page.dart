@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:real_amis/common/cubits/app_user/app_user_cubit.dart';
+import 'package:real_amis/common/helpers/is_dark_mode.dart';
 import 'package:real_amis/common/widgets/appBar/app_bar_no_nav.dart';
 import 'package:real_amis/common/widgets/loader/loader.dart';
 import 'package:real_amis/core/configs/theme/app_colors.dart';
@@ -15,7 +16,7 @@ class PlayersPage extends StatefulWidget {
   const PlayersPage({super.key});
 
   static MaterialPageRoute route() =>
-      MaterialPageRoute(builder: (context) => PlayersPage());
+      MaterialPageRoute(builder: (_) => const PlayersPage());
 
   @override
   State<PlayersPage> createState() => _PlayersPageState();
@@ -24,8 +25,25 @@ class PlayersPage extends StatefulWidget {
 class _PlayersPageState extends State<PlayersPage>
     with SingleTickerProviderStateMixin {
   final TextEditingController _searchController = TextEditingController();
+  final PageStorageBucket _bucket = PageStorageBucket();
   String _query = '';
-  late TabController _tabController;
+  late final TabController _tabController;
+
+  final Set<PlayerRole> playerRoles = {
+    PlayerRole.portiere,
+    PlayerRole.difensore,
+    PlayerRole.difensoreCentrale,
+    PlayerRole.difensoreTerzino,
+    PlayerRole.centrocampista,
+    PlayerRole.mediano,
+    PlayerRole.centrocampistaCentrale,
+    PlayerRole.trequartista,
+    PlayerRole.attaccante,
+    PlayerRole.centravanti,
+    PlayerRole.ala,
+    PlayerRole.riserva,
+    PlayerRole.nessuno,
+  };
 
   @override
   void initState() {
@@ -44,43 +62,27 @@ class _PlayersPageState extends State<PlayersPage>
     super.dispose();
   }
 
+  bool _isPlayerRole(PlayerRole role) => playerRoles.contains(role);
+
   List<PlayerEntity> _filterPlayers(List<PlayerEntity> players, String query) {
     if (query.isEmpty) return players;
     final q = query.toLowerCase();
     return players.where((p) => p.fullName.toLowerCase().contains(q)).toList();
   }
 
-  bool _isPlayerRole(PlayerRole r) {
-    switch (r) {
-      case PlayerRole.portiere:
-      case PlayerRole.difensore:
-      case PlayerRole.difensoreCentrale:
-      case PlayerRole.difensoreTerzino:
-      case PlayerRole.centrocampista:
-      case PlayerRole.mediano:
-      case PlayerRole.centrocampistaCentrale:
-      case PlayerRole.trequartista:
-      case PlayerRole.attaccante:
-      case PlayerRole.centravanti:
-      case PlayerRole.ala:
-      case PlayerRole.riserva:
-      case PlayerRole.nessuno:
-        return true;
-      default:
-        return false;
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = context.isDarkMode;
+
     return Scaffold(
       appBar: AppBarNoNav(
+        backgroundColor: isDarkMode ? AppColors.bgDark : AppColors.bgLight,
         actions: [
           BlocSelector<AppUserCubit, AppUserState, bool?>(
             selector: (state) =>
                 state is AppUserLoggedIn ? state.user.isAdmin : false,
             builder: (context, isAdmin) {
-              if (isAdmin != true) return SizedBox.shrink();
+              if (isAdmin != true) return const SizedBox.shrink();
               return IconButton(
                 onPressed: () async {
                   await Navigator.push(context, AddNewPlayerPage.route());
@@ -88,7 +90,14 @@ class _PlayersPageState extends State<PlayersPage>
                     context.read<PlayerBloc>().add(PlayerFetchAllPlayers());
                   }
                 },
-                icon: Icon(Icons.add, size: 30),
+                icon: Icon(
+                  Icons.add,
+                  size: 30,
+                  color: isDarkMode
+                      ? AppColors.textDarkPrimary
+                      : AppColors.textLightPrimary,
+                ),
+                tooltip: 'Aggiungi giocatore',
               );
             },
           ),
@@ -97,14 +106,13 @@ class _PlayersPageState extends State<PlayersPage>
       body: BlocConsumer<PlayerBloc, PlayerState>(
         listener: (context, state) {
           if (state is PlayerFailure) showSnackBar(context, state.error);
-        },
-        builder: (context, state) {
-          if (state is PlayerLoading) return Loader();
-          if (state is PlayerUpdateSuccess ||
-              state is PlayerDeleteSuccess ||
-              state is PlayerFailure) {
+          if (state is PlayerUpdateSuccess || state is PlayerDeleteSuccess) {
             context.read<PlayerBloc>().add(PlayerFetchAllPlayers());
           }
+        },
+        builder: (context, state) {
+          if (state is PlayerLoading) return const Loader();
+
           if (state is PlayerDisplaySuccess) {
             final allPlayers = List<PlayerEntity>.from(state.players)
               ..sort((a, b) => a.fullName.compareTo(b.fullName));
@@ -123,86 +131,133 @@ class _PlayersPageState extends State<PlayersPage>
                 )
                 .toList();
 
-            return Column(
-              children: [
-                TabBar(
-                  controller: _tabController,
-                  tabs: [
-                    Tab(text: 'Giocatori'),
-                    Tab(text: 'Leggende'),
-                    Tab(text: 'Staff'),
-                  ],
-                  indicatorColor: Colors.white,
-                  labelColor: Colors.white,
-                  unselectedLabelColor: Colors.white70,
-                ),
-
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  child: TextField(
-                    controller: _searchController,
-                    decoration: InputDecoration(
-                      hintText: 'Cerca giocatore',
-                      prefixIcon: Icon(Icons.search),
-                      suffixIcon: _query.isNotEmpty
-                          ? IconButton(
-                              icon: Icon(Icons.clear),
-                              onPressed: () {
-                                _searchController.clear();
-                                setState(() => _query = '');
-                              },
-                            )
-                          : null,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide.none,
+            return PageStorage(
+              bucket: _bucket,
+              child: Column(
+                children: [
+                  TabBar(
+                    controller: _tabController,
+                    tabs: const [
+                      Tab(text: 'Giocatori'),
+                      Tab(text: 'Leggende'),
+                      Tab(text: 'Staff'),
+                    ],
+                    indicatorColor: AppColors.accent,
+                    labelColor: isDarkMode
+                        ? AppColors.textDarkPrimary
+                        : AppColors.textLightPrimary,
+                    unselectedLabelColor:
+                        (isDarkMode
+                                ? AppColors.textDarkPrimary
+                                : AppColors.textLightPrimary)
+                            .withValues(alpha: 0.7),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
+                    child: TextField(
+                      key: const PageStorageKey('players_search'),
+                      controller: _searchController,
+                      decoration: InputDecoration(
+                        hintText: 'Cerca giocatore',
+                        prefixIcon: const Icon(Icons.search),
+                        suffixIcon: _query.isNotEmpty
+                            ? IconButton(
+                                icon: const Icon(Icons.clear),
+                                onPressed: () {
+                                  _searchController.clear();
+                                  setState(() => _query = '');
+                                },
+                              )
+                            : null,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide.none,
+                        ),
+                        filled: true,
+                        fillColor: isDarkMode
+                            ? AppColors.inputFillDark
+                            : AppColors.inputFillLight,
                       ),
-                      filled: true,
-                      fillColor: AppColors.primary,
+                      style: TextStyle(
+                        color: isDarkMode
+                            ? AppColors.textDarkPrimary
+                            : AppColors.textLightPrimary,
+                      ),
                     ),
                   ),
-                ),
-                Expanded(
-                  child: TabBarView(
-                    controller: _tabController,
-                    children: [
-                      _buildListForGroup(giocatori),
-                      _buildListForGroup(leggende),
-                      _buildListForGroup(staff),
-                    ],
+                  Expanded(
+                    child: TabBarView(
+                      controller: _tabController,
+                      children: [
+                        _buildListForGroup(
+                          giocatori,
+                          'giocatori_list',
+                          isDarkMode,
+                        ),
+                        _buildListForGroup(
+                          leggende,
+                          'leggende_list',
+                          isDarkMode,
+                        ),
+                        _buildListForGroup(staff, 'staff_list', isDarkMode),
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             );
           }
-          return SizedBox();
+
+          return const SizedBox.shrink();
         },
       ),
     );
   }
 
-  Widget _buildListForGroup(List<PlayerEntity> list) {
-    return RefreshIndicator(
-      onRefresh: () async =>
-          context.read<PlayerBloc>().add(PlayerFetchAllPlayers()),
-      child: list.isEmpty
-          ? ListView(
-              physics: AlwaysScrollableScrollPhysics(),
-              children: [
-                SizedBox(height: 200),
-                Center(child: Text('Nessun giocatore trovato')),
-              ],
-            )
-          : ListView.builder(
-              itemCount: list.length,
-              itemBuilder: (context, index) {
-                final player = list[index];
-                return PlayerCard(
-                  player: player,
-                  color: index.isEven ? AppColors.tertiary : AppColors.primary,
-                );
-              },
+  Widget _buildListForGroup(
+    List<PlayerEntity> list,
+    String storageKey,
+    bool isDarkMode,
+  ) {
+    if (list.isEmpty) {
+      return ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        children: [
+          const SizedBox(height: 200),
+          Center(
+            child: Text(
+              'Nessun giocatore trovato',
+              style: TextStyle(
+                color: isDarkMode
+                    ? AppColors.textDarkSecondary
+                    : AppColors.textLightSecondary,
+              ),
             ),
+          ),
+        ],
+      );
+    }
+
+    return RefreshIndicator(
+      onRefresh: () async {
+        context.read<PlayerBloc>().add(PlayerFetchAllPlayers());
+        await Future.delayed(const Duration(milliseconds: 300));
+      },
+      child: ListView.builder(
+        key: PageStorageKey(storageKey),
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        itemCount: list.length,
+        itemBuilder: (context, index) {
+          final player = list[index];
+          final cardColor = index.isEven
+              ? (isDarkMode ? AppColors.cardDark : AppColors.cardLight)
+              : (isDarkMode ? AppColors.tertiary : AppColors.primary);
+          return PlayerCard(player: player, color: cardColor);
+        },
+      ),
     );
   }
 }
