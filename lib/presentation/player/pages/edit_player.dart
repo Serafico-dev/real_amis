@@ -145,12 +145,7 @@ class _EditPlayerPageState extends State<EditPlayerPage> {
         onTap: _selectImage,
         child: ClipRRect(
           borderRadius: BorderRadius.circular(10),
-          child: Image.file(
-            _image!,
-            fit: BoxFit.cover,
-            height: 150,
-            width: double.infinity,
-          ),
+          child: Image.file(_image!, fit: BoxFit.cover, height: 150),
         ),
       );
     }
@@ -162,7 +157,6 @@ class _EditPlayerPageState extends State<EditPlayerPage> {
           widget.player.imageUrl,
           fit: BoxFit.cover,
           height: 150,
-          width: double.infinity,
         ),
       ),
     );

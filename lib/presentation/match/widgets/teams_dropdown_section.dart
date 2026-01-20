@@ -57,7 +57,7 @@ class TeamsDropdownSection extends StatelessWidget {
               DropdownButtonFormField<TeamEntity>(
                 initialValue: awayTeam,
                 hint: Text(
-                  hintHome ?? 'Seleziona Squadra Ospite',
+                  hintAway ?? 'Seleziona Squadra Ospite',
                   style: TextStyle(
                     color: context.isDarkMode
                         ? AppColors.textDarkSecondary

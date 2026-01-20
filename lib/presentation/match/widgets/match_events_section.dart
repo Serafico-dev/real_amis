@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:real_amis/common/helpers/is_dark_mode.dart';
 import 'package:real_amis/core/configs/theme/app_colors.dart';
 import 'package:real_amis/domain/entities/event/event_entity.dart';
 import 'package:real_amis/domain/entities/match/match_entity.dart';
@@ -38,7 +37,7 @@ class MatchEventsSection extends StatelessWidget {
       margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: context.isDarkMode ? AppColors.bgDark : AppColors.tertiary,
+        color: AppColors.tertiary.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(10),
       ),
       child: Row(

@@ -82,18 +82,19 @@ class MatchFormSection extends StatelessWidget {
               const SizedBox(height: 15),
               TextFieldNullable(
                 controller: matchDayController,
-                hintText: 'Specifica la giornata (${match?.matchDay ?? ''})',
+                hintText: 'Specifica la giornata (${match?.matchDay ?? 'G0'})',
               ),
               const SizedBox(height: 15),
               NumberFieldNullable(
                 controller: homeTeamScoreController,
                 hintText:
-                    'Goal squadra in casa (${match?.homeTeamScore ?? ''})',
+                    'Goal squadra in casa (${match?.homeTeamScore ?? '0'})',
               ),
               const SizedBox(height: 15),
               NumberFieldNullable(
                 controller: awayTeamScoreController,
-                hintText: 'Goal squadra ospite (${match?.awayTeamScore ?? ''})',
+                hintText:
+                    'Goal squadra ospite (${match?.awayTeamScore ?? '0'})',
               ),
               if (showDeleteButton) ...[
                 const SizedBox(height: 15),

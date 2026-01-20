@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:real_amis/common/helpers/is_dark_mode.dart';
 import 'package:real_amis/common/widgets/appBar/app_bar_no_nav.dart';
 import 'package:real_amis/common/widgets/loader/loader.dart';
 import 'package:real_amis/core/configs/theme/app_colors.dart';
@@ -85,8 +86,14 @@ class _MatchesPageState extends State<MatchesPage> {
                           return MatchSummary(
                             match: match,
                             backgroundColor: index.isEven
-                                ? AppColors.tertiary
-                                : AppColors.primary,
+                                ? (context.isDarkMode
+                                          ? AppColors.cardDark
+                                          : AppColors.cardLight)
+                                      .withValues(alpha: 0.25)
+                                : (context.isDarkMode
+                                          ? AppColors.tertiary
+                                          : AppColors.primary)
+                                      .withValues(alpha: 0.25),
                             onTap: () async {
                               await Navigator.push(
                                 context,

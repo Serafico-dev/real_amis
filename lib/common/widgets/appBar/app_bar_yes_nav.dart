@@ -14,6 +14,11 @@ class AppBarYesNav extends StatelessWidget implements PreferredSizeWidget {
       elevation: 0,
       centerTitle: true,
       title: title ?? Text(''),
+      titleTextStyle: TextStyle(
+        color: context.isDarkMode
+            ? AppColors.textDarkPrimary
+            : AppColors.textLightPrimary,
+      ),
       leading: IconButton(
         onPressed: () {
           Navigator.pop(context);
@@ -33,6 +38,9 @@ class AppBarYesNav extends StatelessWidget implements PreferredSizeWidget {
         ),
       ),
       actions: actions,
+      iconTheme: IconThemeData(
+        color: context.isDarkMode ? AppColors.iconDark : AppColors.iconPrimary,
+      ),
     );
   }
 

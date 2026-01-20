@@ -11,8 +11,14 @@ import 'package:real_amis/presentation/match/widgets/team_score_column.dart';
 class MatchCard extends StatelessWidget {
   final MatchEntity match;
   final Color color;
+  final bool isEven;
 
-  const MatchCard({super.key, required this.match, required this.color});
+  const MatchCard({
+    super.key,
+    required this.match,
+    required this.color,
+    required this.isEven,
+  });
 
   @override
   Widget build(BuildContext context) {

@@ -19,6 +19,7 @@ class MatchesList extends StatelessWidget {
         return MatchCard(
           match: match,
           color: index.isEven ? AppColors.tertiary : AppColors.primary,
+          isEven: index.isEven,
         );
       },
     );

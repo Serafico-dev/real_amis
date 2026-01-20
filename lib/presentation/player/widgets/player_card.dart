@@ -30,7 +30,7 @@ class PlayerCard extends StatelessWidget {
         margin: const EdgeInsets.all(16).copyWith(bottom: 4),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.15),
+          color: color.withValues(alpha: 0.25),
           borderRadius: BorderRadius.circular(10),
         ),
         child: Row(

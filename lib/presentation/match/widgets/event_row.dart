@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:real_amis/common/helpers/is_dark_mode.dart';
 import 'package:real_amis/core/configs/theme/app_colors.dart';
 import 'package:real_amis/core/utils/admin_only.dart';
 import 'package:real_amis/domain/entities/event/event_entity.dart';
@@ -22,18 +23,9 @@ class EventRow extends StatelessWidget {
         ? EventTypeX.fromString(event.eventType as String)
         : event.eventType;
 
-    Color color;
-    switch (type) {
-      case EventType.rosso:
-        color = Colors.red;
-        break;
-      case EventType.giallo:
-        color = Colors.yellow;
-        break;
-      case EventType.goal:
-        color = AppColors.tertiary;
-        break;
-    }
+    Color color = context.isDarkMode
+        ? AppColors.textDarkPrimary
+        : AppColors.textLightPrimary;
 
     final icon = type == EventType.goal ? Icons.sports_soccer : Icons.circle;
 

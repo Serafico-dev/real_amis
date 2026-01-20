@@ -138,7 +138,7 @@ class _MatchViewerPageState extends State<MatchViewerPage> {
                   MatchSummary(
                     match: match,
                     showFullTime: true,
-                    backgroundColor: AppColors.tertiary,
+                    backgroundColor: AppColors.tertiary.withValues(alpha: 0.25),
                   ),
                   const SizedBox(height: 12),
                   BlocBuilder<EventBloc, EventState>(
@@ -158,7 +158,7 @@ class _MatchViewerPageState extends State<MatchViewerPage> {
                   AdminOnly(
                     child: ElevatedButton.icon(
                       onPressed: () => _openAddModal(match),
-                      icon: Icon(Icons.add, color: AppColors.iconPrimary),
+                      icon: Icon(Icons.add, color: AppColors.iconDark),
                       label: Text('Aggiungi evento'),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: isDark

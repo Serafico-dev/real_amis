@@ -101,7 +101,7 @@ class _EditMatchPageState extends State<EditMatchPage> {
             const SizedBox(height: 16),
             MatchFormSection(
               formKey: formKey,
-              selectedDate: selectedDate,
+              selectedDate: widget.match.matchDate,
               onDatePicked: (d) => setState(() => selectedDate = d),
               matchDayController: matchDayController,
               homeTeamScoreController: homeTeamScoreController,
