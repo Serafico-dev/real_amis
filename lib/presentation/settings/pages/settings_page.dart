@@ -87,34 +87,16 @@ class _SettingsPageState extends State<SettingsPage> {
         ? AppColors.textDarkPrimary
         : AppColors.textLightPrimary;
 
-    return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      color: isDarkMode ? AppColors.cardDark : AppColors.cardLight,
-      child: RadioGroup<ThemeMode>(
+    return ListTile(
+      leading: RadioGroup<ThemeMode>(
         groupValue: _selectedTheme,
-        onChanged: (mode) {
-          if (mode != null) _onThemeSelected(mode);
+        onChanged: (m) {
+          if (m != null) _onThemeSelected(m);
         },
-        child: Column(
-          children: [
-            ListTile(
-              leading: Radio<ThemeMode>(value: ThemeMode.light),
-              title: Text('Chiaro', style: TextStyle(color: textColor)),
-              onTap: () => _onThemeSelected(ThemeMode.light),
-            ),
-            ListTile(
-              leading: Radio<ThemeMode>(value: ThemeMode.dark),
-              title: Text('Scuro', style: TextStyle(color: textColor)),
-              onTap: () => _onThemeSelected(ThemeMode.dark),
-            ),
-            ListTile(
-              leading: Radio<ThemeMode>(value: ThemeMode.system),
-              title: Text('Sistema', style: TextStyle(color: textColor)),
-              onTap: () => _onThemeSelected(ThemeMode.system),
-            ),
-          ],
-        ),
+        child: Radio<ThemeMode>(value: mode),
       ),
+      title: Text(label, style: TextStyle(color: textColor)),
+      onTap: () => _onThemeSelected(mode),
     );
   }
 
@@ -218,6 +200,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     ],
                   ),
                 ),
+
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   child: Text(

@@ -43,7 +43,15 @@ class EventRow extends StatelessWidget {
       ),
     );
 
-    final iconWidget = Icon(icon, size: 18, color: color);
+    final iconWidget = Icon(
+      icon,
+      size: 18,
+      color: type == EventType.giallo
+          ? Colors.yellow
+          : type == EventType.rosso
+          ? Colors.red
+          : color,
+    );
 
     final editButton = AdminOnly(
       child: IconButton(

@@ -99,5 +99,4 @@ class _MainAppState extends State<MainApp> {
 /*
 TODO
 - Gestire meglio eliminazione squadre (problema quando sono in match già creati)
-Theme.of(context).brightness
 */
