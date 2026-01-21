@@ -97,7 +97,7 @@ class _MatchViewerPageState extends State<MatchViewerPage> {
             child: IconButton(
               icon: Icon(
                 Icons.edit,
-                color: isDark ? AppColors.iconDark : AppColors.iconPrimary,
+                color: isDark ? AppColors.iconDark : AppColors.iconLight,
                 size: 25,
               ),
               onPressed: () async {
@@ -173,7 +173,7 @@ class _MatchViewerPageState extends State<MatchViewerPage> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: isDark
                             ? AppColors.buttonPrimaryDark
-                            : AppColors.buttonPrimary,
+                            : AppColors.buttonPrimaryLight,
                       ),
                     ),
                   ),

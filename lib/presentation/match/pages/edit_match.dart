@@ -77,7 +77,7 @@ class _EditMatchPageState extends State<EditMatchPage> {
             icon: Icon(
               Icons.done_rounded,
               size: 25,
-              color: isDark ? AppColors.iconDark : AppColors.iconPrimary,
+              color: isDark ? AppColors.iconDark : AppColors.iconLight,
             ),
             onPressed: _updateMatch,
           ),

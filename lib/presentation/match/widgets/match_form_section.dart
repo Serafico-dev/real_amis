@@ -125,7 +125,7 @@ class MatchFormSection extends StatelessWidget {
                                       child: const Text(
                                         'Elimina',
                                         style: TextStyle(
-                                          color: AppColors.tagRed,
+                                          color: AppColors.logoRed,
                                         ),
                                       ),
                                     ),

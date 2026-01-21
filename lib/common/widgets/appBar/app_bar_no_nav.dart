@@ -34,7 +34,7 @@ class AppBarNoNav extends StatelessWidget implements PreferredSizeWidget {
       automaticallyImplyLeading: false,
       actions: actions,
       iconTheme: IconThemeData(
-        color: context.isDarkMode ? AppColors.iconDark : AppColors.iconPrimary,
+        color: context.isDarkMode ? AppColors.iconDark : AppColors.iconLight,
       ),
     );
   }

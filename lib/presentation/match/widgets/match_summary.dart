@@ -23,49 +23,54 @@ class MatchSummary extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = context.isDarkMode;
-    final textColor =
-        isDark ? AppColors.textDarkPrimary : AppColors.textLightPrimary;
+    final textColor = isDark
+        ? AppColors.textDarkPrimary
+        : AppColors.textLightPrimary;
 
     Widget content() => Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            if (match.matchDay != null && match.matchDay!.isNotEmpty)
-              Align(
-                alignment: Alignment.centerRight,
-                child: Text(
-                  match.matchDay!,
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 20,
-                    color: textColor,
-                  ),
-                ),
-              ),
-            Text(
-              formatDateByddMMYYYYnHHmm(match.matchDate),
-              textAlign: TextAlign.center,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        if (match.matchDay != null && match.matchDay!.isNotEmpty)
+          Align(
+            alignment: Alignment.centerRight,
+            child: Text(
+              match.matchDay!,
               style: TextStyle(
                 fontWeight: FontWeight.bold,
-                fontSize: 16,
+                fontSize: 20,
                 color: textColor,
               ),
             ),
-            const SizedBox(height: 12),
-            MatchScoreRow(match: match),
-            if (showFullTime && match.matchDate.isBefore(DateTime.now()))
-              const Padding(
-                padding: EdgeInsets.only(top: 8),
-                child: FullTimeLabel(),
-              ),
-          ],
-        );
+          ),
+        Text(
+          formatDateByddMMYYYYnHHmm(match.matchDate),
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 16,
+            color: textColor,
+          ),
+        ),
+        const SizedBox(height: 12),
+        MatchScoreRow(match: match),
+        if (showFullTime && match.matchDate.isBefore(DateTime.now()))
+          const Padding(
+            padding: EdgeInsets.only(top: 8),
+            child: FullTimeLabel(),
+          ),
+      ],
+    );
 
     return Container(
       margin: const EdgeInsets.all(16).copyWith(bottom: 4),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: backgroundColor ??
-            AppColors.matchCardColor(context.isDarkMode, true),
+        color:
+            backgroundColor ??
+            AppColors.matchCardColor(
+              isDarkMode: context.isDarkMode,
+              isEven: true,
+            ),
         borderRadius: BorderRadius.circular(10),
       ),
       child: onTap != null

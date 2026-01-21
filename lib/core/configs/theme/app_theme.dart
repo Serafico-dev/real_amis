@@ -22,7 +22,7 @@ class AppTheme {
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.buttonPrimary,
+          backgroundColor: AppColors.buttonPrimaryLight,
           foregroundColor: AppColors.textDarkPrimary,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
@@ -31,8 +31,8 @@ class AppTheme {
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          foregroundColor: AppColors.buttonSecondary,
-          side: BorderSide(color: AppColors.buttonSecondary),
+          foregroundColor: AppColors.buttonSecondaryLight,
+          side: BorderSide(color: AppColors.buttonSecondaryLight),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
@@ -57,7 +57,7 @@ class AppTheme {
         bodyMedium: TextStyle(color: AppColors.textLightPrimary),
         bodySmall: TextStyle(color: AppColors.textLightSecondary),
       ),
-      iconTheme: IconThemeData(color: AppColors.iconPrimary),
+      iconTheme: IconThemeData(color: AppColors.iconLight),
       colorScheme: ColorScheme.light(
         primary: AppColors.primary,
         secondary: AppColors.secondary,

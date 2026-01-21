@@ -72,7 +72,7 @@ class _AddNewMatchPageState extends State<AddNewMatchPage> {
           IconButton(
             icon: Icon(
               Icons.done_rounded,
-              color: isDark ? AppColors.iconDark : AppColors.iconPrimary,
+              color: isDark ? AppColors.iconDark : AppColors.iconLight,
               size: 25,
             ),
             onPressed: _uploadMatch,

@@ -50,7 +50,7 @@ class AppBarYesNav extends StatelessWidget implements PreferredSizeWidget {
       ),
       actions: actions,
       iconTheme: IconThemeData(
-        color: context.isDarkMode ? AppColors.iconDark : AppColors.iconPrimary,
+        color: context.isDarkMode ? AppColors.iconDark : AppColors.iconLight,
       ),
     );
   }
