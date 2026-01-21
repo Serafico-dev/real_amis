@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:real_amis/common/helpers/is_dark_mode.dart';
+import 'package:real_amis/core/configs/assets/app_vectors.dart';
 import 'package:real_amis/core/configs/theme/app_colors.dart';
 
 class AppBarYesNav extends StatelessWidget implements PreferredSizeWidget {
@@ -10,10 +11,20 @@ class AppBarYesNav extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     return AppBar(
-      backgroundColor: Colors.transparent,
+      backgroundColor: context.isDarkMode
+          ? AppColors.tertiary.withValues(alpha: 0.25)
+          : AppColors.primary.withValues(alpha: 0.25),
       elevation: 0,
       centerTitle: true,
-      title: title ?? Text(''),
+      title:
+          title ??
+          Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Image.asset(AppVectors.logo, height: 48),
+              const SizedBox(height: 6),
+            ],
+          ),
       titleTextStyle: TextStyle(
         color: context.isDarkMode
             ? AppColors.textDarkPrimary

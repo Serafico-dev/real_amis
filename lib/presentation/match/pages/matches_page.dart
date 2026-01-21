@@ -1,17 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:real_amis/common/helpers/is_dark_mode.dart';
 import 'package:real_amis/common/widgets/appBar/app_bar_no_nav.dart';
 import 'package:real_amis/common/widgets/loader/loader.dart';
 import 'package:real_amis/core/configs/theme/app_colors.dart';
 import 'package:real_amis/core/utils/admin_only.dart';
 import 'package:real_amis/core/utils/show_snackbar.dart';
 import 'package:real_amis/domain/entities/match/match_entity.dart';
+import 'package:real_amis/presentation/choose_mode/bloc/theme_cubit.dart';
 import 'package:real_amis/presentation/match/bloc/match_bloc.dart';
 import 'package:real_amis/presentation/match/pages/add_new_match.dart';
-import 'package:real_amis/presentation/match/pages/match_viewer.dart';
 import 'package:real_amis/presentation/match/widgets/empty_matches.dart';
-import 'package:real_amis/presentation/match/widgets/match_summary.dart';
+import 'package:real_amis/presentation/match/widgets/matches_list.dart';
 
 class MatchesPage extends StatefulWidget {
   const MatchesPage({super.key});
@@ -24,8 +23,6 @@ class MatchesPage extends StatefulWidget {
 }
 
 class _MatchesPageState extends State<MatchesPage> {
-  final _bucket = PageStorageBucket();
-
   @override
   void initState() {
     super.initState();
@@ -43,74 +40,57 @@ class _MatchesPageState extends State<MatchesPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBarNoNav(
-        actions: [
-          AdminOnly(
-            child: IconButton(
-              icon: const Icon(Icons.add, size: 30),
-              tooltip: 'Aggiungi partita',
-              onPressed: () async {
-                await Navigator.push(context, AddNewMatchPage.route());
-                if (mounted) _fetchMatches();
-              },
-            ),
-          ),
-        ],
-      ),
-      body: BlocConsumer<MatchBloc, MatchState>(
-        listener: (context, state) {
-          if (state is MatchFailure) showSnackBar(context, state.error);
-          if (state is MatchUpdateSuccess || state is MatchDeleteSuccess) {
-            _fetchMatches();
-          }
-        },
-        builder: (context, state) {
-          if (state is MatchLoading) return const Loader();
+    return BlocBuilder<ThemeCubit, ThemeMode>(
+      builder: (context, themeMode) {
+        final brightness = MediaQuery.of(context).platformBrightness;
+        final isDark =
+            themeMode == ThemeMode.dark ||
+            (themeMode == ThemeMode.system && brightness == Brightness.dark);
 
-          if (state is MatchDisplaySuccess) {
-            final matches = _sortedMatches(state.matches);
-
-            return PageStorage(
-              bucket: _bucket,
-              child: RefreshIndicator(
-                onRefresh: _refresh,
-                child: matches.isEmpty
-                    ? const EmptyMatches()
-                    : ListView.builder(
-                        key: const PageStorageKey('matches_list'),
-                        padding: const EdgeInsets.symmetric(vertical: 8),
-                        itemCount: matches.length,
-                        itemBuilder: (context, index) {
-                          final match = matches[index];
-                          return MatchSummary(
-                            match: match,
-                            backgroundColor: index.isEven
-                                ? (context.isDarkMode
-                                          ? AppColors.cardDark
-                                          : AppColors.cardLight)
-                                      .withValues(alpha: 0.25)
-                                : (context.isDarkMode
-                                          ? AppColors.tertiary
-                                          : AppColors.primary)
-                                      .withValues(alpha: 0.25),
-                            onTap: () async {
-                              await Navigator.push(
-                                context,
-                                MatchViewerPage.route(match.id),
-                              );
-                              if (context.mounted) _fetchMatches();
-                            },
-                          );
-                        },
-                      ),
+        return Scaffold(
+          appBar: AppBarNoNav(
+            actions: [
+              AdminOnly(
+                child: IconButton(
+                  icon: const Icon(Icons.add, size: 30),
+                  tooltip: 'Aggiungi partita',
+                  onPressed: () async {
+                    await Navigator.push(context, AddNewMatchPage.route());
+                    if (mounted) _fetchMatches();
+                  },
+                  color: isDark
+                      ? AppColors.textDarkPrimary
+                      : AppColors.textLightPrimary,
+                ),
               ),
-            );
-          }
+            ],
+          ),
+          body: BlocConsumer<MatchBloc, MatchState>(
+            listener: (context, state) {
+              if (state is MatchFailure) showSnackBar(context, state.error);
+              if (state is MatchUpdateSuccess || state is MatchDeleteSuccess) {
+                _fetchMatches();
+              }
+            },
+            builder: (context, state) {
+              if (state is MatchLoading) return const Loader();
 
-          return const SizedBox.shrink();
-        },
-      ),
+              if (state is MatchDisplaySuccess) {
+                final matches = _sortedMatches(state.matches);
+
+                if (matches.isEmpty) return const EmptyMatches();
+
+                return RefreshIndicator(
+                  onRefresh: _refresh,
+                  child: MatchesList(matches: matches, isDark: isDark),
+                );
+              }
+
+              return const SizedBox.shrink();
+            },
+          ),
+        );
+      },
     );
   }
 

@@ -59,4 +59,16 @@ class AppColors {
   // --- Shadows ---
   static const Color shadowLight = Color.fromRGBO(0, 0, 0, 0.05);
   static const Color shadowDark = Color.fromRGBO(0, 0, 0, 0.5);
+
+  static Color matchCardColor(bool isDarkMode, bool isEven) {
+    if (isDarkMode) {
+      return isEven
+          ? AppColors.cardDark.withValues(alpha: 0.25)
+          : AppColors.tertiary.withValues(alpha: 0.25);
+    } else {
+      return isEven
+          ? AppColors.cardLight.withValues(alpha: 0.25)
+          : AppColors.primary.withValues(alpha: 0.25);
+    }
+  }
 }

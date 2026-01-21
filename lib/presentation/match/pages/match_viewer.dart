@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:real_amis/common/helpers/app_colors_helper.dart';
 import 'package:real_amis/common/helpers/is_dark_mode.dart';
 import 'package:real_amis/common/widgets/appBar/app_bar_yes_nav.dart';
 import 'package:real_amis/common/widgets/loader/loader.dart';
@@ -17,11 +18,20 @@ import 'package:real_amis/presentation/match/widgets/match_events_section.dart';
 import 'package:real_amis/presentation/match/widgets/match_summary.dart';
 
 class MatchViewerPage extends StatefulWidget {
-  static MaterialPageRoute route(String matchId) =>
-      MaterialPageRoute(builder: (_) => MatchViewerPage(matchId: matchId));
-
   final String matchId;
-  const MatchViewerPage({super.key, required this.matchId});
+  final Color? backgroundColor;
+
+  const MatchViewerPage({
+    super.key,
+    required this.matchId,
+    this.backgroundColor,
+  });
+
+  static MaterialPageRoute route(String matchId, {Color? backgroundColor}) =>
+      MaterialPageRoute(
+        builder: (_) =>
+            MatchViewerPage(matchId: matchId, backgroundColor: backgroundColor),
+      );
 
   @override
   State<MatchViewerPage> createState() => _MatchViewerPageState();
@@ -45,9 +55,7 @@ class _MatchViewerPageState extends State<MatchViewerPage> {
     if (state is MatchDisplaySuccess) {
       return state.matches.firstWhere((m) => m.id == widget.matchId);
     }
-    if (state is MatchUpdateSuccess) {
-      return state.updatedMatch;
-    }
+    if (state is MatchUpdateSuccess) return state.updatedMatch;
     return null;
   }
 
@@ -114,18 +122,20 @@ class _MatchViewerPageState extends State<MatchViewerPage> {
 
           final match = _getCurrentMatch(matchState);
           if (match == null || matchState is MatchDeleteSuccess) {
+            final textColor = isDark
+                ? AppColors.textDarkSecondary
+                : AppColors.textLightSecondary;
             return Center(
               child: Text(
                 'Partita non trovata.',
-                style: TextStyle(
-                  color: isDark
-                      ? AppColors.textDarkSecondary
-                      : AppColors.textLightSecondary,
-                  fontSize: 16,
-                ),
+                style: TextStyle(color: textColor, fontSize: 16),
               ),
             );
           }
+
+          final cardColor =
+              widget.backgroundColor ??
+              AppColorsHelper.cardForIndex(context, 0, isDark: isDark);
 
           return RefreshIndicator(
             color: AppColors.accent,
@@ -138,7 +148,7 @@ class _MatchViewerPageState extends State<MatchViewerPage> {
                   MatchSummary(
                     match: match,
                     showFullTime: true,
-                    backgroundColor: AppColors.tertiary.withValues(alpha: 0.25),
+                    backgroundColor: cardColor,
                   ),
                   const SizedBox(height: 12),
                   BlocBuilder<EventBloc, EventState>(
@@ -146,11 +156,11 @@ class _MatchViewerPageState extends State<MatchViewerPage> {
                       final events = eventState is EventDisplaySuccess
                           ? eventState.events
                           : <EventEntity>[];
-
                       return MatchEventsSection(
                         match: match,
                         events: events,
                         onEdit: _openEditModal,
+                        baseColor: cardColor,
                       );
                     },
                   ),
@@ -159,7 +169,7 @@ class _MatchViewerPageState extends State<MatchViewerPage> {
                     child: ElevatedButton.icon(
                       onPressed: () => _openAddModal(match),
                       icon: Icon(Icons.add, color: AppColors.iconDark),
-                      label: Text('Aggiungi evento'),
+                      label: const Text('Aggiungi evento'),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: isDark
                             ? AppColors.buttonPrimaryDark

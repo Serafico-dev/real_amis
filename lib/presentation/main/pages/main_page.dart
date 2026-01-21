@@ -48,7 +48,7 @@ class _MainPageState extends State<MainPage> {
     final isDarkMode = context.isDarkMode;
 
     final bgColor = isDarkMode ? AppColors.bgDark : AppColors.primary;
-    final selectedColor = isDarkMode ? AppColors.tertiary : AppColors.tertiary;
+    final selectedColor = isDarkMode ? AppColors.tertiary : AppColors.primary;
     final unselectedColor = isDarkMode ? AppColors.accent : AppColors.accent;
 
     return Scaffold(

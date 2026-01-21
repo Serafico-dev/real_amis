@@ -108,7 +108,7 @@ class _TeamsPageState extends State<TeamsPage> {
                         itemBuilder: (context, index) {
                           if (index == 0) return _buildHeaderRow();
                           final team = sortedTeams[index - 1];
-                          return _buildTeamRow(team);
+                          return _buildTeamRow(team, index - 1);
                         },
                       ),
               ),
@@ -118,9 +118,7 @@ class _TeamsPageState extends State<TeamsPage> {
           return const SizedBox.shrink();
         },
       ),
-      backgroundColor: isDarkMode
-          ? AppColors.bgDark
-          : AppColors.bgLight, // sfondo coerente
+      backgroundColor: isDarkMode ? AppColors.bgDark : AppColors.bgLight,
     );
   }
 
@@ -160,8 +158,13 @@ class _TeamsPageState extends State<TeamsPage> {
     );
   }
 
-  Widget _buildTeamRow(TeamEntity team) {
+  Widget _buildTeamRow(TeamEntity team, int index) {
     final isDarkMode = context.isDarkMode;
+
+    // Alternanza dei colori
+    final rowColor = index.isEven
+        ? (isDarkMode ? AppColors.tertiary : AppColors.primary)
+        : (isDarkMode ? AppColors.cardDark : AppColors.cardLight);
 
     return BlocSelector<AppUserCubit, AppUserState, bool>(
       selector: (state) => state is AppUserLoggedIn && state.user.isAdmin,
@@ -176,6 +179,7 @@ class _TeamsPageState extends State<TeamsPage> {
           child: Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
+              color: rowColor.withValues(alpha: 0.25),
               border: Border(
                 bottom: BorderSide(
                   color: isDarkMode

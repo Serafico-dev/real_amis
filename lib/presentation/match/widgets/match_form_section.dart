@@ -61,6 +61,7 @@ class MatchFormSection extends StatelessWidget {
                       ? AppColors.textDarkPrimary
                       : AppColors.textLightPrimary,
                 ),
+                textAlign: TextAlign.center,
               ),
               const SizedBox(height: 8),
               ElevatedButton.icon(

@@ -116,7 +116,6 @@ class _SigninPageState extends State<SigninPage> {
   }
 }
 
-/// Widget privati
 class _EmailField extends StatelessWidget {
   final TextEditingController controller;
   final Color inputFill;
@@ -216,7 +215,8 @@ class _SignupText extends StatelessWidget {
 
     return Padding(
       padding: const EdgeInsets.all(30.0),
-      child: Row(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           const Text(

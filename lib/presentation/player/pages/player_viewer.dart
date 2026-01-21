@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:real_amis/common/cubits/app_user/app_user_cubit.dart';
+import 'package:real_amis/common/helpers/is_dark_mode.dart';
 import 'package:real_amis/common/widgets/appBar/app_bar_yes_nav.dart';
 import 'package:real_amis/common/widgets/loader/loader.dart';
 import 'package:real_amis/core/configs/assets/app_vectors.dart';
@@ -10,15 +11,20 @@ import 'package:real_amis/core/configs/theme/app_colors.dart';
 import 'package:real_amis/core/utils/show_snackbar.dart';
 import 'package:real_amis/domain/entities/player/player_entity.dart';
 import 'package:real_amis/domain/entities/player/player_role.dart';
-import 'package:real_amis/presentation/player/pages/edit_player.dart';
 import 'package:real_amis/presentation/player/bloc/player_bloc.dart';
+import 'package:real_amis/presentation/player/pages/edit_player.dart';
 
 class PlayerViewerPage extends StatelessWidget {
-  static MaterialPageRoute route(String playerId) =>
-      MaterialPageRoute(builder: (_) => PlayerViewerPage(playerId: playerId));
+  static MaterialPageRoute route(String playerId, {Color? cardColor}) =>
+      MaterialPageRoute(
+        builder: (_) =>
+            PlayerViewerPage(playerId: playerId, cardColor: cardColor),
+      );
 
   final String playerId;
-  const PlayerViewerPage({super.key, required this.playerId});
+  final Color? cardColor;
+
+  const PlayerViewerPage({super.key, required this.playerId, this.cardColor});
 
   PlayerEntity? _findCurrentPlayer(PlayerState state) {
     if (state is PlayerUpdateSuccess) return state.updatedPlayer;
@@ -45,6 +51,8 @@ class PlayerViewerPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = context.isDarkMode;
+
     return Scaffold(
       appBar: AppBarYesNav(
         title: const Text('Dettaglio giocatore'),
@@ -77,27 +85,27 @@ class PlayerViewerPage extends StatelessWidget {
           ),
         ],
       ),
+
       body: BlocBuilder<PlayerBloc, PlayerState>(
         builder: (context, state) {
           if (state is PlayerLoading) return const Loader();
 
           final player = _findCurrentPlayer(state);
           if (player == null || state is PlayerDeleteSuccess) {
-            return Center(
-              child: Text(
-                'Giocatore non trovato.',
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-            );
+            return Center(child: Text('Giocatore non trovato.'));
           }
+
+          final bgColor =
+              cardColor?.withValues(alpha: 0.25) ??
+              (isDark ? AppColors.cardDark : AppColors.cardLight);
 
           return Scrollbar(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(16.0),
+              padding: const EdgeInsets.all(16),
               child: Container(
-                padding: const EdgeInsets.all(16.0),
+                padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).cardColor,
+                  color: bgColor,
                   borderRadius: BorderRadius.circular(10),
                   boxShadow: [
                     BoxShadow(
@@ -125,10 +133,7 @@ class PlayerViewerPage extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 4),
-                    Text(
-                      '@${player.userName}',
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
+                    Text("'${player.userName}'"),
                     const SizedBox(height: 12),
                     Center(
                       child: ClipRRect(
@@ -139,14 +144,18 @@ class PlayerViewerPage extends StatelessWidget {
                           fit: BoxFit.cover,
                           placeholder: (context, url) => Container(
                             height: 200,
-                            color: AppColors.primary,
+                            color: isDark
+                                ? AppColors.cardDark
+                                : AppColors.cardLight,
                             child: const Center(
                               child: CircularProgressIndicator(),
                             ),
                           ),
                           errorWidget: (context, url, error) => Container(
                             height: 200,
-                            color: AppColors.primary,
+                            color: isDark
+                                ? AppColors.cardDark
+                                : AppColors.cardLight,
                             child: const Center(
                               child: Icon(Icons.broken_image, size: 40),
                             ),

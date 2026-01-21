@@ -29,23 +29,37 @@ class TeamsDropdownSection extends StatelessWidget {
     return BlocBuilder<TeamBloc, TeamState>(
       builder: (context, state) {
         if (state is TeamLoading) return const Loader();
-        if (state is TeamFailure) return Center(child: Text(state.error));
+        if (state is TeamFailure) {
+          return Center(child: Text(state.error));
+        }
+
         if (state is TeamDisplaySuccess) {
-          final teams = state.teams;
+          final sortedTeams = List<TeamEntity>.from(state.teams)
+            ..sort(
+              (a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()),
+            );
+
+          final homeTeams = sortedTeams
+              .where((t) => awayTeam == null || t.id != awayTeam!.id)
+              .toList();
+
+          final awayTeams = sortedTeams
+              .where((t) => homeTeam == null || t.id != homeTeam!.id)
+              .toList();
+
           return Column(
             children: [
               DropdownButtonFormField<TeamEntity>(
-                initialValue: homeTeam,
+                initialValue: homeTeams.contains(homeTeam) ? homeTeam : null,
                 hint: Text(
-                  hintHome ?? 'Seleziona Squadra in Casa',
+                  hintHome ?? 'Squadra in Casa',
                   style: TextStyle(
                     color: context.isDarkMode
                         ? AppColors.textDarkSecondary
                         : AppColors.textLightSecondary,
                   ),
                 ),
-
-                items: teams
+                items: homeTeams
                     .map(
                       (team) =>
                           DropdownMenuItem(value: team, child: Text(team.name)),
@@ -55,17 +69,16 @@ class TeamsDropdownSection extends StatelessWidget {
               ),
               const SizedBox(height: 15),
               DropdownButtonFormField<TeamEntity>(
-                initialValue: awayTeam,
+                initialValue: awayTeams.contains(awayTeam) ? awayTeam : null,
                 hint: Text(
-                  hintAway ?? 'Seleziona Squadra Ospite',
+                  hintAway ?? 'Squadra Ospite',
                   style: TextStyle(
                     color: context.isDarkMode
                         ? AppColors.textDarkSecondary
                         : AppColors.textLightSecondary,
                   ),
                 ),
-
-                items: teams
+                items: awayTeams
                     .map(
                       (team) =>
                           DropdownMenuItem(value: team, child: Text(team.name)),
@@ -76,6 +89,7 @@ class TeamsDropdownSection extends StatelessWidget {
             ],
           );
         }
+
         return const SizedBox.shrink();
       },
     );

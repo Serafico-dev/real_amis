@@ -1,7 +1,9 @@
 import 'dart:io';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:real_amis/common/helpers/is_dark_mode.dart';
 import 'package:real_amis/common/widgets/appBar/app_bar_yes_nav.dart';
 import 'package:real_amis/common/widgets/button/basic_app_button.dart';
 import 'package:real_amis/common/widgets/loader/loader.dart';
@@ -139,29 +141,6 @@ class _EditPlayerPageState extends State<EditPlayerPage> {
     }
   }
 
-  Widget _buildImagePicker() {
-    if (_image != null) {
-      return GestureDetector(
-        onTap: _selectImage,
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(10),
-          child: Image.file(_image!, fit: BoxFit.cover, height: 150),
-        ),
-      );
-    }
-    return GestureDetector(
-      onTap: _selectImage,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(10),
-        child: Image.network(
-          widget.player.imageUrl,
-          fit: BoxFit.cover,
-          height: 150,
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -196,8 +175,52 @@ class _EditPlayerPageState extends State<EditPlayerPage> {
               key: _formKey,
               child: Column(
                 children: [
-                  _buildImagePicker(),
+                  GestureDetector(
+                    onTap: _selectImage,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+                      child: _image != null
+                          ? Image.file(_image!, height: 200, fit: BoxFit.cover)
+                          : CachedNetworkImage(
+                              imageUrl: widget.player.imageUrl,
+                              height: 200,
+                              fit: BoxFit.cover,
+                              placeholder: (_, _) =>
+                                  const SizedBox(height: 200, child: Loader()),
+                              errorWidget: (_, _, _) => Container(
+                                height: 200,
+                                color: context.isDarkMode
+                                    ? AppColors.cardDark
+                                    : AppColors.cardLight,
+                                child: Icon(
+                                  Icons.broken_image,
+                                  size: 64,
+                                  color: context.isDarkMode
+                                      ? AppColors.textDarkSecondary
+                                      : AppColors.textLightSecondary,
+                                ),
+                              ),
+                            ),
+                    ),
+                  ),
                   const SizedBox(height: 15),
+                  TextButton.icon(
+                    onPressed: _selectImage,
+                    icon: Icon(
+                      Icons.add_a_photo_outlined,
+                      color: context.isDarkMode
+                          ? AppColors.textDarkPrimary
+                          : AppColors.textLightPrimary,
+                    ),
+                    label: Text(
+                      'Modifica foto',
+                      style: TextStyle(
+                        color: context.isDarkMode
+                            ? AppColors.textDarkPrimary
+                            : AppColors.textLightPrimary,
+                      ),
+                    ),
+                  ),
                   TextFieldNullable(
                     controller: _fullNameController,
                     hintText: widget.player.fullName,
@@ -262,6 +285,77 @@ class _EditPlayerPageState extends State<EditPlayerPage> {
                     onSelectionChanged: (newSelection) =>
                         setState(() => _isActive = newSelection.contains(0)),
                     multiSelectionEnabled: false,
+                    style: ButtonStyle(
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      visualDensity: VisualDensity.compact,
+
+                      backgroundColor: WidgetStateProperty.resolveWith((
+                        states,
+                      ) {
+                        final isSelected = states.contains(
+                          WidgetState.selected,
+                        );
+
+                        if (isSelected) {
+                          return context.isDarkMode
+                              ? AppColors.tertiary.withValues(alpha: 0.35)
+                              : AppColors.primary.withValues(alpha: 0.25);
+                        }
+                        return Colors.transparent;
+                      }),
+
+                      foregroundColor: WidgetStateProperty.resolveWith((
+                        states,
+                      ) {
+                        final isSelected = states.contains(
+                          WidgetState.selected,
+                        );
+
+                        if (isSelected) {
+                          return context.isDarkMode
+                              ? AppColors.textDarkPrimary
+                              : AppColors.textLightPrimary;
+                        }
+
+                        return context.isDarkMode
+                            ? AppColors.textDarkSecondary
+                            : AppColors.textLightSecondary;
+                      }),
+
+                      side: WidgetStateProperty.resolveWith((states) {
+                        final isSelected = states.contains(
+                          WidgetState.selected,
+                        );
+
+                        return BorderSide(
+                          color: isSelected
+                              ? (context.isDarkMode
+                                    ? AppColors.tertiary
+                                    : AppColors.primary)
+                              : (context.isDarkMode
+                                    ? AppColors.textDarkSecondary.withValues(
+                                        alpha: 0.3,
+                                      )
+                                    : AppColors.textLightSecondary.withValues(
+                                        alpha: 0.3,
+                                      )),
+                          width: 1,
+                        );
+                      }),
+
+                      shape: WidgetStateProperty.all(
+                        RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+
+                      overlayColor: WidgetStateProperty.all(
+                        (context.isDarkMode
+                                ? AppColors.tertiary
+                                : AppColors.primary)
+                            .withValues(alpha: 0.08),
+                      ),
+                    ),
                   ),
                   const SizedBox(height: 15),
                   BasicAppButton(

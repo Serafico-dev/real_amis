@@ -103,9 +103,7 @@ class _EditEventFormState extends State<EditEventForm> {
       },
     );
 
-    if (confirm == true && mounted) {
-      Navigator.of(context).pop(null);
-    }
+    if (confirm == true && mounted) Navigator.of(context).pop(null);
   }
 
   @override
@@ -145,19 +143,7 @@ class _EditEventFormState extends State<EditEventForm> {
       child: Form(
         key: _formKey,
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Modifica evento',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: textColor,
-              ),
-            ),
-            const SizedBox(height: 12),
-
-            // Minuto
             TextFormField(
               controller: _minutesController,
               keyboardType: TextInputType.number,
@@ -165,8 +151,6 @@ class _EditEventFormState extends State<EditEventForm> {
               decoration: InputDecoration(
                 labelText: 'Minuto',
                 labelStyle: TextStyle(color: secondaryTextColor),
-                hintText: 'Es. 45',
-                hintStyle: TextStyle(color: secondaryTextColor),
                 filled: true,
                 fillColor: inputFillColor,
                 enabledBorder: OutlineInputBorder(
@@ -186,17 +170,14 @@ class _EditEventFormState extends State<EditEventForm> {
             ),
             const SizedBox(height: 12),
 
-            // Giocatore
             TextFormField(
               controller: _playerController,
               style: TextStyle(color: textColor),
               decoration: InputDecoration(
                 labelText: 'Giocatore',
-                hintText: 'Nome giocatore',
-                labelStyle: TextStyle(color: secondaryTextColor),
-                hintStyle: TextStyle(color: secondaryTextColor),
                 filled: true,
                 fillColor: inputFillColor,
+                labelStyle: TextStyle(color: secondaryTextColor),
                 enabledBorder: OutlineInputBorder(
                   borderSide: BorderSide(color: inputBorderColor),
                   borderRadius: BorderRadius.circular(8),
@@ -212,7 +193,6 @@ class _EditEventFormState extends State<EditEventForm> {
             ),
             const SizedBox(height: 12),
 
-            // Tipo evento
             DropdownButtonFormField<EventType>(
               initialValue: _selectedType,
               items: EventType.values
@@ -228,9 +208,9 @@ class _EditEventFormState extends State<EditEventForm> {
               },
               decoration: InputDecoration(
                 labelText: 'Tipo evento',
-                labelStyle: TextStyle(color: secondaryTextColor),
                 filled: true,
                 fillColor: inputFillColor,
+                labelStyle: TextStyle(color: secondaryTextColor),
                 enabledBorder: OutlineInputBorder(
                   borderSide: BorderSide(color: inputBorderColor),
                   borderRadius: BorderRadius.circular(8),
@@ -243,7 +223,6 @@ class _EditEventFormState extends State<EditEventForm> {
             ),
             const SizedBox(height: 20),
 
-            // Bottoni Annulla/Salva
             Row(
               children: [
                 Expanded(
@@ -271,9 +250,8 @@ class _EditEventFormState extends State<EditEventForm> {
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
 
-            // Bottone elimina evento
             Center(
               child: TextButton.icon(
                 onPressed: _submitting ? null : _deleteEvent,

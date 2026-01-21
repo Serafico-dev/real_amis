@@ -11,7 +11,22 @@ import 'package:real_amis/presentation/player/pages/player_viewer.dart';
 class PlayerCard extends StatelessWidget {
   final PlayerEntity player;
   final Color color;
+
   const PlayerCard({super.key, required this.player, required this.color});
+
+  Widget _statTile(BuildContext context, String value, Widget icon) => Column(
+    children: [
+      Text(
+        value,
+        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+          fontWeight: FontWeight.bold,
+          fontSize: 16,
+        ),
+      ),
+      const SizedBox(height: 4),
+      icon,
+    ],
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -21,7 +36,10 @@ class PlayerCard extends StatelessWidget {
 
     return GestureDetector(
       onTap: () async {
-        await Navigator.push(context, PlayerViewerPage.route(player.id));
+        await Navigator.push(
+          context,
+          PlayerViewerPage.route(player.id, cardColor: color),
+        );
         if (context.mounted) {
           context.read<PlayerBloc>().add(PlayerFetchAllPlayers());
         }
@@ -34,7 +52,7 @@ class PlayerCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(10),
         ),
         child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Expanded(
               child: Column(
@@ -66,33 +84,20 @@ class PlayerCard extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 12),
                   Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
                     children: [
-                      Text(
+                      _statTile(
+                        context,
                         player.attendances.toString(),
-                        style: TextStyle(color: textPrimary),
+                        const Icon(Icons.stadium, size: 28),
                       ),
-                      const SizedBox(width: 4),
-                      Icon(
-                        Icons.stadium,
-                        size: 16,
-                        color: isDark
-                            ? AppColors.textDarkSecondary
-                            : AppColors.textLightSecondary,
-                      ),
-                      const SizedBox(width: 10),
-                      Text(
+                      const SizedBox(width: 12),
+                      _statTile(
+                        context,
                         player.goals.toString(),
-                        style: TextStyle(color: textPrimary),
-                      ),
-                      const SizedBox(width: 4),
-                      Icon(
-                        Icons.sports_soccer,
-                        size: 16,
-                        color: isDark
-                            ? AppColors.textDarkSecondary
-                            : AppColors.textLightSecondary,
+                        const Icon(Icons.sports_soccer, size: 28),
                       ),
                     ],
                   ),
@@ -100,40 +105,26 @@ class PlayerCard extends StatelessWidget {
               ),
             ),
 
-            const SizedBox(width: 12),
+            const SizedBox(width: 16),
+
             ClipRRect(
               borderRadius: BorderRadius.circular(10),
               child: CachedNetworkImage(
                 imageUrl: player.imageUrl,
-                width: 80,
-                height: 80,
+                height: 125,
                 fit: BoxFit.cover,
                 placeholder: (_, _) => Container(
-                  width: 80,
-                  height: 80,
+                  height: 125,
                   color: isDark ? AppColors.cardDark : AppColors.cardLight,
                   child: const Center(child: CircularProgressIndicator()),
                 ),
                 errorWidget: (_, _, _) => Container(
-                  width: 80,
-                  height: 80,
+                  height: 125,
                   color: isDark ? AppColors.cardDark : AppColors.cardLight,
                   child: const Center(
                     child: Icon(Icons.broken_image, size: 40),
                   ),
                 ),
-              ),
-            ),
-            const SizedBox(width: 8),
-            ConstrainedBox(
-              constraints: const BoxConstraints(minWidth: 24),
-              child: Icon(
-                player.active == true
-                    ? Icons.check_circle_outline
-                    : Icons.not_interested,
-                color: player.active == true
-                    ? (isDark ? Colors.greenAccent.shade200 : Colors.green)
-                    : (isDark ? Colors.redAccent.shade200 : Colors.red),
               ),
             ),
           ],

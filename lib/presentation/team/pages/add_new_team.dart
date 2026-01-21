@@ -99,7 +99,7 @@ class _AddNewTeamPageState extends State<AddNewTeamPage> {
               Icon(Icons.folder_open, size: 50, color: iconColor),
               const SizedBox(height: 15),
               Text(
-                'Seleziona una foto',
+                'Seleziona un logo',
                 style: TextStyle(fontSize: 15, color: textColor),
               ),
             ],

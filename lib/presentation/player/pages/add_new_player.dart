@@ -3,10 +3,12 @@ import 'dart:io';
 import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:real_amis/common/helpers/is_dark_mode.dart';
 import 'package:real_amis/common/widgets/appBar/app_bar_yes_nav.dart';
 import 'package:real_amis/common/widgets/loader/loader.dart';
 import 'package:real_amis/common/widgets/textFields/number_field_nullable.dart';
 import 'package:real_amis/common/widgets/textFields/text_field_required.dart';
+import 'package:real_amis/core/configs/theme/app_colors.dart';
 import 'package:real_amis/core/utils/pick_image.dart';
 import 'package:real_amis/core/utils/show_snackbar.dart';
 import 'package:real_amis/domain/entities/player/player_role.dart';
@@ -85,7 +87,9 @@ class _AddNewPlayerPageState extends State<AddNewPlayerPage> {
   }
 
   Widget _buildImagePicker() {
-    final borderColor = Theme.of(context).colorScheme.primary;
+    final borderColor = context.isDarkMode
+        ? AppColors.tertiary
+        : AppColors.secondary;
 
     if (_image != null) {
       return GestureDetector(
@@ -104,7 +108,8 @@ class _AddNewPlayerPageState extends State<AddNewPlayerPage> {
     return GestureDetector(
       onTap: _selectImage,
       child: DottedBorder(
-        options: RectDottedBorderOptions(
+        options: RoundedRectDottedBorderOptions(
+          radius: const Radius.circular(10),
           color: borderColor,
           dashPattern: const [20, 4],
           strokeCap: StrokeCap.round,
@@ -117,7 +122,7 @@ class _AddNewPlayerPageState extends State<AddNewPlayerPage> {
             children: const [
               Icon(Icons.folder_open, size: 50),
               SizedBox(height: 15),
-              Text('Seleziona una foto', style: TextStyle(fontSize: 15)),
+              Text('Seleziona un\'immagine', style: TextStyle(fontSize: 15)),
             ],
           ),
         ),
@@ -223,6 +228,77 @@ class _AddNewPlayerPageState extends State<AddNewPlayerPage> {
                       setState(() => _isActive = newSelection.contains(0));
                     },
                     multiSelectionEnabled: false,
+                    style: ButtonStyle(
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      visualDensity: VisualDensity.compact,
+
+                      backgroundColor: WidgetStateProperty.resolveWith((
+                        states,
+                      ) {
+                        final isSelected = states.contains(
+                          WidgetState.selected,
+                        );
+
+                        if (isSelected) {
+                          return context.isDarkMode
+                              ? AppColors.tertiary.withValues(alpha: 0.35)
+                              : AppColors.primary.withValues(alpha: 0.25);
+                        }
+                        return Colors.transparent;
+                      }),
+
+                      foregroundColor: WidgetStateProperty.resolveWith((
+                        states,
+                      ) {
+                        final isSelected = states.contains(
+                          WidgetState.selected,
+                        );
+
+                        if (isSelected) {
+                          return context.isDarkMode
+                              ? AppColors.textDarkPrimary
+                              : AppColors.textLightPrimary;
+                        }
+
+                        return context.isDarkMode
+                            ? AppColors.textDarkSecondary
+                            : AppColors.textLightSecondary;
+                      }),
+
+                      side: WidgetStateProperty.resolveWith((states) {
+                        final isSelected = states.contains(
+                          WidgetState.selected,
+                        );
+
+                        return BorderSide(
+                          color: isSelected
+                              ? (context.isDarkMode
+                                    ? AppColors.tertiary
+                                    : AppColors.primary)
+                              : (context.isDarkMode
+                                    ? AppColors.textDarkSecondary.withValues(
+                                        alpha: 0.3,
+                                      )
+                                    : AppColors.textLightSecondary.withValues(
+                                        alpha: 0.3,
+                                      )),
+                          width: 1,
+                        );
+                      }),
+
+                      shape: WidgetStateProperty.all(
+                        RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+
+                      overlayColor: WidgetStateProperty.all(
+                        (context.isDarkMode
+                                ? AppColors.tertiary
+                                : AppColors.primary)
+                            .withValues(alpha: 0.08),
+                      ),
+                    ),
                   ),
                 ],
               ),

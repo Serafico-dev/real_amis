@@ -70,13 +70,18 @@ class _PlayersPageState extends State<PlayersPage>
     return players.where((p) => p.fullName.toLowerCase().contains(q)).toList();
   }
 
+  Color _getCardColor(int index, bool isDarkMode) {
+    return index.isEven
+        ? (isDarkMode ? AppColors.cardDark : AppColors.cardLight)
+        : (isDarkMode ? AppColors.tertiary : AppColors.primary);
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDarkMode = context.isDarkMode;
 
     return Scaffold(
       appBar: AppBarNoNav(
-        backgroundColor: isDarkMode ? AppColors.bgDark : AppColors.bgLight,
         actions: [
           BlocSelector<AppUserCubit, AppUserState, bool?>(
             selector: (state) =>
@@ -252,9 +257,7 @@ class _PlayersPageState extends State<PlayersPage>
         itemCount: list.length,
         itemBuilder: (context, index) {
           final player = list[index];
-          final cardColor = index.isEven
-              ? (isDarkMode ? AppColors.cardDark : AppColors.cardLight)
-              : (isDarkMode ? AppColors.tertiary : AppColors.primary);
+          final cardColor = _getCardColor(index, isDarkMode);
           return PlayerCard(player: player, color: cardColor);
         },
       ),

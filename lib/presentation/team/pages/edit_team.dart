@@ -140,15 +140,15 @@ class _EditTeamPageState extends State<EditTeamPage> {
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(10),
                       child: _image != null
-                          ? Image.file(_image!, height: 250, fit: BoxFit.cover)
+                          ? Image.file(_image!, height: 200, fit: BoxFit.cover)
                           : CachedNetworkImage(
                               imageUrl: widget.team.imageUrl,
-                              height: 250,
+                              height: 200,
                               fit: BoxFit.cover,
                               placeholder: (_, _) =>
-                                  const SizedBox(height: 250, child: Loader()),
+                                  const SizedBox(height: 200, child: Loader()),
                               errorWidget: (_, _, _) => Container(
-                                height: 250,
+                                height: 200,
                                 color: context.isDarkMode
                                     ? AppColors.cardDark
                                     : AppColors.cardLight,

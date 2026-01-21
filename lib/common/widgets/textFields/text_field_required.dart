@@ -18,7 +18,7 @@ class TextFieldRequired extends StatelessWidget {
       maxLines: null,
       validator: (value) {
         if (value!.trim().isEmpty) {
-          return '$hintText is missing!';
+          return '$hintText è obbligatorio!';
         }
         return null;
       },

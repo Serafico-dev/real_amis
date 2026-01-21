@@ -14,37 +14,38 @@ class EditEventModal extends StatelessWidget {
     final isDarkMode = context.isDarkMode;
 
     return Padding(
-      padding: EdgeInsets.only(bottom: bottom),
-      child: FractionallySizedBox(
-        heightFactor: 0.65,
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const SizedBox(height: 12),
-
-              Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: isDarkMode
-                      ? AppColors.dividerDark
-                      : AppColors.dividerLight,
-                  borderRadius: BorderRadius.circular(2),
-                ),
+      padding: EdgeInsets.fromLTRB(20, 20, 20, 20 + bottom),
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              margin: const EdgeInsets.only(bottom: 8),
+              decoration: BoxDecoration(
+                color: isDarkMode
+                    ? AppColors.dividerDark
+                    : AppColors.dividerLight,
+                borderRadius: BorderRadius.circular(2),
               ),
+            ),
 
-              const SizedBox(height: 12),
-
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 8,
-                ),
-                child: EditEventForm(event: event),
+            Text(
+              'Modifica evento',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+                color: isDarkMode
+                    ? AppColors.textDarkPrimary
+                    : AppColors.textLightPrimary,
               ),
-            ],
-          ),
+            ),
+
+            const SizedBox(height: 12),
+
+            EditEventForm(event: event),
+          ],
         ),
       ),
     );

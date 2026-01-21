@@ -93,10 +93,8 @@ class _EditMatchPageState extends State<EditMatchPage> {
               awayTeam: awayTeam,
               onHomeChanged: (t) => setState(() => homeTeam = t),
               onAwayChanged: (t) => setState(() => awayTeam = t),
-              hintHome:
-                  'Seleziona Squadra in Casa (${widget.match.homeTeam?.name})',
-              hintAway:
-                  'Seleziona Squadra Ospite (${widget.match.awayTeam?.name})',
+              hintHome: 'Squadra in Casa (${widget.match.homeTeam?.name})',
+              hintAway: 'Squadra Ospite (${widget.match.awayTeam?.name})',
             ),
             const SizedBox(height: 16),
             MatchFormSection(

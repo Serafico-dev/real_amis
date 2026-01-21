@@ -3,7 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:real_amis/common/helpers/is_dark_mode.dart';
 import 'package:real_amis/common/widgets/appBar/app_bar_yes_nav.dart';
 import 'package:real_amis/common/widgets/button/basic_app_button.dart';
-import 'package:real_amis/core/configs/assets/app_vectors.dart';
 import 'package:real_amis/core/configs/theme/app_colors.dart';
 import 'package:real_amis/core/utils/show_snackbar.dart';
 import 'package:real_amis/presentation/auth/bloc/auth_bloc.dart';
@@ -41,7 +40,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
         : AppColors.textLightSecondary;
 
     return Scaffold(
-      appBar: AppBarYesNav(title: Image.asset(AppVectors.logo, width: 50)),
+      appBar: AppBarYesNav(),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(20),

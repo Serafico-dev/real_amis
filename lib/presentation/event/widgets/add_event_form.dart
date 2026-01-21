@@ -94,7 +94,6 @@ class _AddEventFormState extends State<AddEventForm> {
             key: _formKey,
             child: Column(
               children: [
-                // Giocatore
                 TextFormField(
                   controller: playerController,
                   style: TextStyle(color: textColor),
@@ -118,7 +117,6 @@ class _AddEventFormState extends State<AddEventForm> {
                 ),
                 const SizedBox(height: 12),
 
-                // Minuto
                 TextFormField(
                   controller: minuteController,
                   keyboardType: TextInputType.number,
@@ -183,7 +181,6 @@ class _AddEventFormState extends State<AddEventForm> {
 
                 const SizedBox(height: 12),
 
-                // Bottoni
                 Row(
                   children: [
                     Expanded(
