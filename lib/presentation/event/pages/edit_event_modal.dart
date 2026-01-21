@@ -4,10 +4,15 @@ import 'package:real_amis/core/configs/theme/app_colors.dart';
 import 'package:real_amis/domain/entities/event/event_entity.dart';
 import 'package:real_amis/presentation/event/widgets/edit_event_form.dart';
 
-class EditEventModal extends StatelessWidget {
+class EditEventModal extends StatefulWidget {
   final EventEntity event;
   const EditEventModal({super.key, required this.event});
 
+  @override
+  State<EditEventModal> createState() => _EditEventModalState();
+}
+
+class _EditEventModalState extends State<EditEventModal> {
   @override
   Widget build(BuildContext context) {
     final bottom = MediaQuery.of(context).viewInsets.bottom;
@@ -44,7 +49,10 @@ class EditEventModal extends StatelessWidget {
 
             const SizedBox(height: 12),
 
-            EditEventForm(event: event),
+            EditEventForm(
+              event: widget.event,
+              onClose: () => Navigator.of(context).pop(),
+            ),
           ],
         ),
       ),

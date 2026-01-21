@@ -9,7 +9,9 @@ import 'package:real_amis/presentation/event/bloc/event_bloc.dart';
 
 class EditEventForm extends StatefulWidget {
   final EventEntity event;
-  const EditEventForm({super.key, required this.event});
+  final VoidCallback onClose;
+
+  const EditEventForm({super.key, required this.event, required this.onClose});
 
   @override
   State<EditEventForm> createState() => _EditEventFormState();
@@ -90,12 +92,7 @@ class _EditEventFormState extends State<EditEventForm> {
               child: const Text('Annulla'),
             ),
             TextButton(
-              onPressed: () {
-                context.read<EventBloc>().add(
-                  EventDelete(eventId: widget.event.id),
-                );
-                Navigator.pop(context, true);
-              },
+              onPressed: () => Navigator.pop(context, true),
               child: const Text('Elimina', style: TextStyle(color: Colors.red)),
             ),
           ],
@@ -103,7 +100,11 @@ class _EditEventFormState extends State<EditEventForm> {
       },
     );
 
-    if (confirm == true && mounted) Navigator.of(context).pop(null);
+    if (confirm != true || !mounted) return;
+
+    setState(() => _submitting = true);
+
+    context.read<EventBloc>().add(EventDelete(eventId: widget.event.id));
   }
 
   @override
@@ -131,9 +132,13 @@ class _EditEventFormState extends State<EditEventForm> {
           showSnackBar(context, 'Evento aggiornato');
           Navigator.of(context).pop('updated');
         } else if (state is EventDeleteSuccess) {
+          context.read<EventBloc>().add(
+            EventFetchMatchEvents(matchId: widget.event.matchId),
+          );
+        } else if (state is EventDisplaySuccess) {
           if (!mounted) return;
+          widget.onClose();
           showSnackBar(context, 'Evento eliminato');
-          Navigator.of(context).pop('deleted');
         } else if (state is EventFailure) {
           if (!mounted) return;
           showSnackBar(context, 'Errore: ${state.error}');

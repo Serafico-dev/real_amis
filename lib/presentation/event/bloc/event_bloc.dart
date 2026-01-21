@@ -37,9 +37,9 @@ class EventBloc extends Bloc<EventEvent, EventState> {
     on<EventUpdate>(_onEventUpdate);
     on<EventDelete>(_onEventDelete);
   }
+
   void _onEventUpload(EventUpload event, Emitter<EventState> emit) async {
     emit(EventLoading());
-
     final res = await _uploadEvent(
       UploadEventParams(
         matchId: event.matchId,
@@ -61,7 +61,6 @@ class EventBloc extends Bloc<EventEvent, EventState> {
     Emitter<EventState> emit,
   ) async {
     emit(EventLoading());
-
     final res = await _getAllEvents(NoParams());
     res.fold(
       (l) => emit(EventFailure(l.message)),
@@ -74,7 +73,6 @@ class EventBloc extends Bloc<EventEvent, EventState> {
     Emitter<EventState> emit,
   ) async {
     emit(EventLoading());
-
     final res = await _getEventsByMatch(MatchIdParams(event.matchId));
     res.fold(
       (l) => emit(EventFailure(l.message)),
@@ -84,7 +82,6 @@ class EventBloc extends Bloc<EventEvent, EventState> {
 
   void _onEventUpdate(EventUpdate event, Emitter<EventState> emit) async {
     emit(EventLoading());
-
     final res = await _updateEvent(
       UpdateEventParams(
         event: event.event,
@@ -97,33 +94,34 @@ class EventBloc extends Bloc<EventEvent, EventState> {
     );
 
     res.fold((l) => emit(EventFailure(l.message)), (updatedEvent) {
-      List<EventEntity> updatedEvents;
-      if (state is EventDisplaySuccess) {
-        updatedEvents = List<EventEntity>.from(
-          (state as EventDisplaySuccess).events,
-        );
-        final idx = updatedEvents.indexWhere((p) => p.id == updatedEvent.id);
-        if (idx >= 0) {
-          updatedEvents[idx] = updatedEvent;
-        } else {
-          updatedEvents.add(updatedEvent);
-        }
+      final updatedEvents = (state is EventDisplaySuccess)
+          ? List<EventEntity>.from((state as EventDisplaySuccess).events)
+          : <EventEntity>[];
+
+      final idx = updatedEvents.indexWhere((e) => e.id == updatedEvent.id);
+      if (idx >= 0) {
+        updatedEvents[idx] = updatedEvent;
       } else {
-        updatedEvents = [updatedEvent];
+        updatedEvents.add(updatedEvent);
       }
+
       emit(EventDisplaySuccess(updatedEvents));
       emit(EventUpdateSuccess(updatedEvent));
     });
   }
 
   void _onEventDelete(EventDelete event, Emitter<EventState> emit) async {
-    emit(EventLoading());
-
     final res = await _deleteEvent(event.eventId);
 
-    res.fold(
-      (l) => emit(EventFailure(l.message)),
-      (r) => emit(EventDeleteSuccess()),
-    );
+    res.fold((l) => emit(EventFailure(l.message)), (_) {
+      final currentEvents = (state is EventDisplaySuccess)
+          ? List<EventEntity>.from((state as EventDisplaySuccess).events)
+          : <EventEntity>[];
+
+      currentEvents.removeWhere((e) => e.id == event.eventId);
+
+      emit(EventDisplaySuccess(currentEvents));
+      emit(EventDeleteSuccess());
+    });
   }
 }
