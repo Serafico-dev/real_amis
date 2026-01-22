@@ -49,7 +49,7 @@ class _SigninPageState extends State<SigninPage> {
         : AppColors.inputFillLight;
 
     return Scaffold(
-      appBar: AppBarNoNav(title: Image.asset(AppVectors.logo, width: 50)),
+      appBar: AppBarNoNav(),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 40),

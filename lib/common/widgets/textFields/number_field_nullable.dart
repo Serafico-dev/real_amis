@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class NumberFieldNullable extends StatelessWidget {
   final TextEditingController controller;
   final String hintText;
+
   const NumberFieldNullable({
     super.key,
     required this.controller,
@@ -14,8 +16,8 @@ class NumberFieldNullable extends StatelessWidget {
     return TextFormField(
       controller: controller,
       decoration: InputDecoration(hintText: hintText),
-      maxLines: null,
       keyboardType: TextInputType.number,
+      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
     );
   }
 }

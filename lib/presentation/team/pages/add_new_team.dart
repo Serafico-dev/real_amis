@@ -118,6 +118,9 @@ class _AddNewTeamPageState extends State<AddNewTeamPage> {
           IconButton(
             onPressed: _uploadTeam,
             icon: const Icon(Icons.done_rounded, size: 25),
+            color: context.isDarkMode
+                ? AppColors.iconDark
+                : AppColors.iconLight,
             tooltip: 'Salva',
           ),
         ],

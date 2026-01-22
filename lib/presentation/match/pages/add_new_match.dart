@@ -75,6 +75,7 @@ class _AddNewMatchPageState extends State<AddNewMatchPage> {
               color: isDark ? AppColors.iconDark : AppColors.iconLight,
               size: 25,
             ),
+            tooltip: 'Salva',
             onPressed: _uploadMatch,
           ),
         ],

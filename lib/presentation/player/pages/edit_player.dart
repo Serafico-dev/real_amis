@@ -151,7 +151,9 @@ class _EditPlayerPageState extends State<EditPlayerPage> {
             onPressed: _updatePlayer,
             icon: Icon(
               Icons.done_rounded,
-              color: Theme.of(context).colorScheme.onPrimary,
+              color: context.isDarkMode
+                  ? AppColors.iconDark
+                  : AppColors.iconLight,
               size: 25,
             ),
             tooltip: 'Salva',
@@ -223,7 +225,7 @@ class _EditPlayerPageState extends State<EditPlayerPage> {
                   ),
                   TextFieldNullable(
                     controller: _fullNameController,
-                    hintText: widget.player.fullName,
+                    hintText: '${widget.player.fullName} (Nome e cognome)',
                   ),
                   const SizedBox(height: 15),
                   DropdownButtonFormField<PlayerRole>(
@@ -253,27 +255,29 @@ class _EditPlayerPageState extends State<EditPlayerPage> {
                   const SizedBox(height: 15),
                   TextFieldNullable(
                     controller: _userNameController,
-                    hintText: widget.player.userName,
+                    hintText: '${widget.player.userName} (Soprannome)',
                   ),
                   const SizedBox(height: 15),
                   NumberFieldNullable(
                     controller: _attendancesController,
-                    hintText: widget.player.attendances.toString(),
+                    hintText:
+                        '${widget.player.attendances.toString()} (Presenze)',
                   ),
                   const SizedBox(height: 15),
                   NumberFieldNullable(
                     controller: _goalsController,
-                    hintText: widget.player.goals.toString(),
+                    hintText: '${widget.player.goals.toString()} (Goal)',
                   ),
                   const SizedBox(height: 15),
                   NumberFieldNullable(
                     controller: _yellowCardsController,
-                    hintText: widget.player.yellowCards.toString(),
+                    hintText:
+                        '${widget.player.yellowCards.toString()} (Gialli)',
                   ),
                   const SizedBox(height: 15),
                   NumberFieldNullable(
                     controller: _redCardsController,
-                    hintText: widget.player.redCards.toString(),
+                    hintText: '${widget.player.redCards.toString()} (Rossi)',
                   ),
                   const SizedBox(height: 15),
                   SegmentedButton<int>(

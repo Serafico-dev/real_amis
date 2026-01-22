@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:real_amis/common/helpers/is_dark_mode.dart';
 import 'package:real_amis/core/configs/theme/app_colors.dart';
@@ -152,6 +153,7 @@ class _EditEventFormState extends State<EditEventForm> {
             TextFormField(
               controller: _minutesController,
               keyboardType: TextInputType.number,
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
               style: TextStyle(color: textColor),
               decoration: InputDecoration(
                 labelText: 'Minuto',

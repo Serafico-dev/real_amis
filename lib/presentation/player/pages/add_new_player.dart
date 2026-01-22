@@ -140,7 +140,9 @@ class _AddNewPlayerPageState extends State<AddNewPlayerPage> {
             onPressed: _uploadPlayer,
             icon: Icon(
               Icons.done_rounded,
-              color: Theme.of(context).colorScheme.onPrimary,
+              color: context.isDarkMode
+                  ? AppColors.iconDark
+                  : AppColors.iconLight,
               size: 25,
             ),
             tooltip: 'Salva',

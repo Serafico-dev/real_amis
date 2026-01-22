@@ -79,6 +79,7 @@ class _EditMatchPageState extends State<EditMatchPage> {
               size: 25,
               color: isDark ? AppColors.iconDark : AppColors.iconLight,
             ),
+            tooltip: 'Salva',
             onPressed: _updateMatch,
           ),
         ],
