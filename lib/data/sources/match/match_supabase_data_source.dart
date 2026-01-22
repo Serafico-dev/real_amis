@@ -34,9 +34,11 @@ class MatchSupabaseDataSourceImpl implements MatchSupabaseDataSource {
       final matches = await supabaseClient
           .from('matches')
           .select(
-            '*, HomeTeam:home_team_id(name,image_url), AwayTeam:away_team_id(name,image_url)',
+            '*, HomeTeam:home_team_id(name,image_url), AwayTeam:away_team_id(name,image_url), League:league_id(name,year)',
           );
-      return matches.map((match) => MatchModel.fromJson(match)).toList();
+      return (matches as List)
+          .map((match) => MatchModel.fromJson(match as Map<String, dynamic>))
+          .toList();
     } on PostgrestException catch (e) {
       throw ServerException(e.message);
     } catch (e) {
@@ -63,7 +65,6 @@ class MatchSupabaseDataSourceImpl implements MatchSupabaseDataSource {
   @override
   Future<MatchModel> deleteMatch({required String matchId}) async {
     try {
-      await supabaseClient.storage.from('matches').remove([matchId]);
       final matchData = await supabaseClient
           .from('matches')
           .delete()

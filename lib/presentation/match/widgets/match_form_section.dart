@@ -5,11 +5,13 @@ import 'package:real_amis/common/helpers/is_dark_mode.dart';
 import 'package:real_amis/common/widgets/button/basic_app_button.dart';
 import 'package:real_amis/common/widgets/loader/loader.dart';
 import 'package:real_amis/common/widgets/textFields/number_field_nullable.dart';
-import 'package:real_amis/common/widgets/textFields/text_field_nullable.dart';
+import 'package:real_amis/common/widgets/textFields/text_field_required.dart';
 import 'package:real_amis/core/configs/theme/app_colors.dart';
 import 'package:real_amis/core/utils/format_data.dart';
 import 'package:real_amis/core/utils/show_snackbar.dart';
+import 'package:real_amis/domain/entities/league/league_entity.dart';
 import 'package:real_amis/domain/entities/match/match_entity.dart';
+import 'package:real_amis/presentation/league/bloc/league_bloc.dart';
 import 'package:real_amis/presentation/match/bloc/match_bloc.dart';
 
 class MatchFormSection extends StatelessWidget {
@@ -19,6 +21,8 @@ class MatchFormSection extends StatelessWidget {
   final TextEditingController matchDayController;
   final TextEditingController homeTeamScoreController;
   final TextEditingController awayTeamScoreController;
+  final LeagueEntity? selectedLeague;
+  final ValueChanged<LeagueEntity?>? onLeagueSelected;
   final MatchEntity? match;
   final bool showDeleteButton;
 
@@ -30,6 +34,8 @@ class MatchFormSection extends StatelessWidget {
     required this.matchDayController,
     required this.homeTeamScoreController,
     required this.awayTeamScoreController,
+    this.selectedLeague,
+    this.onLeagueSelected,
     this.match,
     this.showDeleteButton = false,
   });
@@ -80,25 +86,78 @@ class MatchFormSection extends StatelessWidget {
                 icon: const Icon(Icons.calendar_today, color: Colors.white),
                 label: const Text('Scegli una data'),
               ),
-              const SizedBox(height: 15),
-              TextFieldNullable(
+              const SizedBox(height: 16),
+
+              BlocBuilder<LeagueBloc, LeagueState>(
+                builder: (context, state) {
+                  if (state is LeagueDisplaySuccess) {
+                    final leaguesList =
+                        state.leagues
+                            .map(
+                              (e) => LeagueEntity(
+                                id: e.id,
+                                name: e.name,
+                                year: e.year,
+                              ),
+                            )
+                            .toList()
+                          ..sort((a, b) => b.year.compareTo(a.year));
+
+                    final initialLeague = leaguesList.firstWhere(
+                      (l) => l.id == (selectedLeague?.id ?? match?.league?.id),
+                      orElse: () => leaguesList.first,
+                    );
+
+                    return DropdownButtonFormField<LeagueEntity>(
+                      decoration: const InputDecoration(
+                        labelText: 'Campionato',
+                        border: OutlineInputBorder(),
+                      ),
+                      initialValue: initialLeague,
+                      items: leaguesList.map((league) {
+                        return DropdownMenuItem(
+                          value: league,
+                          child: Text('${league.name} - ${league.year}'),
+                        );
+                      }).toList(),
+                      onChanged: onLeagueSelected,
+                      validator: (value) =>
+                          value == null ? 'Seleziona un campionato' : null,
+                    );
+                  } else if (state is LeagueFailure) {
+                    return Text(
+                      'Errore nel caricamento dei campionati',
+                      style: TextStyle(color: AppColors.logoRed),
+                    );
+                  } else {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                },
+              ),
+
+              const SizedBox(height: 16),
+
+              TextFieldRequired(
                 controller: matchDayController,
                 hintText: 'Specifica la giornata (${match?.matchDay ?? 'G0'})',
               ),
-              const SizedBox(height: 15),
+              const SizedBox(height: 16),
+
               NumberFieldNullable(
                 controller: homeTeamScoreController,
                 hintText:
                     'Goal squadra in casa (${match?.homeTeamScore ?? '0'})',
               ),
-              const SizedBox(height: 15),
+              const SizedBox(height: 16),
+
               NumberFieldNullable(
                 controller: awayTeamScoreController,
                 hintText:
                     'Goal squadra ospite (${match?.awayTeamScore ?? '0'})',
               ),
+              const SizedBox(height: 16),
+
               if (showDeleteButton) ...[
-                const SizedBox(height: 15),
                 BlocBuilder<MatchBloc, MatchState>(
                   builder: (context, state) {
                     final isLoading = state is MatchLoading;

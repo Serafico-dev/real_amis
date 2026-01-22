@@ -30,6 +30,7 @@ class MatchRepositoryImpl implements MatchRepository {
     int? homeTeamScore,
     int? awayTeamScore,
     String? matchDay,
+    required String leagueId,
   }) async {
     try {
       if (!await (connectionChecker.isConnected)) {
@@ -44,6 +45,7 @@ class MatchRepositoryImpl implements MatchRepository {
         homeTeamScore: homeTeamScore,
         awayTeamScore: awayTeamScore,
         matchDay: matchDay,
+        leagueId: leagueId,
       );
       await matchSupabaseDataSource.uploadMatch(matchModel);
       return right(matchModel);
@@ -78,6 +80,7 @@ class MatchRepositoryImpl implements MatchRepository {
     String? matchDay,
     TeamModel? homeTeam,
     TeamModel? awayTeam,
+    String? leagueId,
   }) async {
     try {
       if (!await (connectionChecker.isConnected)) {
@@ -94,6 +97,7 @@ class MatchRepositoryImpl implements MatchRepository {
         matchDay: matchDay ?? match.matchDay,
         homeTeam: homeTeam ?? match.homeTeam,
         awayTeam: awayTeam ?? match.awayTeam,
+        leagueId: leagueId ?? match.leagueId,
       );
       await matchSupabaseDataSource.updateMatch(matchModel);
       return right(matchModel);

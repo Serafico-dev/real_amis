@@ -10,6 +10,7 @@ abstract interface class MatchRepository {
     int? homeTeamScore,
     int? awayTeamScore,
     String? matchDay,
+    required String leagueId,
   });
 
   Future<Either<Failure, List<MatchEntity>>> getAllMatches();
@@ -22,6 +23,7 @@ abstract interface class MatchRepository {
     int? homeTeamScore,
     int? awayTeamScore,
     String? matchDay,
+    String? leagueId,
   });
 
   Future<Either<Failure, MatchEntity>> deleteMatch({required String matchId});

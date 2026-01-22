@@ -27,7 +27,6 @@ class TeamRepositoryImpl implements TeamRepository {
   Future<Either<Failure, TeamEntity>> uploadTeam({
     required String name,
     required File image,
-    int? score,
   }) async {
     try {
       if (!await (connectionChecker.isConnected)) {
@@ -38,7 +37,6 @@ class TeamRepositoryImpl implements TeamRepository {
         updatedAt: DateTime.now(),
         name: name,
         imageUrl: '',
-        score: score,
       );
 
       final imageUrl = await teamSupabaseDataSource.uploadTeamImage(
@@ -74,7 +72,6 @@ class TeamRepositoryImpl implements TeamRepository {
     required TeamEntity team,
     String? name,
     File? image,
-    int? score,
   }) async {
     try {
       if (!await (connectionChecker.isConnected)) {
@@ -85,7 +82,6 @@ class TeamRepositoryImpl implements TeamRepository {
         updatedAt: DateTime.now(),
         name: name ?? team.name,
         imageUrl: team.imageUrl,
-        score: score ?? team.score,
       );
 
       final imageUrl = await teamSupabaseDataSource.updateTeamImage(

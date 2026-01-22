@@ -16,7 +16,6 @@ class UpdateTeam implements UseCase<TeamEntity, UpdateTeamParams> {
       team: params.team,
       name: params.name,
       image: params.image,
-      score: params.score,
     );
   }
 }
@@ -25,7 +24,6 @@ class UpdateTeamParams {
   final TeamEntity team;
   final String? name;
   final File? image;
-  final int? score;
 
-  UpdateTeamParams({required this.team, this.name, this.image, this.score});
+  UpdateTeamParams({required this.team, this.name, this.image});
 }

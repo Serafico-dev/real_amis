@@ -3,7 +3,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:real_amis/common/helpers/is_dark_mode.dart';
 import 'package:real_amis/common/widgets/appBar/app_bar_yes_nav.dart';
 import 'package:real_amis/core/configs/theme/app_colors.dart';
+import 'package:real_amis/core/utils/show_snackbar.dart';
+import 'package:real_amis/domain/entities/league/league_entity.dart';
 import 'package:real_amis/domain/entities/team/team_entity.dart';
+import 'package:real_amis/presentation/league/bloc/league_bloc.dart';
 import 'package:real_amis/presentation/match/bloc/match_bloc.dart';
 import 'package:real_amis/presentation/match/widgets/match_form_section.dart';
 import 'package:real_amis/presentation/match/widgets/teams_dropdown_section.dart';
@@ -23,6 +26,7 @@ class _AddNewMatchPageState extends State<AddNewMatchPage> {
   DateTime? selectedDate;
   TeamEntity? homeTeam;
   TeamEntity? awayTeam;
+  LeagueEntity? selectedLeague;
 
   final matchDayController = TextEditingController();
   final homeTeamScoreController = TextEditingController();
@@ -32,7 +36,9 @@ class _AddNewMatchPageState extends State<AddNewMatchPage> {
   @override
   void initState() {
     super.initState();
+    // Carichiamo squadre e campionati
     context.read<TeamBloc>().add(TeamFetchAllTeams());
+    context.read<LeagueBloc>().add(LeagueFetchAllLeagues());
   }
 
   @override
@@ -47,7 +53,8 @@ class _AddNewMatchPageState extends State<AddNewMatchPage> {
     if (formKey.currentState!.validate() &&
         selectedDate != null &&
         homeTeam != null &&
-        awayTeam != null) {
+        awayTeam != null &&
+        selectedLeague != null) {
       context.read<MatchBloc>().add(
         MatchUpload(
           matchDate: selectedDate!,
@@ -56,8 +63,11 @@ class _AddNewMatchPageState extends State<AddNewMatchPage> {
           homeTeamScore: int.tryParse(homeTeamScoreController.text.trim()) ?? 0,
           awayTeamScore: int.tryParse(awayTeamScoreController.text.trim()) ?? 0,
           matchDay: matchDayController.text.toUpperCase().trim(),
+          leagueId: selectedLeague!.id,
         ),
       );
+    } else if (selectedLeague == null) {
+      showSnackBar(context, 'Seleziona un campionato!');
     }
   }
 
@@ -92,6 +102,7 @@ class _AddNewMatchPageState extends State<AddNewMatchPage> {
               onAwayChanged: (t) => setState(() => awayTeam = t),
             ),
             const SizedBox(height: 16),
+
             MatchFormSection(
               formKey: formKey,
               selectedDate: selectedDate,
@@ -99,6 +110,9 @@ class _AddNewMatchPageState extends State<AddNewMatchPage> {
               matchDayController: matchDayController,
               homeTeamScoreController: homeTeamScoreController,
               awayTeamScoreController: awayTeamScoreController,
+              selectedLeague: selectedLeague,
+              onLeagueSelected: (league) =>
+                  setState(() => selectedLeague = league),
             ),
           ],
         ),

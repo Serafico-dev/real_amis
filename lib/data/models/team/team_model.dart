@@ -6,7 +6,6 @@ class TeamModel extends TeamEntity {
     required super.updatedAt,
     required super.name,
     required super.imageUrl,
-    super.score,
   });
 
   Map<String, dynamic> toJson() {
@@ -15,7 +14,6 @@ class TeamModel extends TeamEntity {
       'updated_at': updatedAt.toIso8601String(),
       'name': name,
       'image_url': imageUrl,
-      'score': score,
     };
   }
 
@@ -27,7 +25,6 @@ class TeamModel extends TeamEntity {
           : DateTime.parse(map['updated_at']),
       name: map['name'] ?? '',
       imageUrl: map['image_url'] ?? '',
-      score: map['score'] ?? 0,
     );
   }
   TeamModel copyWith({
@@ -42,7 +39,6 @@ class TeamModel extends TeamEntity {
       updatedAt: updatedAt ?? this.updatedAt,
       name: name ?? this.name,
       imageUrl: imageUrl ?? this.imageUrl,
-      score: score ?? this.score,
     );
   }
 }

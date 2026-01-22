@@ -12,12 +12,15 @@ import 'package:real_amis/core/network/connection_checker.dart';
 import 'package:real_amis/core/utils/secure_storage.dart';
 import 'package:real_amis/data/repositories/auth/auth_repository_impl.dart';
 import 'package:real_amis/data/repositories/event/event_repository_impl.dart';
+import 'package:real_amis/data/repositories/leagues/league_repository_impl.dart';
 import 'package:real_amis/data/repositories/match/match_repository_impl.dart';
 import 'package:real_amis/data/repositories/player/player_repository_impl.dart';
 import 'package:real_amis/data/repositories/team/team_repository_impl.dart';
 import 'package:real_amis/data/sources/auth/auth_supabase_data_source.dart';
 import 'package:real_amis/data/sources/event/event_local_data_source.dart';
 import 'package:real_amis/data/sources/event/event_supabase_data_source.dart';
+import 'package:real_amis/data/sources/league/league_local_data_source.dart';
+import 'package:real_amis/data/sources/league/league_supabase_data_source.dart';
 import 'package:real_amis/data/sources/match/match_local_data_source.dart';
 import 'package:real_amis/data/sources/match/match_supabase_data_source.dart';
 import 'package:real_amis/data/sources/player/player_local_data_source.dart';
@@ -26,6 +29,7 @@ import 'package:real_amis/data/sources/team/team_local_data_source.dart';
 import 'package:real_amis/data/sources/team/team_supabase_data_source.dart';
 import 'package:real_amis/domain/repositories/auth/auth_repository.dart';
 import 'package:real_amis/domain/repositories/event/event_repository.dart';
+import 'package:real_amis/domain/repositories/league/league_repository.dart';
 import 'package:real_amis/domain/repositories/match/match_repository.dart';
 import 'package:real_amis/domain/repositories/player/player_repository.dart';
 import 'package:real_amis/domain/repositories/team/team_repository.dart';
@@ -41,6 +45,10 @@ import 'package:real_amis/domain/usecases/event/get_all_events.dart';
 import 'package:real_amis/domain/usecases/event/get_events_by_match.dart';
 import 'package:real_amis/domain/usecases/event/update_event.dart';
 import 'package:real_amis/domain/usecases/event/upload_event.dart';
+import 'package:real_amis/domain/usecases/league/delete_league.dart';
+import 'package:real_amis/domain/usecases/league/get_all_leagues.dart';
+import 'package:real_amis/domain/usecases/league/update_league.dart';
+import 'package:real_amis/domain/usecases/league/upload_league.dart';
 import 'package:real_amis/domain/usecases/match/delete_match.dart';
 import 'package:real_amis/domain/usecases/match/get_all_matches.dart';
 import 'package:real_amis/domain/usecases/match/update_match.dart';
@@ -56,6 +64,7 @@ import 'package:real_amis/domain/usecases/team/upload_team.dart';
 import 'package:real_amis/presentation/auth/bloc/auth_bloc.dart';
 import 'package:real_amis/presentation/choose_mode/bloc/theme_cubit.dart';
 import 'package:real_amis/presentation/event/bloc/event_bloc.dart';
+import 'package:real_amis/presentation/league/bloc/league_bloc.dart';
 import 'package:real_amis/presentation/match/bloc/match_bloc.dart';
 import 'package:real_amis/presentation/player/bloc/player_bloc.dart';
 import 'package:real_amis/presentation/team/bloc/team_bloc.dart';
@@ -114,10 +123,11 @@ Future<void> initDependencies() async {
   );
 
   _initAuth();
-  _initPlayer();
-  _initMatch();
-  _initTeam();
   _initEvent();
+  _initLeague();
+  _initMatch();
+  _initPlayer();
+  _initTeam();
 }
 
 void _initAuth() {
@@ -152,35 +162,70 @@ void _initAuth() {
   );
 }
 
-void _initPlayer() {
+void _initEvent() {
   // Datasource
-  serviceLocator.registerFactory<PlayerSupabaseDataSource>(
-    () => PlayerSupabaseDataSourceImpl(serviceLocator()),
+  serviceLocator.registerFactory<EventSupabaseDataSource>(
+    () => EventSupabaseDataSourceImpl(serviceLocator()),
   );
-  serviceLocator.registerFactory<PlayerLocalDataSource>(
-    () => PlayerLocalDataSourceImpl(serviceLocator()),
+  serviceLocator.registerFactory<EventLocalDataSource>(
+    () => EventLocalDataSourceImpl(serviceLocator()),
   );
   // Repository
-  serviceLocator.registerFactory<PlayerRepository>(
-    () => PlayerRepositoryImpl(
+  serviceLocator.registerFactory<EventRepository>(
+    () => EventRepositoryImpl(
       serviceLocator(),
       serviceLocator(),
       serviceLocator(),
     ),
   );
   // Usecases
-  serviceLocator.registerFactory(() => UploadPlayer(serviceLocator()));
-  serviceLocator.registerFactory(() => GetAllPlayers(serviceLocator()));
-  serviceLocator.registerFactory(() => UpdatePlayer(serviceLocator()));
-  serviceLocator.registerFactory(() => DeletePlayer(serviceLocator()));
+  serviceLocator.registerFactory(() => UploadEvent(serviceLocator()));
+  serviceLocator.registerFactory(() => GetAllEvents(serviceLocator()));
+  serviceLocator.registerFactory(() => GetEventsByMatch(serviceLocator()));
+  serviceLocator.registerFactory(() => UpdateEvent(serviceLocator()));
+  serviceLocator.registerFactory(() => DeleteEvent(serviceLocator()));
 
   // Bloc
   serviceLocator.registerLazySingleton(
-    () => PlayerBloc(
-      uploadPlayer: serviceLocator(),
-      getAllPlayers: serviceLocator(),
-      updatePlayer: serviceLocator(),
-      deletePlayer: serviceLocator(),
+    () => EventBloc(
+      uploadEvent: serviceLocator(),
+      getAllEvents: serviceLocator(),
+      getEventsByMatch: serviceLocator(),
+      updateEvent: serviceLocator(),
+      deleteEvent: serviceLocator(),
+    ),
+  );
+}
+
+void _initLeague() {
+  // Datasource
+  serviceLocator.registerFactory<LeagueSupabaseDataSource>(
+    () => LeagueSupabaseDataSourceImpl(serviceLocator()),
+  );
+  serviceLocator.registerFactory<LeagueLocalDataSource>(
+    () => LeagueLocalDataSourceImpl(serviceLocator()),
+  );
+  // Repository
+  serviceLocator.registerFactory<LeagueRepository>(
+    () => LeagueRepositoryImpl(
+      serviceLocator(),
+      serviceLocator(),
+      serviceLocator(),
+    ),
+  );
+  // Usecases
+  serviceLocator.registerFactory(() => UploadLeague(serviceLocator()));
+  serviceLocator.registerFactory(() => GetAllLeagues(serviceLocator()));
+  serviceLocator.registerFactory(() => UpdateLeague(serviceLocator()));
+  serviceLocator.registerFactory(() => DeleteLeague(serviceLocator()));
+
+  // Bloc
+  serviceLocator.registerLazySingleton(
+    () => LeagueBloc(
+      uploadLeague: serviceLocator(),
+      getAllLeagues: serviceLocator(),
+      updateLeague: serviceLocator(),
+      deleteLeague: serviceLocator(),
     ),
   );
 }
@@ -218,6 +263,39 @@ void _initMatch() {
   );
 }
 
+void _initPlayer() {
+  // Datasource
+  serviceLocator.registerFactory<PlayerSupabaseDataSource>(
+    () => PlayerSupabaseDataSourceImpl(serviceLocator()),
+  );
+  serviceLocator.registerFactory<PlayerLocalDataSource>(
+    () => PlayerLocalDataSourceImpl(serviceLocator()),
+  );
+  // Repository
+  serviceLocator.registerFactory<PlayerRepository>(
+    () => PlayerRepositoryImpl(
+      serviceLocator(),
+      serviceLocator(),
+      serviceLocator(),
+    ),
+  );
+  // Usecases
+  serviceLocator.registerFactory(() => UploadPlayer(serviceLocator()));
+  serviceLocator.registerFactory(() => GetAllPlayers(serviceLocator()));
+  serviceLocator.registerFactory(() => UpdatePlayer(serviceLocator()));
+  serviceLocator.registerFactory(() => DeletePlayer(serviceLocator()));
+
+  // Bloc
+  serviceLocator.registerLazySingleton(
+    () => PlayerBloc(
+      uploadPlayer: serviceLocator(),
+      getAllPlayers: serviceLocator(),
+      updatePlayer: serviceLocator(),
+      deletePlayer: serviceLocator(),
+    ),
+  );
+}
+
 void _initTeam() {
   // Datasource
   serviceLocator.registerFactory<TeamSupabaseDataSource>(
@@ -247,41 +325,6 @@ void _initTeam() {
       getAllTeams: serviceLocator(),
       updateTeam: serviceLocator(),
       deleteTeam: serviceLocator(),
-    ),
-  );
-}
-
-void _initEvent() {
-  // Datasource
-  serviceLocator.registerFactory<EventSupabaseDataSource>(
-    () => EventSupabaseDataSourceImpl(serviceLocator()),
-  );
-  serviceLocator.registerFactory<EventLocalDataSource>(
-    () => EventLocalDataSourceImpl(serviceLocator()),
-  );
-  // Repository
-  serviceLocator.registerFactory<EventRepository>(
-    () => EventRepositoryImpl(
-      serviceLocator(),
-      serviceLocator(),
-      serviceLocator(),
-    ),
-  );
-  // Usecases
-  serviceLocator.registerFactory(() => UploadEvent(serviceLocator()));
-  serviceLocator.registerFactory(() => GetAllEvents(serviceLocator()));
-  serviceLocator.registerFactory(() => GetEventsByMatch(serviceLocator()));
-  serviceLocator.registerFactory(() => UpdateEvent(serviceLocator()));
-  serviceLocator.registerFactory(() => DeleteEvent(serviceLocator()));
-
-  // Bloc
-  serviceLocator.registerLazySingleton(
-    () => EventBloc(
-      uploadEvent: serviceLocator(),
-      getAllEvents: serviceLocator(),
-      getEventsByMatch: serviceLocator(),
-      updateEvent: serviceLocator(),
-      deleteEvent: serviceLocator(),
     ),
   );
 }

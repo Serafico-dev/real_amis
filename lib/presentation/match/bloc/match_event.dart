@@ -12,6 +12,7 @@ final class MatchUpload extends MatchEvent {
   final String? matchDay;
   final TeamEntity? homeTeam;
   final TeamEntity? awayTeam;
+  final String leagueId;
 
   MatchUpload({
     required this.matchDate,
@@ -22,6 +23,7 @@ final class MatchUpload extends MatchEvent {
     this.matchDay,
     this.homeTeam,
     this.awayTeam,
+    required this.leagueId,
   });
 }
 
@@ -35,6 +37,7 @@ final class MatchUpdate extends MatchEvent {
   final int? homeTeamScore;
   final int? awayTeamScore;
   final String? matchDay;
+  final String? leagueId;
 
   MatchUpdate({
     required this.match,
@@ -44,6 +47,7 @@ final class MatchUpdate extends MatchEvent {
     this.homeTeamScore,
     this.awayTeamScore,
     this.matchDay,
+    this.leagueId,
   });
 }
 

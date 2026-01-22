@@ -8,6 +8,7 @@ import 'package:real_amis/init_dependencies.dart';
 import 'package:real_amis/presentation/auth/bloc/auth_bloc.dart';
 import 'package:real_amis/presentation/choose_mode/bloc/theme_cubit.dart';
 import 'package:real_amis/presentation/event/bloc/event_bloc.dart';
+import 'package:real_amis/presentation/league/bloc/league_bloc.dart';
 import 'package:real_amis/presentation/match/bloc/match_bloc.dart';
 import 'package:real_amis/presentation/player/bloc/player_bloc.dart';
 import 'package:real_amis/presentation/splash/pages/splash.dart';
@@ -25,10 +26,11 @@ void main() async {
         BlocProvider(create: (_) => serviceLocator<ThemeCubit>()),
         BlocProvider(create: (_) => serviceLocator<AppUserCubit>()),
         BlocProvider(create: (_) => serviceLocator<AuthBloc>()),
-        BlocProvider(create: (_) => serviceLocator<PlayerBloc>()),
-        BlocProvider(create: (_) => serviceLocator<MatchBloc>()),
-        BlocProvider(create: (_) => serviceLocator<TeamBloc>()),
         BlocProvider(create: (_) => serviceLocator<EventBloc>()),
+        BlocProvider(create: (_) => serviceLocator<LeagueBloc>()),
+        BlocProvider(create: (_) => serviceLocator<MatchBloc>()),
+        BlocProvider(create: (_) => serviceLocator<PlayerBloc>()),
+        BlocProvider(create: (_) => serviceLocator<TeamBloc>()),
       ],
       child: MainApp(),
     ),

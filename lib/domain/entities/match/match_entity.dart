@@ -1,3 +1,4 @@
+import 'package:real_amis/domain/entities/league/league_entity.dart';
 import 'package:real_amis/domain/entities/team/team_entity.dart';
 
 class MatchEntity {
@@ -11,6 +12,8 @@ class MatchEntity {
   final String? matchDay;
   final TeamEntity? homeTeam;
   final TeamEntity? awayTeam;
+  final String leagueId;
+  final LeagueEntity? league;
 
   MatchEntity({
     required this.id,
@@ -23,5 +26,7 @@ class MatchEntity {
     this.matchDay,
     this.homeTeam,
     this.awayTeam,
+    required this.leagueId,
+    this.league,
   });
 }

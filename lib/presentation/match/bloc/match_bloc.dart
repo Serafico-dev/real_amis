@@ -43,6 +43,7 @@ class MatchBloc extends Bloc<MatchEvent, MatchState> {
         homeTeamScore: event.homeTeamScore,
         awayTeamScore: event.awayTeamScore,
         matchDay: event.matchDay,
+        leagueId: event.leagueId,
       ),
     );
 
@@ -78,6 +79,7 @@ class MatchBloc extends Bloc<MatchEvent, MatchState> {
         homeTeamScore: event.homeTeamScore,
         awayTeamScore: event.awayTeamScore,
         matchDay: event.matchDay,
+        leagueId: event.leagueId,
       ),
     );
 

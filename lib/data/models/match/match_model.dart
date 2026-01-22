@@ -1,5 +1,7 @@
+import 'package:real_amis/data/models/league/league_model.dart';
 import 'package:real_amis/data/models/team/team_model.dart';
 import 'package:real_amis/domain/entities/match/match_entity.dart';
+import 'package:real_amis/domain/entities/league/league_entity.dart';
 
 class MatchModel extends MatchEntity {
   MatchModel({
@@ -13,6 +15,8 @@ class MatchModel extends MatchEntity {
     super.matchDay,
     super.homeTeam,
     super.awayTeam,
+    required super.leagueId,
+    super.league,
   });
 
   Map<String, dynamic> toJson() {
@@ -25,6 +29,7 @@ class MatchModel extends MatchEntity {
       'home_team_score': homeTeamScore,
       'away_team_score': awayTeamScore,
       'match_day': matchDay,
+      'league_id': leagueId, // inviamo solo l'id
     };
   }
 
@@ -48,6 +53,10 @@ class MatchModel extends MatchEntity {
       awayTeam: map['AwayTeam'] != null
           ? TeamModel.fromJson(map['AwayTeam'] as Map<String, dynamic>)
           : null,
+      leagueId: map['league_id'] ?? '',
+      league: map['League'] != null
+          ? LeagueModel.fromJson(map['League'] as Map<String, dynamic>)
+          : null,
     );
   }
 
@@ -62,6 +71,8 @@ class MatchModel extends MatchEntity {
     String? matchDay,
     TeamModel? homeTeam,
     TeamModel? awayTeam,
+    String? leagueId,
+    LeagueEntity? league,
   }) {
     return MatchModel(
       id: id ?? this.id,
@@ -74,6 +85,8 @@ class MatchModel extends MatchEntity {
       matchDay: matchDay ?? this.matchDay,
       homeTeam: homeTeam ?? this.homeTeam,
       awayTeam: awayTeam ?? this.awayTeam,
+      leagueId: leagueId ?? this.leagueId,
+      league: league ?? this.league,
     );
   }
 }
