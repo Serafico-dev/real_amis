@@ -183,31 +183,26 @@ void _initAuth() {
 }
 
 Future<void> initNotifications() async {
-  final notificationsPlugin = FlutterLocalNotificationsPlugin();
-
-  final birthdayService = BirthdayNotificationService(notificationsPlugin);
-
-  await birthdayService.init();
-
-  serviceLocator.registerLazySingleton<BirthdayNotificationService>(
-    () => birthdayService,
-  );
-
   tz.initializeTimeZones();
   tz.setLocalLocation(tz.getLocation('Europe/Rome'));
 
-  const AndroidInitializationSettings androidSettings =
-      AndroidInitializationSettings('@mipmap/ic_launcher');
-
-  const DarwinInitializationSettings iosSettings =
-      DarwinInitializationSettings();
-
-  const InitializationSettings settings = InitializationSettings(
+  const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
+  const iosSettings = DarwinInitializationSettings();
+  const settings = InitializationSettings(
     android: androidSettings,
     iOS: iosSettings,
   );
 
   await flutterLocalNotificationsPlugin.initialize(settings);
+
+  final birthdayService = BirthdayNotificationService(
+    flutterLocalNotificationsPlugin,
+  );
+  await birthdayService.init();
+
+  serviceLocator.registerLazySingleton<BirthdayNotificationService>(
+    () => birthdayService,
+  );
 }
 
 void _initEvent() {

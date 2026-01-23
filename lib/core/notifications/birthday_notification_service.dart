@@ -1,6 +1,5 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
-import 'package:timezone/data/latest.dart' as tzdata;
 
 class BirthdayNotificationService {
   final FlutterLocalNotificationsPlugin _notifications;
@@ -12,16 +11,6 @@ class BirthdayNotificationService {
   static const _channelDescription = 'Notifiche compleanni giocatori';
 
   Future<void> init() async {
-    tzdata.initializeTimeZones();
-
-    const androidSettings = AndroidInitializationSettings(
-      '@mipmap/ic_launcher',
-    );
-
-    const initSettings = InitializationSettings(android: androidSettings);
-
-    await _notifications.initialize(initSettings);
-
     const androidChannel = AndroidNotificationChannel(
       _channelId,
       _channelName,
@@ -36,9 +25,7 @@ class BirthdayNotificationService {
         ?.createNotificationChannel(androidChannel);
   }
 
-  int _notificationId(String playerId) {
-    return playerId.hashCode;
-  }
+  int _notificationId(String playerId) => playerId.hashCode;
 
   Future<void> scheduleBirthday({
     required String playerId,
