@@ -2,6 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:intl/intl.dart';
 import 'package:real_amis/common/cubits/app_user/app_user_cubit.dart';
 import 'package:real_amis/common/helpers/is_dark_mode.dart';
 import 'package:real_amis/common/widgets/appBar/app_bar_yes_nav.dart';
@@ -134,7 +135,17 @@ class PlayerViewerPage extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text("'${player.userName}'"),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 4),
+                    if (player.birthday != null)
+                      Text(
+                        '🎂 ${DateFormat('dd/MM/yyyy').format(player.birthday!)}',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: context.isDarkMode
+                              ? AppColors.textDarkPrimary
+                              : AppColors.textLightPrimary,
+                        ),
+                      ),
+
                     Center(
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(10),

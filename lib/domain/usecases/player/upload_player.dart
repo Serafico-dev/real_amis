@@ -23,6 +23,7 @@ class UploadPlayer implements UseCase<PlayerEntity, UploadPlayerParams> {
       yellowCards: params.yellowCards,
       redCards: params.redCards,
       active: params.active,
+      birthday: params.birthday,
     );
   }
 }
@@ -37,6 +38,7 @@ class UploadPlayerParams {
   final int? yellowCards;
   final int? redCards;
   final bool active;
+  final DateTime? birthday;
 
   UploadPlayerParams({
     required this.userName,
@@ -48,5 +50,6 @@ class UploadPlayerParams {
     this.yellowCards,
     this.redCards,
     required this.active,
+    this.birthday,
   });
 }

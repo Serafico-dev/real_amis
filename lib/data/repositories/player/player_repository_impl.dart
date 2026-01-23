@@ -35,6 +35,7 @@ class PlayerRepositoryImpl implements PlayerRepository {
     int? yellowCards,
     int? redCards,
     required bool active,
+    DateTime? birthday,
   }) async {
     try {
       if (!await (connectionChecker.isConnected)) {
@@ -52,6 +53,7 @@ class PlayerRepositoryImpl implements PlayerRepository {
         yellowCards: yellowCards,
         redCards: redCards,
         active: active,
+        birthday: birthday,
       );
 
       final imageUrl = await playerSupabaseDataSource.uploadPlayerImage(
@@ -96,6 +98,7 @@ class PlayerRepositoryImpl implements PlayerRepository {
     int? yellowCards,
     int? redCards,
     bool? active,
+    DateTime? birthday,
   }) async {
     try {
       if (!await (connectionChecker.isConnected)) {
@@ -113,6 +116,7 @@ class PlayerRepositoryImpl implements PlayerRepository {
         yellowCards: yellowCards ?? player.yellowCards,
         redCards: redCards ?? player.redCards,
         active: active ?? player.active,
+        birthday: birthday ?? player.birthday,
       );
 
       final imageUrl = await playerSupabaseDataSource.updatePlayerImage(

@@ -12,6 +12,7 @@ class PlayerEntity {
   final int? yellowCards;
   final int? redCards;
   final bool active;
+  final DateTime? birthday;
 
   PlayerEntity({
     required this.id,
@@ -25,5 +26,6 @@ class PlayerEntity {
     this.yellowCards,
     this.redCards,
     required this.active,
+    this.birthday,
   });
 }

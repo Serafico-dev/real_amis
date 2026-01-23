@@ -14,6 +14,7 @@ class PlayerModel extends PlayerEntity {
     super.yellowCards,
     super.redCards,
     required super.active,
+    super.birthday,
   });
 
   Map<String, dynamic> toJson() {
@@ -29,15 +30,16 @@ class PlayerModel extends PlayerEntity {
       'yellow_cards': yellowCards,
       'red_cards': redCards,
       'active': active,
+      'birthday': birthday?.toIso8601String(),
     };
   }
 
   factory PlayerModel.fromJson(Map<String, dynamic> map) {
     return PlayerModel(
       id: map['id'] ?? '',
-      updatedAt: map['updated_at'] == null
-          ? DateTime.now()
-          : DateTime.parse(map['updated_at']),
+      updatedAt: map['updated_at'] != null
+          ? DateTime.parse(map['updated_at'])
+          : DateTime.now(),
       userName: map['username'] ?? '',
       fullName: map['full_name'] ?? '',
       imageUrl: map['image_url'] ?? '',
@@ -47,6 +49,9 @@ class PlayerModel extends PlayerEntity {
       yellowCards: map['yellow_cards'] ?? 0,
       redCards: map['red_cards'] ?? 0,
       active: map['active'] ?? false,
+      birthday: map['birthday'] != null
+          ? DateTime.parse(map['birthday'])
+          : null,
     );
   }
 
@@ -62,6 +67,7 @@ class PlayerModel extends PlayerEntity {
     int? yellowCards,
     int? redCards,
     bool? active,
+    DateTime? birthday,
   }) {
     return PlayerModel(
       id: id ?? this.id,
@@ -75,6 +81,7 @@ class PlayerModel extends PlayerEntity {
       yellowCards: yellowCards ?? this.yellowCards,
       redCards: redCards ?? this.redCards,
       active: active ?? this.active,
+      birthday: birthday ?? this.birthday,
     );
   }
 }

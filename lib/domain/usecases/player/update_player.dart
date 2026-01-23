@@ -24,6 +24,7 @@ class UpdatePlayer implements UseCase<PlayerEntity, UpdatePlayerParams> {
       yellowCards: params.yellowCards,
       redCards: params.redCards,
       active: params.active,
+      birthday: params.birthday,
     );
   }
 }
@@ -39,6 +40,7 @@ class UpdatePlayerParams {
   final int? yellowCards;
   final int? redCards;
   final bool? active;
+  final DateTime? birthday;
 
   UpdatePlayerParams({
     required this.player,
@@ -51,5 +53,6 @@ class UpdatePlayerParams {
     this.yellowCards,
     this.redCards,
     this.active,
+    this.birthday,
   });
 }

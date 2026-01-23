@@ -13,6 +13,7 @@ final class PlayerUpload extends PlayerEvent {
   final int? yellowCards;
   final int? redCards;
   final bool active;
+  final DateTime? birthday;
 
   PlayerUpload({
     required this.userName,
@@ -24,6 +25,7 @@ final class PlayerUpload extends PlayerEvent {
     this.yellowCards,
     this.redCards,
     required this.active,
+    this.birthday,
   });
 }
 
@@ -40,6 +42,7 @@ final class PlayerUpdate extends PlayerEvent {
   final int? yellowCards;
   final int? redCards;
   final bool? active;
+  final DateTime? birthday;
 
   PlayerUpdate({
     required this.player,
@@ -52,6 +55,7 @@ final class PlayerUpdate extends PlayerEvent {
     this.yellowCards,
     this.redCards,
     this.active,
+    this.birthday,
   });
 }
 

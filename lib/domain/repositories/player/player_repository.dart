@@ -16,6 +16,7 @@ abstract interface class PlayerRepository {
     int? yellowCards,
     int? redCards,
     required bool active,
+    DateTime? birthday,
   });
 
   Future<Either<Failure, List<PlayerEntity>>> getAllPlayers();
@@ -31,6 +32,7 @@ abstract interface class PlayerRepository {
     int? yellowCards,
     int? redCards,
     bool? active,
+    DateTime? birthday,
   });
 
   Future<Either<Failure, PlayerEntity>> deletePlayer({

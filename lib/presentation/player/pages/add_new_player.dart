@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_datetime_picker_plus/flutter_datetime_picker_plus.dart';
+import 'package:intl/intl.dart';
 import 'package:real_amis/common/helpers/is_dark_mode.dart';
 import 'package:real_amis/common/widgets/appBar/app_bar_yes_nav.dart';
 import 'package:real_amis/common/widgets/loader/loader.dart';
@@ -33,6 +35,7 @@ class _AddNewPlayerPageState extends State<AddNewPlayerPage> {
   final TextEditingController _goalsController = TextEditingController();
   final TextEditingController _yellowCardsController = TextEditingController();
   final TextEditingController _redCardsController = TextEditingController();
+  DateTime? _birthday;
 
   PlayerRole? _selectedRole;
   File? _image;
@@ -82,6 +85,7 @@ class _AddNewPlayerPageState extends State<AddNewPlayerPage> {
         yellowCards: _parseOrZero(_yellowCardsController.text),
         redCards: _parseOrZero(_redCardsController.text),
         active: _isActive,
+        birthday: _birthday,
       ),
     );
   }
@@ -198,6 +202,41 @@ class _AddNewPlayerPageState extends State<AddNewPlayerPage> {
                   TextFieldRequired(
                     controller: _userNameController,
                     hintText: 'Soprannome',
+                  ),
+                  const SizedBox(height: 15),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _birthday == null
+                            ? 'Data di nascita non selezionata'
+                            : 'Data di nascita: ${DateFormat('dd/MM/yyyy').format(_birthday!)}',
+                        style: TextStyle(
+                          color: context.isDarkMode
+                              ? AppColors.textDarkPrimary
+                              : AppColors.textLightPrimary,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      ElevatedButton.icon(
+                        onPressed: () async {
+                          final picked = await DatePicker.showDatePicker(
+                            context,
+                            showTitleActions: true,
+                            minTime: DateTime(1950),
+                            maxTime: DateTime.now(),
+                            currentTime: DateTime(2000),
+                            locale: LocaleType.it,
+                          );
+                          if (picked != null) {
+                            setState(() => _birthday = picked);
+                          }
+                        },
+                        icon: const Icon(Icons.cake, color: Colors.white),
+                        label: const Text('Seleziona data di nascita'),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 15),
                   NumberFieldNullable(

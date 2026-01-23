@@ -48,6 +48,7 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
         yellowCards: event.yellowCards,
         redCards: event.redCards,
         active: event.active,
+        birthday: event.birthday,
       ),
     );
 
@@ -86,6 +87,7 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
         yellowCards: event.yellowCards,
         redCards: event.redCards,
         active: event.active,
+        birthday: event.birthday,
       ),
     );
 
