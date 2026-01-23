@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:dartz/dartz.dart';
 import 'package:real_amis/core/errors/failure.dart';
+import 'package:real_amis/core/notifications/birthday_notification_service.dart';
 import 'package:real_amis/core/usecase/usecase.dart';
 import 'package:real_amis/domain/entities/player/player_entity.dart';
 import 'package:real_amis/domain/entities/player/player_role.dart';
@@ -9,11 +10,15 @@ import 'package:real_amis/domain/repositories/player/player_repository.dart';
 
 class UpdatePlayer implements UseCase<PlayerEntity, UpdatePlayerParams> {
   final PlayerRepository playerRepository;
-  UpdatePlayer(this.playerRepository);
+  final BirthdayNotificationService birthdayService;
+
+  UpdatePlayer(this.playerRepository, this.birthdayService);
 
   @override
   Future<Either<Failure, PlayerEntity>> call(UpdatePlayerParams params) async {
-    return await playerRepository.updatePlayer(
+    final oldBirthday = params.player.birthday;
+
+    final result = await playerRepository.updatePlayer(
       player: params.player,
       userName: params.userName,
       fullName: params.fullName,
@@ -26,6 +31,22 @@ class UpdatePlayer implements UseCase<PlayerEntity, UpdatePlayerParams> {
       active: params.active,
       birthday: params.birthday,
     );
+
+    return await result.fold((failure) async => Left(failure), (player) async {
+      final newBirthday = player.birthday;
+
+      if (newBirthday == null) {
+        await birthdayService.cancel(player.id);
+      } else if (oldBirthday != newBirthday) {
+        await birthdayService.scheduleBirthday(
+          playerId: player.id,
+          fullName: player.fullName,
+          birthday: newBirthday,
+        );
+      }
+
+      return Right(player);
+    });
   }
 }
 

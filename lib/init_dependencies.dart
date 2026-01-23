@@ -7,6 +7,7 @@ import 'package:hydrated_bloc/hydrated_bloc.dart';
 import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:real_amis/common/cubits/app_user/app_user_cubit.dart';
+import 'package:real_amis/core/notifications/birthday_notification_service.dart';
 import 'package:real_amis/core/secrets/app_secrets.dart';
 import 'package:real_amis/core/network/connection_checker.dart';
 import 'package:real_amis/core/utils/secure_storage.dart';
@@ -62,6 +63,9 @@ import 'package:real_amis/domain/usecases/player/get_all_players.dart';
 import 'package:real_amis/domain/usecases/player/update_player.dart';
 import 'package:real_amis/domain/usecases/player/upload_player.dart';
 import 'package:real_amis/domain/usecases/score/delete_score.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:timezone/data/latest_all.dart' as tz;
+import 'package:timezone/timezone.dart' as tz;
 import 'package:real_amis/domain/usecases/score/get_all_scores.dart';
 import 'package:real_amis/domain/usecases/score/get_scores_by_league.dart';
 import 'package:real_amis/domain/usecases/score/update_score.dart';
@@ -83,8 +87,13 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 final serviceLocator = GetIt.instance;
 final FlutterLocalization localization = FlutterLocalization.instance;
 
+final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+    FlutterLocalNotificationsPlugin();
+
 Future<void> initDependencies() async {
   Hive.defaultDirectory = (await getApplicationDocumentsDirectory()).path;
+
+  await initNotifications();
 
   final supabase = await Supabase.initialize(
     url: AppSecrets.url,
@@ -171,6 +180,34 @@ void _initAuth() {
       appUserCubit: serviceLocator(),
     ),
   );
+}
+
+Future<void> initNotifications() async {
+  final notificationsPlugin = FlutterLocalNotificationsPlugin();
+
+  final birthdayService = BirthdayNotificationService(notificationsPlugin);
+
+  await birthdayService.init();
+
+  serviceLocator.registerLazySingleton<BirthdayNotificationService>(
+    () => birthdayService,
+  );
+
+  tz.initializeTimeZones();
+  tz.setLocalLocation(tz.getLocation('Europe/Rome'));
+
+  const AndroidInitializationSettings androidSettings =
+      AndroidInitializationSettings('@mipmap/ic_launcher');
+
+  const DarwinInitializationSettings iosSettings =
+      DarwinInitializationSettings();
+
+  const InitializationSettings settings = InitializationSettings(
+    android: androidSettings,
+    iOS: iosSettings,
+  );
+
+  await flutterLocalNotificationsPlugin.initialize(settings);
 }
 
 void _initEvent() {
@@ -291,9 +328,19 @@ void _initPlayer() {
     ),
   );
   // Usecases
-  serviceLocator.registerFactory(() => UploadPlayer(serviceLocator()));
+  serviceLocator.registerFactory(
+    () => UploadPlayer(
+      serviceLocator(),
+      serviceLocator<BirthdayNotificationService>(),
+    ),
+  );
   serviceLocator.registerFactory(() => GetAllPlayers(serviceLocator()));
-  serviceLocator.registerFactory(() => UpdatePlayer(serviceLocator()));
+  serviceLocator.registerFactory(
+    () => UpdatePlayer(
+      serviceLocator(),
+      serviceLocator<BirthdayNotificationService>(),
+    ),
+  );
   serviceLocator.registerFactory(() => DeletePlayer(serviceLocator()));
 
   // Bloc
