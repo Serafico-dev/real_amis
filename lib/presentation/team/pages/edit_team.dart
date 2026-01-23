@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:real_amis/common/helpers/is_dark_mode.dart';
 import 'package:real_amis/common/widgets/appBar/app_bar_yes_nav.dart';
-import 'package:real_amis/common/widgets/button/basic_app_button.dart';
 import 'package:real_amis/common/widgets/loader/loader.dart';
 import 'package:real_amis/core/configs/theme/app_colors.dart';
 import 'package:real_amis/core/utils/pick_image.dart';
@@ -58,32 +57,6 @@ class _EditTeamPageState extends State<EditTeamPage> {
         image: _image,
       ),
     );
-  }
-
-  Future<void> _confirmAndDelete() async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Conferma eliminazione'),
-        content: const Text(
-          'Sei sicuro di voler eliminare questa squadra? Questa azione non è reversibile.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Annulla'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Elimina', style: TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmed == true && mounted) {
-      context.read<TeamBloc>().add(TeamDelete(teamId: widget.team.id));
-    }
   }
 
   @override
@@ -184,11 +157,6 @@ class _EditTeamPageState extends State<EditTeamPage> {
                       }
                       return null;
                     },
-                  ),
-                  const SizedBox(height: 20),
-                  BasicAppButton(
-                    title: isLoading ? 'Elaborazione...' : 'Elimina squadra',
-                    onPressed: isLoading ? null : _confirmAndDelete,
                   ),
                   if (isLoading)
                     const Padding(

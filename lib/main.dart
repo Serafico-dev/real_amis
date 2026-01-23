@@ -102,6 +102,8 @@ class _MainAppState extends State<MainApp> {
 
 /*
 TODO
-- Gestire meglio eliminazione squadre (problema quando sono in match già creati)
+- Gestire relazione squadre e campionato
 - Migliorare gestione campionato con modifica/eliminazione?
+- Cambio password da impostazioni
+- Ulteriori migliore design
 */
