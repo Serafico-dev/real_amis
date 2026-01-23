@@ -2,7 +2,6 @@ import 'dart:io';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:real_amis/common/helpers/is_dark_mode.dart';
 import 'package:real_amis/common/widgets/appBar/app_bar_yes_nav.dart';
@@ -17,6 +16,7 @@ import 'package:real_amis/presentation/team/bloc/team_bloc.dart';
 class EditTeamPage extends StatefulWidget {
   static MaterialPageRoute route(TeamEntity team) =>
       MaterialPageRoute(builder: (context) => EditTeamPage(team: team));
+
   final TeamEntity team;
   const EditTeamPage({super.key, required this.team});
 
@@ -27,22 +27,17 @@ class EditTeamPage extends StatefulWidget {
 class _EditTeamPageState extends State<EditTeamPage> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _nameController;
-  late final TextEditingController _scoreController;
   File? _image;
 
   @override
   void initState() {
     super.initState();
     _nameController = TextEditingController(text: widget.team.name);
-    _scoreController = TextEditingController(
-      text: widget.team.score == 0 ? '' : widget.team.score.toString(),
-    );
   }
 
   @override
   void dispose() {
     _nameController.dispose();
-    _scoreController.dispose();
     super.dispose();
   }
 
@@ -51,26 +46,16 @@ class _EditTeamPageState extends State<EditTeamPage> {
     if (picked != null) setState(() => _image = picked);
   }
 
-  int _parseScoreOrDefault(String? text, int defaultValue) {
-    if (text == null || text.trim().isEmpty) return defaultValue;
-    return int.tryParse(text.trim()) ?? defaultValue;
-  }
-
   void _onSave() {
     if (!(_formKey.currentState?.validate() ?? false)) return;
 
     final updatedName = _nameController.text.trim();
-    final updatedScore = _parseScoreOrDefault(
-      _scoreController.text,
-      widget.team.score!,
-    );
 
     context.read<TeamBloc>().add(
       TeamUpdate(
         team: widget.team,
         name: updatedName.isNotEmpty ? updatedName : widget.team.name,
         image: _image,
-        score: updatedScore,
       ),
     );
   }
@@ -85,11 +70,11 @@ class _EditTeamPageState extends State<EditTeamPage> {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
+            onPressed: () => Navigator.pop(context, false),
             child: const Text('Annulla'),
           ),
           TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
+            onPressed: () => Navigator.pop(context, true),
             child: const Text('Elimina', style: TextStyle(color: Colors.red)),
           ),
         ],
@@ -110,10 +95,10 @@ class _EditTeamPageState extends State<EditTeamPage> {
           IconButton(
             onPressed: _onSave,
             icon: const Icon(Icons.done_rounded, size: 25),
+            tooltip: 'Salva',
             color: context.isDarkMode
                 ? AppColors.iconDark
                 : AppColors.iconLight,
-            tooltip: 'Salva',
           ),
         ],
       ),
@@ -127,9 +112,8 @@ class _EditTeamPageState extends State<EditTeamPage> {
             Navigator.pop(context);
           }
         },
-        builder: (context, state) {
-          if (state is TeamLoading) return const Loader();
 
+        builder: (context, state) {
           final isLoading = state is TeamLoading;
 
           return SingleChildScrollView(
@@ -201,34 +185,16 @@ class _EditTeamPageState extends State<EditTeamPage> {
                       return null;
                     },
                   ),
-                  const SizedBox(height: 12),
-                  TextFormField(
-                    controller: _scoreController,
-                    decoration: InputDecoration(
-                      hintText: 'Punteggio',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      filled: true,
-                    ),
-                    keyboardType: TextInputType.number,
-                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                    validator: (v) {
-                      if (v != null &&
-                          v.trim().isNotEmpty &&
-                          int.tryParse(v.trim()) == null) {
-                        return 'Inserisci un numero valido';
-                      }
-                      return null;
-                    },
-                  ),
                   const SizedBox(height: 20),
                   BasicAppButton(
-                    title: isLoading
-                        ? 'Eliminazione in corso...'
-                        : 'Elimina squadra',
+                    title: isLoading ? 'Elaborazione...' : 'Elimina squadra',
                     onPressed: isLoading ? null : _confirmAndDelete,
                   ),
+                  if (isLoading)
+                    const Padding(
+                      padding: EdgeInsets.only(top: 20),
+                      child: Loader(),
+                    ),
                 ],
               ),
             ),

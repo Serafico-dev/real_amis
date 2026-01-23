@@ -15,6 +15,7 @@ import 'package:real_amis/data/repositories/event/event_repository_impl.dart';
 import 'package:real_amis/data/repositories/leagues/league_repository_impl.dart';
 import 'package:real_amis/data/repositories/match/match_repository_impl.dart';
 import 'package:real_amis/data/repositories/player/player_repository_impl.dart';
+import 'package:real_amis/data/repositories/score/score_repository_impl.dart';
 import 'package:real_amis/data/repositories/team/team_repository_impl.dart';
 import 'package:real_amis/data/sources/auth/auth_supabase_data_source.dart';
 import 'package:real_amis/data/sources/event/event_local_data_source.dart';
@@ -25,6 +26,8 @@ import 'package:real_amis/data/sources/match/match_local_data_source.dart';
 import 'package:real_amis/data/sources/match/match_supabase_data_source.dart';
 import 'package:real_amis/data/sources/player/player_local_data_source.dart';
 import 'package:real_amis/data/sources/player/player_supabase_data_source.dart';
+import 'package:real_amis/data/sources/score/score_local_data_source.dart';
+import 'package:real_amis/data/sources/score/score_supabase_data_source.dart';
 import 'package:real_amis/data/sources/team/team_local_data_source.dart';
 import 'package:real_amis/data/sources/team/team_supabase_data_source.dart';
 import 'package:real_amis/domain/repositories/auth/auth_repository.dart';
@@ -32,6 +35,7 @@ import 'package:real_amis/domain/repositories/event/event_repository.dart';
 import 'package:real_amis/domain/repositories/league/league_repository.dart';
 import 'package:real_amis/domain/repositories/match/match_repository.dart';
 import 'package:real_amis/domain/repositories/player/player_repository.dart';
+import 'package:real_amis/domain/repositories/score/score_repository.dart';
 import 'package:real_amis/domain/repositories/team/team_repository.dart';
 import 'package:real_amis/domain/usecases/auth/current_user.dart';
 import 'package:real_amis/domain/usecases/auth/password_reset.dart';
@@ -57,6 +61,11 @@ import 'package:real_amis/domain/usecases/player/delete_player.dart';
 import 'package:real_amis/domain/usecases/player/get_all_players.dart';
 import 'package:real_amis/domain/usecases/player/update_player.dart';
 import 'package:real_amis/domain/usecases/player/upload_player.dart';
+import 'package:real_amis/domain/usecases/score/delete_score.dart';
+import 'package:real_amis/domain/usecases/score/get_all_scores.dart';
+import 'package:real_amis/domain/usecases/score/get_scores_by_league.dart';
+import 'package:real_amis/domain/usecases/score/update_score.dart';
+import 'package:real_amis/domain/usecases/score/upload_score.dart';
 import 'package:real_amis/domain/usecases/team/delete_team.dart';
 import 'package:real_amis/domain/usecases/team/get_all_teams.dart';
 import 'package:real_amis/domain/usecases/team/update_team.dart';
@@ -67,6 +76,7 @@ import 'package:real_amis/presentation/event/bloc/event_bloc.dart';
 import 'package:real_amis/presentation/league/bloc/league_bloc.dart';
 import 'package:real_amis/presentation/match/bloc/match_bloc.dart';
 import 'package:real_amis/presentation/player/bloc/player_bloc.dart';
+import 'package:real_amis/presentation/score/bloc/score_bloc.dart';
 import 'package:real_amis/presentation/team/bloc/team_bloc.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -127,6 +137,7 @@ Future<void> initDependencies() async {
   _initLeague();
   _initMatch();
   _initPlayer();
+  _initScore();
   _initTeam();
 }
 
@@ -292,6 +303,41 @@ void _initPlayer() {
       getAllPlayers: serviceLocator(),
       updatePlayer: serviceLocator(),
       deletePlayer: serviceLocator(),
+    ),
+  );
+}
+
+void _initScore() {
+  // Datasource
+  serviceLocator.registerFactory<ScoreSupabaseDataSource>(
+    () => ScoreSupabaseDataSourceImpl(serviceLocator()),
+  );
+  serviceLocator.registerFactory<ScoreLocalDataSource>(
+    () => ScoreLocalDataSourceImpl(serviceLocator()),
+  );
+  // Repository
+  serviceLocator.registerFactory<ScoreRepository>(
+    () => ScoreRepositoryImpl(
+      serviceLocator(),
+      serviceLocator(),
+      serviceLocator(),
+    ),
+  );
+  // Usecases
+  serviceLocator.registerFactory(() => UploadScore(serviceLocator()));
+  serviceLocator.registerFactory(() => GetAllScores(serviceLocator()));
+  serviceLocator.registerFactory(() => GetScoresByLeague(serviceLocator()));
+  serviceLocator.registerFactory(() => UpdateScore(serviceLocator()));
+  serviceLocator.registerFactory(() => DeleteScore(serviceLocator()));
+
+  // Bloc
+  serviceLocator.registerLazySingleton(
+    () => ScoreBloc(
+      uploadScore: serviceLocator(),
+      getAllScores: serviceLocator(),
+      getScoresByLeague: serviceLocator(),
+      updateScore: serviceLocator(),
+      deleteScore: serviceLocator(),
     ),
   );
 }

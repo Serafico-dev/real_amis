@@ -38,11 +38,7 @@ class TeamBloc extends Bloc<TeamEvent, TeamState> {
     emit(TeamLoading());
 
     final res = await _uploadTeam(
-      UploadTeamParams(
-        name: event.name,
-        image: event.image,
-        score: event.score,
-      ),
+      UploadTeamParams(name: event.name, image: event.image),
     );
 
     res.fold(
@@ -69,12 +65,7 @@ class TeamBloc extends Bloc<TeamEvent, TeamState> {
     emit(TeamLoading());
 
     final res = await _updateTeam(
-      UpdateTeamParams(
-        team: event.team,
-        name: event.name,
-        image: event.image,
-        score: event.score,
-      ),
+      UpdateTeamParams(team: event.team, name: event.name, image: event.image),
     );
 
     res.fold((l) => emit(TeamFailure(l.message)), (updatedTeam) {

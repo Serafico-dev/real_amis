@@ -6,7 +6,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:real_amis/common/helpers/is_dark_mode.dart';
 import 'package:real_amis/common/widgets/appBar/app_bar_yes_nav.dart';
 import 'package:real_amis/common/widgets/loader/loader.dart';
-import 'package:real_amis/common/widgets/textFields/number_field_nullable.dart';
 import 'package:real_amis/common/widgets/textFields/text_field_required.dart';
 import 'package:real_amis/core/configs/theme/app_colors.dart';
 import 'package:real_amis/core/utils/pick_image.dart';
@@ -16,7 +15,9 @@ import 'package:real_amis/presentation/team/bloc/team_bloc.dart';
 class AddNewTeamPage extends StatefulWidget {
   static MaterialPageRoute route() =>
       MaterialPageRoute(builder: (_) => const AddNewTeamPage());
+
   const AddNewTeamPage({super.key});
+
   @override
   State<AddNewTeamPage> createState() => _AddNewTeamPageState();
 }
@@ -24,13 +25,11 @@ class AddNewTeamPage extends StatefulWidget {
 class _AddNewTeamPageState extends State<AddNewTeamPage> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
-  final _scoreController = TextEditingController();
   File? _image;
 
   @override
   void dispose() {
     _nameController.dispose();
-    _scoreController.dispose();
     super.dispose();
   }
 
@@ -38,9 +37,6 @@ class _AddNewTeamPageState extends State<AddNewTeamPage> {
     final picked = await pickImage();
     if (picked != null) setState(() => _image = picked);
   }
-
-  int _parseOrZero(String? text) =>
-      text == null || text.trim().isEmpty ? 0 : int.tryParse(text.trim()) ?? 0;
 
   void _uploadTeam() {
     if (!(_formKey.currentState?.validate() ?? false)) return;
@@ -50,11 +46,7 @@ class _AddNewTeamPageState extends State<AddNewTeamPage> {
     }
 
     context.read<TeamBloc>().add(
-      TeamUpload(
-        name: _nameController.text.trim(),
-        image: _image!,
-        score: _parseOrZero(_scoreController.text),
-      ),
+      TeamUpload(name: _nameController.text.trim(), image: _image!),
     );
   }
 
@@ -64,7 +56,6 @@ class _AddNewTeamPageState extends State<AddNewTeamPage> {
     final iconColor = isDarkMode
         ? AppColors.textDarkPrimary
         : AppColors.textLightPrimary;
-    final textColor = iconColor;
 
     if (_image != null) {
       return GestureDetector(
@@ -100,7 +91,7 @@ class _AddNewTeamPageState extends State<AddNewTeamPage> {
               const SizedBox(height: 15),
               Text(
                 'Seleziona un logo',
-                style: TextStyle(fontSize: 15, color: textColor),
+                style: TextStyle(fontSize: 15, color: iconColor),
               ),
             ],
           ),
@@ -118,10 +109,10 @@ class _AddNewTeamPageState extends State<AddNewTeamPage> {
           IconButton(
             onPressed: _uploadTeam,
             icon: const Icon(Icons.done_rounded, size: 25),
+            tooltip: 'Salva',
             color: context.isDarkMode
                 ? AppColors.iconDark
                 : AppColors.iconLight,
-            tooltip: 'Salva',
           ),
         ],
       ),
@@ -134,7 +125,7 @@ class _AddNewTeamPageState extends State<AddNewTeamPage> {
           }
         },
         builder: (context, state) {
-          if (state is TeamLoading) return const Loader();
+          final isLoading = state is TeamLoading;
 
           return SingleChildScrollView(
             padding: const EdgeInsets.all(16),
@@ -148,11 +139,11 @@ class _AddNewTeamPageState extends State<AddNewTeamPage> {
                     controller: _nameController,
                     hintText: 'Nome',
                   ),
-                  const SizedBox(height: 15),
-                  NumberFieldNullable(
-                    controller: _scoreController,
-                    hintText: 'Punteggio',
-                  ),
+                  if (isLoading)
+                    const Padding(
+                      padding: EdgeInsets.only(top: 20),
+                      child: Loader(),
+                    ),
                 ],
               ),
             ),

@@ -36,7 +36,6 @@ class _AddNewMatchPageState extends State<AddNewMatchPage> {
   @override
   void initState() {
     super.initState();
-    // Carichiamo squadre e campionati
     context.read<TeamBloc>().add(TeamFetchAllTeams());
     context.read<LeagueBloc>().add(LeagueFetchAllLeagues());
   }

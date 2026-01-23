@@ -17,6 +17,11 @@ final class ScoreUpload extends ScoreEvent {
 
 final class ScoreFetchAllScores extends ScoreEvent {}
 
+final class ScoreFetchByLeague extends ScoreEvent {
+  final String leagueId;
+  ScoreFetchByLeague({required this.leagueId});
+}
+
 final class ScoreUpdate extends ScoreEvent {
   final ScoreEntity scoreEntity;
   final String? leagueId;

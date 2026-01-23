@@ -11,6 +11,7 @@ import 'package:real_amis/presentation/event/bloc/event_bloc.dart';
 import 'package:real_amis/presentation/league/bloc/league_bloc.dart';
 import 'package:real_amis/presentation/match/bloc/match_bloc.dart';
 import 'package:real_amis/presentation/player/bloc/player_bloc.dart';
+import 'package:real_amis/presentation/score/bloc/score_bloc.dart';
 import 'package:real_amis/presentation/splash/pages/splash.dart';
 import 'package:real_amis/presentation/splash/pages/splash_logged_in.dart';
 import 'package:real_amis/presentation/team/bloc/team_bloc.dart';
@@ -30,6 +31,7 @@ void main() async {
         BlocProvider(create: (_) => serviceLocator<LeagueBloc>()),
         BlocProvider(create: (_) => serviceLocator<MatchBloc>()),
         BlocProvider(create: (_) => serviceLocator<PlayerBloc>()),
+        BlocProvider(create: (_) => serviceLocator<ScoreBloc>()),
         BlocProvider(create: (_) => serviceLocator<TeamBloc>()),
       ],
       child: MainApp(),
