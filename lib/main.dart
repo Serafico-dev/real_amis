@@ -103,5 +103,6 @@ class _MainAppState extends State<MainApp> {
 /*
 TODO
 - Gestire meglio eliminazione squadre (problema quando sono in match già creati)
-- Aggiungere campionato per suddividere partite e punteggi squadre
+- Migliorare gestione campionato con modifica/eliminazione?
+- Inserire compleanno giocatore
 */

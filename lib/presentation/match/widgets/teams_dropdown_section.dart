@@ -48,43 +48,63 @@ class TeamsDropdownSection extends StatelessWidget {
               .toList();
 
           return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              DropdownButtonFormField<TeamEntity>(
-                initialValue: homeTeams.contains(homeTeam) ? homeTeam : null,
-                hint: Text(
-                  hintHome ?? 'Squadra in Casa',
-                  style: TextStyle(
-                    color: context.isDarkMode
-                        ? AppColors.textDarkSecondary
-                        : AppColors.textLightSecondary,
+              SizedBox(
+                width: double.infinity,
+                child: DropdownButtonFormField<TeamEntity>(
+                  isExpanded: true,
+                  initialValue: homeTeams.contains(homeTeam) ? homeTeam : null,
+                  hint: Text(
+                    hintHome ?? 'Squadra in Casa',
+                    style: TextStyle(
+                      color: context.isDarkMode
+                          ? AppColors.textDarkSecondary
+                          : AppColors.textLightSecondary,
+                    ),
                   ),
+                  items: homeTeams
+                      .map(
+                        (team) => DropdownMenuItem(
+                          value: team,
+                          child: Text(
+                            team.name,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: onHomeChanged,
                 ),
-                items: homeTeams
-                    .map(
-                      (team) =>
-                          DropdownMenuItem(value: team, child: Text(team.name)),
-                    )
-                    .toList(),
-                onChanged: onHomeChanged,
               ),
               const SizedBox(height: 15),
-              DropdownButtonFormField<TeamEntity>(
-                initialValue: awayTeams.contains(awayTeam) ? awayTeam : null,
-                hint: Text(
-                  hintAway ?? 'Squadra Ospite',
-                  style: TextStyle(
-                    color: context.isDarkMode
-                        ? AppColors.textDarkSecondary
-                        : AppColors.textLightSecondary,
+
+              SizedBox(
+                width: double.infinity,
+                child: DropdownButtonFormField<TeamEntity>(
+                  isExpanded: true,
+                  initialValue: awayTeams.contains(awayTeam) ? awayTeam : null,
+                  hint: Text(
+                    hintAway ?? 'Squadra Ospite',
+                    style: TextStyle(
+                      color: context.isDarkMode
+                          ? AppColors.textDarkSecondary
+                          : AppColors.textLightSecondary,
+                    ),
                   ),
+                  items: awayTeams
+                      .map(
+                        (team) => DropdownMenuItem(
+                          value: team,
+                          child: Text(
+                            team.name,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: onAwayChanged,
                 ),
-                items: awayTeams
-                    .map(
-                      (team) =>
-                          DropdownMenuItem(value: team, child: Text(team.name)),
-                    )
-                    .toList(),
-                onChanged: onAwayChanged,
               ),
             ],
           );
