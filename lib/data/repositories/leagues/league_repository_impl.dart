@@ -25,18 +25,34 @@ class LeagueRepositoryImpl implements LeagueRepository {
   Future<Either<Failure, LeagueEntity>> uploadLeague({
     required String name,
     required String year,
+    List<String>? teamIds,
   }) async {
     try {
-      if (!await (connectionChecker.isConnected)) {
+      if (!await connectionChecker.isConnected) {
         return left(Failure(Constants.noConnectionErrorMessage));
       }
-      LeagueModel leagueModel = LeagueModel(
+
+      final leagueModel = LeagueModel(
         id: Uuid().v1(),
         name: name,
         year: year,
+        teamIds: teamIds ?? [],
       );
-      await leagueSupabaseDataSource.uploadLeague(leagueModel);
-      return right(leagueModel);
+
+      final uploadedLeague = await leagueSupabaseDataSource.uploadLeague(
+        leagueModel,
+      );
+
+      if (teamIds != null) {
+        for (var teamId in teamIds) {
+          await leagueSupabaseDataSource.addTeamToLeague(
+            uploadedLeague.id,
+            teamId,
+          );
+        }
+      }
+
+      return right(uploadedLeague);
     } on ServerException catch (e) {
       return left(Failure(e.message));
     }
@@ -45,13 +61,24 @@ class LeagueRepositoryImpl implements LeagueRepository {
   @override
   Future<Either<Failure, List<LeagueEntity>>> getAllLeagues() async {
     try {
-      if (!await (connectionChecker.isConnected)) {
+      if (!await connectionChecker.isConnected) {
         final leagues = leagueLocalDataSource.loadLeagues();
         return right(leagues);
       }
+
       final leagues = await leagueSupabaseDataSource.getAllLeagues();
-      leagueLocalDataSource.uploadLocalLeagues(leagues: leagues);
-      return right(leagues);
+      final leaguesWithTeams = <LeagueModel>[];
+
+      for (var league in leagues) {
+        final teamIds = await leagueSupabaseDataSource.getTeamIdsByLeague(
+          league.id,
+        );
+        leaguesWithTeams.add(league.copyWith(teamIds: teamIds));
+      }
+
+      leagueLocalDataSource.uploadLocalLeagues(leagues: leaguesWithTeams);
+
+      return right(leaguesWithTeams);
     } on ServerException catch (e) {
       return left(Failure(e.message));
     }
@@ -62,18 +89,37 @@ class LeagueRepositoryImpl implements LeagueRepository {
     required LeagueEntity league,
     String? name,
     String? year,
+    List<String>? teamIds,
   }) async {
     try {
-      if (!await (connectionChecker.isConnected)) {
+      if (!await connectionChecker.isConnected) {
         return left(Failure(Constants.noConnectionErrorMessage));
       }
-      LeagueModel leagueModel = LeagueModel(
+
+      final updatedModel = LeagueModel(
         id: league.id,
         name: name ?? league.name,
         year: year ?? league.year,
+        teamIds: teamIds ?? league.teamIds,
       );
-      await leagueSupabaseDataSource.updateLeague(leagueModel);
-      return right(leagueModel);
+
+      final leagueResult = await leagueSupabaseDataSource.updateLeague(
+        updatedModel,
+      );
+
+      if (teamIds != null) {
+        final existingTeamIds = await leagueSupabaseDataSource
+            .getTeamIdsByLeague(league.id);
+        for (var oldId in existingTeamIds) {
+          await leagueSupabaseDataSource.removeTeamFromLeague(league.id, oldId);
+        }
+
+        for (var newId in teamIds) {
+          await leagueSupabaseDataSource.addTeamToLeague(league.id, newId);
+        }
+      }
+
+      return right(leagueResult);
     } on ServerException catch (e) {
       return left(Failure(e.message));
     }
@@ -84,9 +130,10 @@ class LeagueRepositoryImpl implements LeagueRepository {
     required String leagueId,
   }) async {
     try {
-      if (!await (connectionChecker.isConnected)) {
+      if (!await connectionChecker.isConnected) {
         return left(Failure(Constants.noConnectionErrorMessage));
       }
+
       final deletedLeague = await leagueSupabaseDataSource.deleteLeague(
         leagueId: leagueId,
       );

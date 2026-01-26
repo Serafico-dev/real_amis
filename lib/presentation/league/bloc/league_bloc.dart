@@ -36,7 +36,11 @@ class LeagueBloc extends Bloc<LeagueEvent, LeagueState> {
     emit(LeagueLoading());
 
     final res = await _uploadLeague(
-      UploadLeagueParams(name: event.name, year: event.year),
+      UploadLeagueParams(
+        name: event.name,
+        year: event.year,
+        teamIds: event.teamIds,
+      ),
     );
 
     res.fold(
@@ -67,6 +71,7 @@ class LeagueBloc extends Bloc<LeagueEvent, LeagueState> {
         league: event.league,
         name: event.name,
         year: event.year,
+        teamIds: event.teamIds,
       ),
     );
 

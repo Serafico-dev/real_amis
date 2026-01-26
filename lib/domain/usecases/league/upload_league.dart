@@ -13,6 +13,7 @@ class UploadLeague implements UseCase<LeagueEntity, UploadLeagueParams> {
     return await leagueRepository.uploadLeague(
       name: params.name,
       year: params.year,
+      teamIds: params.teamIds,
     );
   }
 }
@@ -20,6 +21,7 @@ class UploadLeague implements UseCase<LeagueEntity, UploadLeagueParams> {
 class UploadLeagueParams {
   final String name;
   final String year;
+  final List<String>? teamIds;
 
-  UploadLeagueParams({required this.name, required this.year});
+  UploadLeagueParams({required this.name, required this.year, this.teamIds});
 }

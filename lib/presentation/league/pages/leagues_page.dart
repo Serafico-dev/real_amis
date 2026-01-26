@@ -62,6 +62,7 @@ class _LeaguesPageState extends State<LeaguesPage> {
                 return Card(
                   child: ListTile(
                     title: Text('${league.name} - ${league.year}'),
+                    subtitle: Text('Squadre: ${league.teamIds.length}'),
                     trailing: const Icon(Icons.edit),
                     onTap: () async {
                       await Navigator.push(

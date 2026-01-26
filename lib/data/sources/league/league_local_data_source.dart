@@ -12,22 +12,21 @@ class LeagueLocalDataSourceImpl implements LeagueLocalDataSource {
 
   @override
   List<LeagueModel> loadLeagues() {
-    List<LeagueModel> leagues = [];
-    box.read(() {
-      for (int i = 0; i < box.length; i++) {
-        leagues.add(LeagueModel.fromJson(box.get(i.toString())));
+    final leagues = <LeagueModel>[];
+    for (int i = 0; i < box.length; i++) {
+      final json = box.get(i.toString());
+      if (json != null) {
+        leagues.add(LeagueModel.fromJson(json));
       }
-    });
+    }
     return leagues;
   }
 
   @override
   void uploadLocalLeagues({required List<LeagueModel> leagues}) {
     box.clear();
-    box.write(() {
-      for (int i = 0; i < leagues.length; i++) {
-        box.put(i.toString(), leagues[i].toJson());
-      }
-    });
+    for (int i = 0; i < leagues.length; i++) {
+      box.put(i.toString(), leagues[i].toJson());
+    }
   }
 }

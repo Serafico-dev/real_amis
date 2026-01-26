@@ -6,6 +6,7 @@ abstract interface class LeagueRepository {
   Future<Either<Failure, LeagueEntity>> uploadLeague({
     required String name,
     required String year,
+    List<String>? teamIds,
   });
 
   Future<Either<Failure, List<LeagueEntity>>> getAllLeagues();
@@ -14,6 +15,7 @@ abstract interface class LeagueRepository {
     required LeagueEntity league,
     String? name,
     String? year,
+    List<String>? teamIds,
   });
 
   Future<Either<Failure, LeagueEntity>> deleteLeague({

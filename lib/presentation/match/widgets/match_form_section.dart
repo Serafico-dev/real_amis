@@ -107,6 +107,7 @@ class MatchFormSection extends StatelessWidget {
                                     id: e.id,
                                     name: e.name,
                                     year: e.year,
+                                    teamIds: e.teamIds,
                                   ),
                                 )
                                 .toList()

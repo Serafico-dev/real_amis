@@ -4,9 +4,10 @@ import 'package:real_amis/common/helpers/is_dark_mode.dart';
 import 'package:real_amis/common/widgets/appBar/app_bar_yes_nav.dart';
 import 'package:real_amis/common/widgets/button/basic_app_button.dart';
 import 'package:real_amis/core/configs/theme/app_colors.dart';
-import 'package:real_amis/core/utils/show_snackbar.dart';
 import 'package:real_amis/domain/entities/league/league_entity.dart';
+import 'package:real_amis/domain/entities/team/team_entity.dart';
 import 'package:real_amis/presentation/league/bloc/league_bloc.dart';
+import 'package:real_amis/presentation/team/bloc/team_bloc.dart';
 
 class EditLeaguePage extends StatefulWidget {
   final LeagueEntity league;
@@ -24,11 +25,15 @@ class _EditLeaguePageState extends State<EditLeaguePage> {
   late TextEditingController _nameController;
   late TextEditingController _yearController;
 
+  List<TeamEntity> allTeams = [];
+  List<TeamEntity> selectedTeams = [];
+
   @override
   void initState() {
     super.initState();
     _nameController = TextEditingController(text: widget.league.name);
     _yearController = TextEditingController(text: widget.league.year);
+    context.read<TeamBloc>().add(TeamFetchAllTeams());
   }
 
   @override
@@ -45,6 +50,7 @@ class _EditLeaguePageState extends State<EditLeaguePage> {
           league: widget.league,
           name: _nameController.text.trim(),
           year: _yearController.text.trim(),
+          teamIds: selectedTeams.map((t) => t.id).toList(),
         ),
       );
     }
@@ -100,45 +106,91 @@ class _EditLeaguePageState extends State<EditLeaguePage> {
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
-        child: BlocListener<LeagueBloc, LeagueState>(
-          listener: (context, state) {
-            if (state is LeagueUpdateSuccess || state is LeagueDeleteSuccess) {
-              Navigator.pop(context, true);
-            }
-            if (state is LeagueFailure) {
-              showSnackBar(context, state.error);
-            }
-          },
-          child: Form(
-            key: _formKey,
-            child: Column(
-              children: [
-                TextFormField(
-                  controller: _nameController,
-                  decoration: const InputDecoration(labelText: 'Nome'),
-                  validator: (v) => v == null || v.trim().isEmpty
-                      ? 'Inserisci un nome'
-                      : null,
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _yearController,
-                  decoration: const InputDecoration(labelText: 'Anno'),
-                  keyboardType: TextInputType.number,
-                  validator: (v) => v == null || v.trim().isEmpty
-                      ? 'Inserisci un anno'
-                      : null,
-                ),
-                const SizedBox(height: 24),
-                BasicAppButton(
-                  title: 'Elimina campionato',
-                  onPressed: _deleteLeague,
-                ),
-              ],
+        child: Column(
+          children: [
+            Form(
+              key: _formKey,
+              child: Column(
+                children: [
+                  TextFormField(
+                    controller: _nameController,
+                    decoration: const InputDecoration(labelText: 'Nome'),
+                    validator: (v) => v == null || v.trim().isEmpty
+                        ? 'Inserisci un nome'
+                        : null,
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _yearController,
+                    decoration: const InputDecoration(labelText: 'Anno'),
+                    keyboardType: TextInputType.number,
+                    validator: (v) => v == null || v.trim().isEmpty
+                        ? 'Inserisci un anno'
+                        : null,
+                  ),
+                  const SizedBox(height: 24),
+                  BlocBuilder<TeamBloc, TeamState>(
+                    builder: (context, state) {
+                      if (state is TeamLoading) {
+                        return const CircularProgressIndicator();
+                      }
+                      if (state is TeamDisplaySuccess) {
+                        allTeams = state.teams;
+                        selectedTeams = allTeams
+                            .where((t) => widget.league.teamIds.contains(t.id))
+                            .toList();
+                        return _buildTeamsSelector();
+                      }
+                      if (state is TeamFailure) {
+                        return Text(
+                          'Errore nel caricamento dei team: ${state.error}',
+                        );
+                      }
+                      return const SizedBox.shrink();
+                    },
+                  ),
+                  const SizedBox(height: 24),
+                  BasicAppButton(
+                    title: 'Elimina campionato',
+                    onPressed: _deleteLeague,
+                  ),
+                ],
+              ),
             ),
-          ),
+          ],
         ),
       ),
+    );
+  }
+
+  Widget _buildTeamsSelector() {
+    if (allTeams.isEmpty) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Seleziona le squadre',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 8),
+        ...allTeams.map((team) {
+          final selected = selectedTeams.contains(team);
+          return CheckboxListTile(
+            title: Text(team.name),
+            value: selected,
+            onChanged: (value) {
+              setState(() {
+                if (value == true) {
+                  selectedTeams.add(team);
+                } else {
+                  selectedTeams.remove(team);
+                }
+              });
+            },
+          );
+        }),
+      ],
     );
   }
 }

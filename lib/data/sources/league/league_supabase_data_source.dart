@@ -7,6 +7,10 @@ abstract interface class LeagueSupabaseDataSource {
   Future<List<LeagueModel>> getAllLeagues();
   Future<LeagueModel> updateLeague(LeagueModel league);
   Future<LeagueModel> deleteLeague({required String leagueId});
+
+  Future<List<String>> getTeamIdsByLeague(String leagueId);
+  Future<void> addTeamToLeague(String leagueId, String teamId);
+  Future<void> removeTeamFromLeague(String leagueId, String teamId);
 }
 
 class LeagueSupabaseDataSourceImpl implements LeagueSupabaseDataSource {
@@ -32,7 +36,9 @@ class LeagueSupabaseDataSourceImpl implements LeagueSupabaseDataSource {
   Future<List<LeagueModel>> getAllLeagues() async {
     try {
       final leagues = await supabaseClient.from('leagues').select();
-      return leagues.map((league) => LeagueModel.fromJson(league)).toList();
+      return (leagues as List)
+          .map((league) => LeagueModel.fromJson(league))
+          .toList();
     } on PostgrestException catch (e) {
       throw ServerException(e.message);
     } catch (e) {
@@ -59,13 +65,56 @@ class LeagueSupabaseDataSourceImpl implements LeagueSupabaseDataSource {
   @override
   Future<LeagueModel> deleteLeague({required String leagueId}) async {
     try {
-      await supabaseClient.storage.from('leagues').remove([leagueId]);
       final leagueData = await supabaseClient
           .from('leagues')
           .delete()
           .eq('id', leagueId)
           .select();
       return LeagueModel.fromJson(leagueData.first);
+    } on PostgrestException catch (e) {
+      throw ServerException(e.message);
+    } catch (e) {
+      throw ServerException(e.toString());
+    }
+  }
+
+  @override
+  Future<List<String>> getTeamIdsByLeague(String leagueId) async {
+    try {
+      final response = await supabaseClient
+          .from('league_teams')
+          .select('team_id')
+          .eq('league_id', leagueId);
+      return (response as List).map((e) => e['team_id'] as String).toList();
+    } on PostgrestException catch (e) {
+      throw ServerException(e.message);
+    } catch (e) {
+      throw ServerException(e.toString());
+    }
+  }
+
+  @override
+  Future<void> addTeamToLeague(String leagueId, String teamId) async {
+    try {
+      await supabaseClient.from('league_teams').insert({
+        'league_id': leagueId,
+        'team_id': teamId,
+      });
+    } on PostgrestException catch (e) {
+      throw ServerException(e.message);
+    } catch (e) {
+      throw ServerException(e.toString());
+    }
+  }
+
+  @override
+  Future<void> removeTeamFromLeague(String leagueId, String teamId) async {
+    try {
+      await supabaseClient
+          .from('league_teams')
+          .delete()
+          .eq('league_id', leagueId)
+          .eq('team_id', teamId);
     } on PostgrestException catch (e) {
       throw ServerException(e.message);
     } catch (e) {

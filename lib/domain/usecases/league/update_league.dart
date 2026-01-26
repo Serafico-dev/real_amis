@@ -14,6 +14,7 @@ class UpdateLeague implements UseCase<LeagueEntity, UpdateLeagueParams> {
       league: params.league,
       name: params.name,
       year: params.year,
+      teamIds: params.teamIds,
     );
   }
 }
@@ -22,6 +23,12 @@ class UpdateLeagueParams {
   final LeagueEntity league;
   final String? name;
   final String? year;
+  final List<String>? teamIds;
 
-  UpdateLeagueParams({required this.league, this.name, this.year});
+  UpdateLeagueParams({
+    required this.league,
+    this.name,
+    this.year,
+    this.teamIds,
+  });
 }
