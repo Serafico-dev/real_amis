@@ -25,8 +25,14 @@ abstract interface class AuthSupabaseDataSource {
     required String email,
     required String redirectTo,
   });
+
   Future<void> updatePasswordWithAccessToken({
     required String accessToken,
+    required String newPassword,
+  });
+
+  Future<void> changePassword({
+    required String currentPassword,
     required String newPassword,
   });
 
@@ -176,6 +182,24 @@ class AuthSupabaseDataSourceImpl implements AuthSupabaseDataSource {
     } catch (e) {
       throw ServerException(e.toString());
     }
+  }
+
+  @override
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    final session = supabaseClient.auth.currentSession;
+    if (session == null || session.user.email == null) {
+      throw ServerException('Utente non autenticato');
+    }
+
+    await supabaseClient.auth.signInWithPassword(
+      email: session.user.email!,
+      password: currentPassword,
+    );
+
+    await supabaseClient.auth.updateUser(UserAttributes(password: newPassword));
   }
 
   @override

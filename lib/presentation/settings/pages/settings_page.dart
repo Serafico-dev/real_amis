@@ -9,7 +9,7 @@ import 'package:real_amis/common/widgets/loader/loader.dart';
 import 'package:real_amis/core/configs/theme/app_colors.dart';
 import 'package:real_amis/core/utils/show_snackbar.dart';
 import 'package:real_amis/presentation/auth/bloc/auth_bloc.dart';
-import 'package:real_amis/presentation/auth/pages/forgot_password.dart';
+import 'package:real_amis/presentation/auth/pages/change_password.dart';
 import 'package:real_amis/presentation/auth/pages/signin.dart';
 import 'package:real_amis/presentation/choose_mode/bloc/theme_cubit.dart';
 import 'package:real_amis/presentation/settings/pages/terms_privacy_page.dart';
@@ -124,7 +124,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   trailing: IconButton(
                     tooltip: 'Cambia password',
                     onPressed: () {
-                      Navigator.push(context, ForgotPasswordPage.route());
+                      Navigator.push(context, ChangePasswordPage.route());
                     },
                     icon: Icon(Icons.lock_open, size: 26, color: textColor),
                   ),

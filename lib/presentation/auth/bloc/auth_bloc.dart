@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:real_amis/common/cubits/app_user/app_user_cubit.dart';
 import 'package:real_amis/core/usecase/usecase.dart';
 import 'package:real_amis/domain/entities/auth/user_entity.dart';
+import 'package:real_amis/domain/usecases/auth/change_password.dart';
 import 'package:real_amis/domain/usecases/auth/current_user.dart';
 import 'package:real_amis/domain/usecases/auth/password_reset.dart';
 import 'package:real_amis/domain/usecases/auth/password_reset_complete.dart';
@@ -21,6 +22,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final UserLogout _userLogout;
   final PasswordReset _passwordReset;
   final PasswordResetComplete _passwordResetComplete;
+  final ChangePassword _changePassword;
   final UserDelete _userDelete;
   final AppUserCubit _appUserCubit;
 
@@ -31,6 +33,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     required UserLogout userLogout,
     required PasswordReset passwordReset,
     required PasswordResetComplete passwordResetComplete,
+    required ChangePassword changePassword,
     required UserDelete userDelete,
     required AppUserCubit appUserCubit,
   }) : _userSignUp = userSignUp,
@@ -39,6 +42,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
        _userLogout = userLogout,
        _passwordReset = passwordReset,
        _passwordResetComplete = passwordResetComplete,
+       _changePassword = changePassword,
        _userDelete = userDelete,
        _appUserCubit = appUserCubit,
        super(AuthInitial()) {
@@ -48,6 +52,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<AuthLogout>(_onAuthLogout);
     on<AuthSendPasswordResetEmail>(_onPasswordReset);
     on<AuthCompletePasswordReset>(_onPasswordUpdate);
+    on<AuthChangePassword>(_onAuthChangePassword);
     on<AuthDeleteAccount>(_onAuthDeleteAccount);
   }
 
@@ -151,6 +156,25 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       (r) {
         emit(AuthPasswordResetCompleted());
       },
+    );
+  }
+
+  Future<void> _onAuthChangePassword(
+    AuthChangePassword event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(AuthLoading());
+
+    final res = await _changePassword(
+      ChangePasswordParams(
+        currentPassword: event.currentPassword,
+        newPassword: event.newPassword,
+      ),
+    );
+
+    res.fold(
+      (l) => emit(AuthFailure(l.message)),
+      (_) => emit(AuthPasswordChanged()),
     );
   }
 

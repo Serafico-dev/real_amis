@@ -38,6 +38,7 @@ import 'package:real_amis/domain/repositories/match/match_repository.dart';
 import 'package:real_amis/domain/repositories/player/player_repository.dart';
 import 'package:real_amis/domain/repositories/score/score_repository.dart';
 import 'package:real_amis/domain/repositories/team/team_repository.dart';
+import 'package:real_amis/domain/usecases/auth/change_password.dart';
 import 'package:real_amis/domain/usecases/auth/current_user.dart';
 import 'package:real_amis/domain/usecases/auth/password_reset.dart';
 import 'package:real_amis/domain/usecases/auth/password_reset_complete.dart';
@@ -166,6 +167,7 @@ void _initAuth() {
   serviceLocator.registerFactory(() => UserLogout(serviceLocator()));
   serviceLocator.registerFactory(() => PasswordReset(serviceLocator()));
   serviceLocator.registerFactory(() => PasswordResetComplete(serviceLocator()));
+  serviceLocator.registerFactory(() => ChangePassword(serviceLocator()));
   serviceLocator.registerFactory(() => UserDelete(serviceLocator()));
   // Bloc
   serviceLocator.registerLazySingleton(
@@ -176,6 +178,7 @@ void _initAuth() {
       userLogout: serviceLocator(),
       passwordReset: serviceLocator(),
       passwordResetComplete: serviceLocator(),
+      changePassword: serviceLocator(),
       userDelete: serviceLocator(),
       appUserCubit: serviceLocator(),
     ),

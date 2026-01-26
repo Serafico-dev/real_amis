@@ -27,5 +27,10 @@ abstract interface class AuthRepository {
     required String newPassword,
   });
 
+  Future<Either<Failure, void>> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  });
+
   Future<Either<Failure, UserEntity>> deleteAccount({required String id});
 }
