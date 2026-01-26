@@ -14,11 +14,6 @@ final class AuthSuccess extends AuthState {
   const AuthSuccess(this.user);
 }
 
-final class AuthChecked extends AuthState {
-  final UserEntity user;
-  const AuthChecked(this.user);
-}
-
 final class AuthFailure extends AuthState {
   final String message;
   const AuthFailure(this.message);
@@ -35,6 +30,6 @@ final class AuthPasswordResetFailure extends AuthState {
   const AuthPasswordResetFailure(this.message);
 }
 
-class AuthPasswordChanged extends AuthState {}
+final class AuthPasswordChanged extends AuthState {}
 
 final class AuthAccountDeleted extends AuthState {}

@@ -320,9 +320,19 @@ class _TeamRow extends StatelessWidget {
               borderRadius: BorderRadius.circular(10),
               child: CachedNetworkImage(
                 imageUrl: team.imageUrl,
+                cacheKey: team.id,
                 width: 40,
                 height: 40,
                 fit: BoxFit.cover,
+                placeholder: (_, _) => const SizedBox(
+                  width: 40,
+                  height: 40,
+                  child: Center(
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                ),
+                errorWidget: (_, _, _) =>
+                    const Icon(Icons.broken_image, size: 40),
               ),
             ),
             const SizedBox(width: 12),

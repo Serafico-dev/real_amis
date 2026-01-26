@@ -33,7 +33,6 @@ class _SigninPageState extends State<SigninPage> {
 
   void _handleAuthSuccess() {
     if (!mounted) return;
-    context.read<AuthBloc>().add(AuthIsUserLoggedIn());
     Navigator.pushAndRemoveUntil(context, MainPage.route(), (route) => false);
   }
 

@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:real_amis/common/cubits/app_user/app_user_cubit.dart';
+import 'package:real_amis/core/cubits/app_user/app_user_cubit.dart';
 import 'package:real_amis/core/usecase/usecase.dart';
 import 'package:real_amis/domain/entities/auth/user_entity.dart';
 import 'package:real_amis/domain/usecases/auth/change_password.dart';
-import 'package:real_amis/domain/usecases/auth/current_user.dart';
 import 'package:real_amis/domain/usecases/auth/password_reset.dart';
 import 'package:real_amis/domain/usecases/auth/password_reset_complete.dart';
 import 'package:real_amis/domain/usecases/auth/user_delete.dart';
@@ -18,7 +17,6 @@ part 'auth_state.dart';
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final UserSignUp _userSignUp;
   final UserLogin _userLogin;
-  final CurrentUser _currentUser;
   final UserLogout _userLogout;
   final PasswordReset _passwordReset;
   final PasswordResetComplete _passwordResetComplete;
@@ -29,7 +27,6 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   AuthBloc({
     required UserSignUp userSignUp,
     required UserLogin userLogin,
-    required CurrentUser currentUser,
     required UserLogout userLogout,
     required PasswordReset passwordReset,
     required PasswordResetComplete passwordResetComplete,
@@ -38,7 +35,6 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     required AppUserCubit appUserCubit,
   }) : _userSignUp = userSignUp,
        _userLogin = userLogin,
-       _currentUser = currentUser,
        _userLogout = userLogout,
        _passwordReset = passwordReset,
        _passwordResetComplete = passwordResetComplete,
@@ -48,7 +44,6 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
        super(AuthInitial()) {
     on<AuthSignUp>(_onAuthSignUp);
     on<AuthLogin>(_onAuthLogin);
-    on<AuthIsUserLoggedIn>(_onIsUserLoggedIn);
     on<AuthLogout>(_onAuthLogout);
     on<AuthSendPasswordResetEmail>(_onPasswordReset);
     on<AuthCompletePasswordReset>(_onPasswordUpdate);
@@ -80,20 +75,6 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       _appUserCubit.clearUser();
       emit(AuthFailure(l.message));
     }, (r) => _emitAuthSuccess(r, emit));
-  }
-
-  Future<void> _onIsUserLoggedIn(
-    AuthIsUserLoggedIn event,
-    Emitter<AuthState> emit,
-  ) async {
-    emit(AuthLoading());
-
-    final res = await _currentUser(NoParams());
-
-    res.fold((l) {
-      _appUserCubit.clearUser();
-      emit(AuthFailure(l.message));
-    }, (r) => _emitAuthChecked(r, emit));
   }
 
   Future<void> _onAuthLogout(AuthLogout event, Emitter<AuthState> emit) async {
@@ -202,12 +183,5 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
     _appUserCubit.updateUser(user);
     emit(AuthSuccess(user));
-  }
-
-  void _emitAuthChecked(UserEntity user, Emitter<AuthState> emit) {
-    emit(AuthLoading());
-
-    _appUserCubit.updateUser(user);
-    emit(AuthChecked(user));
   }
 }

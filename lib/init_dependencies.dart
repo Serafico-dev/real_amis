@@ -6,7 +6,8 @@ import 'package:hive/hive.dart';
 import 'package:hydrated_bloc/hydrated_bloc.dart';
 import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:real_amis/common/cubits/app_user/app_user_cubit.dart';
+import 'package:real_amis/core/cubits/app_user/app_user_cubit.dart';
+import 'package:real_amis/core/auth/auth_session_listener.dart';
 import 'package:real_amis/core/notifications/birthday_notification_service.dart';
 import 'package:real_amis/core/secrets/app_secrets.dart';
 import 'package:real_amis/core/network/connection_checker.dart';
@@ -39,7 +40,6 @@ import 'package:real_amis/domain/repositories/player/player_repository.dart';
 import 'package:real_amis/domain/repositories/score/score_repository.dart';
 import 'package:real_amis/domain/repositories/team/team_repository.dart';
 import 'package:real_amis/domain/usecases/auth/change_password.dart';
-import 'package:real_amis/domain/usecases/auth/current_user.dart';
 import 'package:real_amis/domain/usecases/auth/password_reset.dart';
 import 'package:real_amis/domain/usecases/auth/password_reset_complete.dart';
 import 'package:real_amis/domain/usecases/auth/user_delete.dart';
@@ -116,7 +116,11 @@ Future<void> initDependencies() async {
   final savedSessionJson = await secureStorage.readSession();
   if (savedSessionJson != null) {
     try {
-      await supabase.client.auth.setInitialSession(savedSessionJson);
+      final sessionMap = jsonDecode(savedSessionJson);
+      final accessToken = sessionMap['access_token'] as String?;
+      if (accessToken != null) {
+        await supabase.client.auth.setSession(savedSessionJson);
+      }
     } catch (_) {
       final access = await secureStorage.readToken();
       final refresh = await secureStorage.readRefreshToken();
@@ -138,6 +142,13 @@ Future<void> initDependencies() async {
   serviceLocator.registerLazySingleton(() => AppUserCubit());
   serviceLocator.registerLazySingleton(() => ThemeCubit());
 
+  serviceLocator.registerLazySingleton(
+    () => AuthSessionListener(
+      supabase: serviceLocator<SupabaseClient>(),
+      appUserCubit: serviceLocator<AppUserCubit>(),
+    ),
+  );
+
   serviceLocator.registerFactory<ConnectionChecker>(
     () => ConnectionCheckerImpl(serviceLocator()),
   );
@@ -149,6 +160,8 @@ Future<void> initDependencies() async {
   _initPlayer();
   _initScore();
   _initTeam();
+
+  serviceLocator<AuthSessionListener>().start();
 }
 
 void _initAuth() {
@@ -163,7 +176,6 @@ void _initAuth() {
   // Usecases
   serviceLocator.registerFactory(() => UserSignUp(serviceLocator()));
   serviceLocator.registerFactory(() => UserLogin(serviceLocator()));
-  serviceLocator.registerFactory(() => CurrentUser(serviceLocator()));
   serviceLocator.registerFactory(() => UserLogout(serviceLocator()));
   serviceLocator.registerFactory(() => PasswordReset(serviceLocator()));
   serviceLocator.registerFactory(() => PasswordResetComplete(serviceLocator()));
@@ -174,7 +186,6 @@ void _initAuth() {
     () => AuthBloc(
       userSignUp: serviceLocator(),
       userLogin: serviceLocator(),
-      currentUser: serviceLocator(),
       userLogout: serviceLocator(),
       passwordReset: serviceLocator(),
       passwordResetComplete: serviceLocator(),

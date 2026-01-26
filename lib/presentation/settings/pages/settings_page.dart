@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:real_amis/core/cubits/app_user/app_user_cubit.dart';
 import 'package:real_amis/common/helpers/app_info.dart';
 import 'package:real_amis/common/helpers/is_dark_mode.dart';
 import 'package:real_amis/common/helpers/open_support_contact.dart';
 import 'package:real_amis/common/widgets/appBar/app_bar_no_nav.dart';
 import 'package:real_amis/common/widgets/confirmDialog/styled_confirm_dialog.dart';
-import 'package:real_amis/common/widgets/loader/loader.dart';
 import 'package:real_amis/core/configs/theme/app_colors.dart';
 import 'package:real_amis/core/utils/show_snackbar.dart';
 import 'package:real_amis/presentation/auth/bloc/auth_bloc.dart';
@@ -29,7 +29,6 @@ class _SettingsPageState extends State<SettingsPage> {
   void initState() {
     super.initState();
     _selectedTheme = context.read<ThemeCubit>().state;
-    context.read<AuthBloc>().add(AuthIsUserLoggedIn());
   }
 
   Future<bool?> _showConfirmDialog({
@@ -56,7 +55,7 @@ class _SettingsPageState extends State<SettingsPage> {
 
   void _redirectToSignin() {
     if (!mounted) return;
-    Navigator.pushAndRemoveUntil(context, SigninPage.route(), (route) => false);
+    Navigator.pushAndRemoveUntil(context, SigninPage.route(), (_) => false);
   }
 
   Future<void> _onLogoutPressed() async {
@@ -65,6 +64,7 @@ class _SettingsPageState extends State<SettingsPage> {
       message: 'Sei sicuro di voler effettuare il logout?',
       confirmLabel: 'Disconnettiti',
     );
+
     if (confirm == true && mounted) {
       context.read<AuthBloc>().add(AuthLogout());
     }
@@ -84,234 +84,252 @@ class _SettingsPageState extends State<SettingsPage> {
     return Scaffold(
       backgroundColor: bgColor,
       appBar: AppBarNoNav(),
-      body: BlocConsumer<AuthBloc, AuthState>(
+      body: BlocListener<AuthBloc, AuthState>(
         listener: (context, state) {
-          if (state is AuthFailure) showSnackBar(context, state.message);
+          if (state is AuthFailure) {
+            showSnackBar(context, state.message);
+          }
+
           if (state is AuthLoggedOut || state is AuthAccountDeleted) {
             _redirectToSignin();
           }
         },
-        builder: (context, state) {
-          final userEmail = (state is AuthChecked) ? state.user.email : null;
-          if (state is AuthLoading) return const Loader();
+        child: BlocBuilder<AppUserCubit, AppUserState>(
+          builder: (context, userState) {
+            final userEmail = userState is AppUserLoggedIn
+                ? userState.user.email
+                : 'Non disponibile';
 
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  child: Text(
-                    'Account',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: textColor,
+            return SingleChildScrollView(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    child: Text(
+                      'Account',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: textColor,
+                      ),
                     ),
                   ),
-                ),
-                SettingsTile(
-                  title: 'Email',
-                  subtitle: userEmail ?? 'Non disponibile',
-                  titleColor: textColor,
-                  subtitleColor: subtitleColor,
-                ),
-                const SizedBox(height: 4),
-                SettingsTile(
-                  title: 'Cambia password',
-                  titleColor: textColor,
-                  trailing: IconButton(
-                    tooltip: 'Cambia password',
-                    onPressed: () {
-                      Navigator.push(context, ChangePasswordPage.route());
-                    },
-                    icon: Icon(Icons.lock_open, size: 26, color: textColor),
+
+                  SettingsTile(
+                    title: 'Email',
+                    subtitle: userEmail,
+                    titleColor: textColor,
+                    subtitleColor: subtitleColor,
                   ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  child: Text(
-                    'Tema',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: textColor,
-                    ),
-                  ),
-                ),
-                Card(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  color: isDarkMode ? AppColors.cardDark : AppColors.cardLight,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 24,
-                    ),
-                    child: SegmentedButton<ThemeMode>(
-                      segments: const [
-                        ButtonSegment(
-                          value: ThemeMode.light,
-                          icon: Icon(Icons.light_mode_outlined),
-                          label: Text('Chiaro'),
-                        ),
-                        ButtonSegment(
-                          value: ThemeMode.dark,
-                          icon: Icon(Icons.dark_mode_outlined),
-                          label: Text('Scuro'),
-                        ),
-                        ButtonSegment(
-                          value: ThemeMode.system,
-                          icon: Icon(Icons.settings_suggest_outlined),
-                          label: Text('Sistema'),
-                        ),
-                      ],
-                      selected: {_selectedTheme},
-                      onSelectionChanged: (selection) {
-                        _onThemeSelected(selection.first);
+
+                  const SizedBox(height: 4),
+
+                  SettingsTile(
+                    title: 'Cambia password',
+                    titleColor: textColor,
+                    trailing: IconButton(
+                      tooltip: 'Cambia password',
+                      onPressed: () {
+                        Navigator.push(context, ChangePasswordPage.route());
                       },
-                      style: ButtonStyle(
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        visualDensity: VisualDensity.compact,
+                      icon: Icon(Icons.lock_open, size: 26, color: textColor),
+                    ),
+                  ),
 
-                        backgroundColor: WidgetStateProperty.resolveWith((
-                          states,
-                        ) {
-                          final isSelected = states.contains(
-                            WidgetState.selected,
-                          );
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    child: Text(
+                      'Tema',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: textColor,
+                      ),
+                    ),
+                  ),
 
-                          if (isSelected) {
-                            return isDarkMode
-                                ? AppColors.tertiary.withValues(alpha: 0.35)
-                                : AppColors.primary.withValues(alpha: 0.25);
-                          }
-                          return Colors.transparent;
-                        }),
-
-                        foregroundColor: WidgetStateProperty.resolveWith((
-                          states,
-                        ) {
-                          final isSelected = states.contains(
-                            WidgetState.selected,
-                          );
-
-                          if (isSelected) {
-                            return isDarkMode
-                                ? AppColors.textDarkPrimary
-                                : AppColors.textLightPrimary;
-                          }
-
-                          return isDarkMode
-                              ? AppColors.textDarkSecondary
-                              : AppColors.textLightSecondary;
-                        }),
-
-                        side: WidgetStateProperty.resolveWith((states) {
-                          final isSelected = states.contains(
-                            WidgetState.selected,
-                          );
-
-                          return BorderSide(
-                            color: isSelected
-                                ? (isDarkMode
-                                      ? AppColors.tertiary
-                                      : AppColors.primary)
-                                : (isDarkMode
-                                      ? AppColors.textDarkSecondary.withValues(
-                                          alpha: 0.3,
-                                        )
-                                      : AppColors.textLightSecondary.withValues(
-                                          alpha: 0.3,
-                                        )),
-                            width: 1,
-                          );
-                        }),
-
-                        shape: WidgetStateProperty.all(
-                          RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
+                  Card(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    color: isDarkMode
+                        ? AppColors.cardDark
+                        : AppColors.cardLight,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 24,
+                      ),
+                      child: SegmentedButton<ThemeMode>(
+                        segments: const [
+                          ButtonSegment(
+                            value: ThemeMode.light,
+                            icon: Icon(Icons.light_mode_outlined),
+                            label: Text('Chiaro'),
                           ),
-                        ),
+                          ButtonSegment(
+                            value: ThemeMode.dark,
+                            icon: Icon(Icons.dark_mode_outlined),
+                            label: Text('Scuro'),
+                          ),
+                          ButtonSegment(
+                            value: ThemeMode.system,
+                            icon: Icon(Icons.settings_suggest_outlined),
+                            label: Text('Sistema'),
+                          ),
+                        ],
+                        selected: {_selectedTheme},
+                        onSelectionChanged: (selection) {
+                          _onThemeSelected(selection.first);
+                        },
+                        style: ButtonStyle(
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          visualDensity: VisualDensity.compact,
 
-                        overlayColor: WidgetStateProperty.all(
-                          (isDarkMode ? AppColors.tertiary : AppColors.primary)
-                              .withValues(alpha: 0.08),
+                          backgroundColor: WidgetStateProperty.resolveWith((
+                            states,
+                          ) {
+                            final isSelected = states.contains(
+                              WidgetState.selected,
+                            );
+                            if (isSelected) {
+                              return isDarkMode
+                                  ? AppColors.tertiary.withValues(alpha: 0.35)
+                                  : AppColors.primary.withValues(alpha: 0.25);
+                            }
+                            return Colors.transparent;
+                          }),
+
+                          foregroundColor: WidgetStateProperty.resolveWith((
+                            states,
+                          ) {
+                            final isSelected = states.contains(
+                              WidgetState.selected,
+                            );
+                            if (isSelected) {
+                              return isDarkMode
+                                  ? AppColors.textDarkPrimary
+                                  : AppColors.textLightPrimary;
+                            }
+                            return isDarkMode
+                                ? AppColors.textDarkSecondary
+                                : AppColors.textLightSecondary;
+                          }),
+
+                          side: WidgetStateProperty.resolveWith((states) {
+                            final isSelected = states.contains(
+                              WidgetState.selected,
+                            );
+                            return BorderSide(
+                              color: isSelected
+                                  ? (isDarkMode
+                                        ? AppColors.tertiary
+                                        : AppColors.primary)
+                                  : (isDarkMode
+                                        ? AppColors.textDarkSecondary
+                                              .withValues(alpha: 0.3)
+                                        : AppColors.textLightSecondary
+                                              .withValues(alpha: 0.3)),
+                              width: 1,
+                            );
+                          }),
+
+                          shape: WidgetStateProperty.all(
+                            RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+
+                          overlayColor: WidgetStateProperty.all(
+                            (isDarkMode
+                                    ? AppColors.tertiary
+                                    : AppColors.primary)
+                                .withValues(alpha: 0.08),
+                          ),
                         ),
                       ),
                     ),
                   ),
-                ),
 
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  child: Text(
-                    'Informazioni',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: textColor,
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    child: Text(
+                      'Informazioni',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: textColor,
+                      ),
                     ),
                   ),
-                ),
-                FutureBuilder<String>(
-                  future: AppInfo.versionWithBuildAsync(),
-                  builder: (context, snap) {
-                    final ver =
-                        snap.data ??
-                        (snap.connectionState == ConnectionState.waiting
-                            ? 'Caricamento...'
-                            : 'N/A');
-                    return SettingsTile(
-                      title: 'Versione',
-                      subtitle: ver,
-                      titleColor: textColor,
-                      subtitleColor: subtitleColor,
-                    );
-                  },
-                ),
-                const SizedBox(height: 4),
-                SettingsTile(
-                  title: 'Termini e Privacy',
-                  titleColor: textColor,
-                  trailing: IconButton(
-                    tooltip: 'Apri Termini e Privacy',
-                    onPressed: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => TermsPrivacyPage()),
+
+                  FutureBuilder<String>(
+                    future: AppInfo.versionWithBuildAsync(),
+                    builder: (context, snap) {
+                      final ver =
+                          snap.data ??
+                          (snap.connectionState == ConnectionState.waiting
+                              ? 'Caricamento...'
+                              : 'N/A');
+
+                      return SettingsTile(
+                        title: 'Versione',
+                        subtitle: ver,
+                        titleColor: textColor,
+                        subtitleColor: subtitleColor,
+                      );
+                    },
+                  ),
+
+                  const SizedBox(height: 4),
+
+                  SettingsTile(
+                    title: 'Termini e Privacy',
+                    titleColor: textColor,
+                    trailing: IconButton(
+                      tooltip: 'Apri Termini e Privacy',
+                      onPressed: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => TermsPrivacyPage()),
+                      ),
+                      icon: Icon(Icons.description_outlined, color: textColor),
                     ),
-                    icon: Icon(Icons.description_outlined, color: textColor),
                   ),
-                ),
-                const SizedBox(height: 4),
-                SettingsTile(
-                  title: 'Contatta supporto',
-                  titleColor: textColor,
-                  subtitle: 'invia feedback o segnala un problema',
-                  subtitleColor: subtitleColor,
-                  trailing: IconButton(
-                    tooltip: 'Contatta supporto',
-                    onPressed: () => openSupportContact(context),
-                    icon: Icon(Icons.email_outlined, color: textColor),
+
+                  const SizedBox(height: 4),
+
+                  SettingsTile(
+                    title: 'Contatta supporto',
+                    subtitle: 'invia feedback o segnala un problema',
+                    titleColor: textColor,
+                    subtitleColor: subtitleColor,
+                    trailing: IconButton(
+                      tooltip: 'Contatta supporto',
+                      onPressed: () => openSupportContact(context),
+                      icon: Icon(Icons.email_outlined, color: textColor),
+                    ),
                   ),
-                ),
-                const Divider(height: 50, color: Colors.grey),
-                SettingsTile(
-                  title: 'Esci',
-                  titleColor: textColor,
-                  trailing: IconButton(
-                    tooltip: 'Disconnettiti',
-                    onPressed: _onLogoutPressed,
-                    icon: Icon(Icons.exit_to_app, size: 28, color: textColor),
+
+                  const Divider(height: 50, color: Colors.grey),
+
+                  SettingsTile(
+                    title: 'Esci',
+                    titleColor: textColor,
+                    trailing: IconButton(
+                      tooltip: 'Disconnettiti',
+                      onPressed: _onLogoutPressed,
+                      icon: Icon(Icons.exit_to_app, size: 28, color: textColor),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 24),
-              ],
-            ),
-          );
-        },
+
+                  const SizedBox(height: 24),
+                ],
+              ),
+            );
+          },
+        ),
       ),
     );
   }

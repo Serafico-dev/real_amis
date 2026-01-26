@@ -190,6 +190,7 @@ class _EditPlayerPageState extends State<EditPlayerPage> {
                           ? Image.file(_image!, height: 200, fit: BoxFit.cover)
                           : CachedNetworkImage(
                               imageUrl: widget.player.imageUrl,
+                              cacheKey: widget.player.id,
                               height: 200,
                               fit: BoxFit.cover,
                               placeholder: (_, _) =>

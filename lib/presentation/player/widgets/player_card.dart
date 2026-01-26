@@ -111,6 +111,7 @@ class PlayerCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(10),
               child: CachedNetworkImage(
                 imageUrl: player.imageUrl,
+                cacheKey: player.id,
                 height: 125,
                 fit: BoxFit.cover,
                 placeholder: (_, _) => Container(

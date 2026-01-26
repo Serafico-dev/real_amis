@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:real_amis/common/helpers/is_dark_mode.dart';
@@ -41,10 +42,16 @@ class TeamCard extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Image.network(
-              team.imageUrl,
+            CachedNetworkImage(
+              imageUrl: team.imageUrl,
+              cacheKey: team.id,
               height: 100,
-              errorBuilder: (_, _, _) => Icon(
+              fit: BoxFit.cover,
+              placeholder: (_, _) => SizedBox(
+                height: 100,
+                child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+              ),
+              errorWidget: (_, _, _) => Icon(
                 Icons.broken_image,
                 size: 64,
                 color: textColor.withValues(alpha: 0.6),

@@ -103,6 +103,7 @@ class _EditTeamPageState extends State<EditTeamPage> {
                           ? Image.file(_image!, height: 200, fit: BoxFit.cover)
                           : CachedNetworkImage(
                               imageUrl: widget.team.imageUrl,
+                              cacheKey: widget.team.id,
                               height: 200,
                               fit: BoxFit.cover,
                               placeholder: (_, _) =>

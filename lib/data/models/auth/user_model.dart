@@ -10,6 +10,11 @@ class UserModel extends UserEntity {
       isAdmin: map['isAdmin'] ?? false,
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {'id': id, 'email': email, 'isAdmin': isAdmin};
+  }
+
   UserModel copyWith({String? id, String? email, bool? isAdmin}) {
     return UserModel(
       id: id ?? this.id,

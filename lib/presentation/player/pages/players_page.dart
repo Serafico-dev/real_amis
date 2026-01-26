@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:real_amis/common/cubits/app_user/app_user_cubit.dart';
+import 'package:real_amis/core/cubits/app_user/app_user_cubit.dart';
 import 'package:real_amis/common/helpers/is_dark_mode.dart';
 import 'package:real_amis/common/widgets/appBar/app_bar_no_nav.dart';
 import 'package:real_amis/common/widgets/loader/loader.dart';

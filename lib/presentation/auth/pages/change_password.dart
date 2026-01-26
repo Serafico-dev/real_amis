@@ -7,7 +7,7 @@ import 'package:real_amis/core/configs/theme/app_colors.dart';
 import 'package:real_amis/core/utils/password_strength.dart';
 import 'package:real_amis/core/utils/show_snackbar.dart';
 import 'package:real_amis/presentation/auth/bloc/auth_bloc.dart';
-import 'package:real_amis/presentation/auth/enums/password_strength.dart';
+
 import 'package:real_amis/presentation/auth/widgets/password_strength_indicator.dart';
 
 class ChangePasswordPage extends StatefulWidget {

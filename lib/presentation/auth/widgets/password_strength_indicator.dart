@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:real_amis/common/helpers/is_dark_mode.dart';
 import 'package:real_amis/core/configs/theme/app_colors.dart';
-import 'package:real_amis/presentation/auth/enums/password_strength.dart';
+import 'package:real_amis/core/utils/password_strength.dart';
 
 class PasswordStrengthIndicator extends StatelessWidget {
   final PasswordStrength strength;

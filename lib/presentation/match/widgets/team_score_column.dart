@@ -20,9 +20,10 @@ class TeamScoreColumn extends StatelessWidget {
       children: [
         SizedBox(
           height: 90,
-          width: double.infinity, // prende tutta la colonna
+          width: double.infinity,
           child: CachedNetworkImage(
             imageUrl: team.imageUrl,
+            cacheKey: team.id,
             fit: BoxFit.contain,
           ),
         ),

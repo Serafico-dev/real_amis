@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/intl.dart';
-import 'package:real_amis/common/cubits/app_user/app_user_cubit.dart';
+import 'package:real_amis/core/cubits/app_user/app_user_cubit.dart';
 import 'package:real_amis/common/helpers/is_dark_mode.dart';
 import 'package:real_amis/common/widgets/appBar/app_bar_yes_nav.dart';
 import 'package:real_amis/common/widgets/loader/loader.dart';
@@ -151,6 +151,7 @@ class PlayerViewerPage extends StatelessWidget {
                         borderRadius: BorderRadius.circular(10),
                         child: CachedNetworkImage(
                           imageUrl: player.imageUrl,
+                          cacheKey: player.id,
                           height: 200,
                           fit: BoxFit.cover,
                           placeholder: (context, url) => Container(

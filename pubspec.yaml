@@ -15,6 +15,7 @@ dependencies:
   flutter:
     sdk: flutter
   flutter_bloc: ^9.1.1
+  flutter_cache_manager: ^3.4.0
   flutter_datetime_picker_plus: ^2.2.0
   flutter_local_notifications: ^19.5.0
   flutter_localization: ^0.3.3

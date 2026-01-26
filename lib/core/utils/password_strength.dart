@@ -1,4 +1,4 @@
-import 'package:real_amis/presentation/auth/enums/password_strength.dart';
+enum PasswordStrength { empty, weak, medium, strong, veryStrong }
 
 PasswordStrength evaluatePassword(String password) {
   if (password.isEmpty) return PasswordStrength.empty;

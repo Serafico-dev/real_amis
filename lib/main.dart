@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localization/flutter_localization.dart';
-import 'package:real_amis/common/cubits/app_user/app_user_cubit.dart';
+import 'package:real_amis/core/cubits/app_user/app_user_cubit.dart';
 import 'package:real_amis/core/configs/locale/local_language.dart';
 import 'package:real_amis/core/configs/theme/app_theme.dart';
 import 'package:real_amis/init_dependencies.dart';
@@ -61,7 +61,6 @@ class _MainAppState extends State<MainApp> {
       initLanguageCode: 'it',
     );
     localization.onTranslatedLanguage = _onTranslatedLanguage;
-    context.read<AuthBloc>().add(AuthIsUserLoggedIn());
   }
 
   @override
