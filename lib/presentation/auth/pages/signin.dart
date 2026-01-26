@@ -55,7 +55,10 @@ class _SigninPageState extends State<SigninPage> {
           child: BlocConsumer<AuthBloc, AuthState>(
             listener: (context, state) {
               if (state is AuthFailure) {
-                if (mounted) showSnackBar(context, state.message);
+                if (mounted) {
+                  final friendlyMsg = getFriendlyErrorMessage(state.message);
+                  showSnackBar(context, friendlyMsg);
+                }
               } else if (state is AuthSuccess) {
                 _handleAuthSuccess();
               }
@@ -234,4 +237,18 @@ class _SignupText extends StatelessWidget {
       ),
     );
   }
+}
+
+String getFriendlyErrorMessage(String rawMessage) {
+  final msg = rawMessage.toLowerCase();
+  if (msg.contains('invalid login credentials') ||
+      msg.contains('invalid password') ||
+      msg.contains('email not found')) {
+    return 'Email o password errata';
+  } else if (msg.contains('user disabled')) {
+    return 'Account disabilitato, contatta il supporto';
+  } else if (msg.contains('network')) {
+    return 'Errore di rete, controlla la connessione';
+  }
+  return 'Si è verificato un errore, riprova';
 }
