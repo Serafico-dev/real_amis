@@ -38,7 +38,9 @@ class AppBarYesNav extends StatelessWidget implements PreferredSizeWidget {
           height: 50,
           width: 50,
           decoration: BoxDecoration(
-            color: Colors.black.withValues(alpha: 0.04),
+            color: context.isDarkMode
+                ? Colors.white.withValues(alpha: 0.08)
+                : Colors.black.withValues(alpha: 0.04),
             shape: BoxShape.circle,
           ),
           child: Icon(

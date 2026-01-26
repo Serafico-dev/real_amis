@@ -10,7 +10,7 @@ import 'package:real_amis/domain/entities/league/league_entity.dart';
 import 'package:real_amis/domain/entities/match/match_entity.dart';
 import 'package:real_amis/presentation/choose_mode/bloc/theme_cubit.dart';
 import 'package:real_amis/presentation/league/bloc/league_bloc.dart';
-import 'package:real_amis/presentation/league/pages/add_new_league.dart';
+import 'package:real_amis/presentation/league/pages/leagues_page.dart';
 import 'package:real_amis/presentation/match/bloc/match_bloc.dart';
 import 'package:real_amis/presentation/match/pages/add_new_match.dart';
 import 'package:real_amis/presentation/match/widgets/empty_matches.dart';
@@ -61,7 +61,7 @@ class _MatchesPageState extends State<MatchesPage> {
           AdminOnly(
             child: PopupMenuButton<_AddMenuAction>(
               tooltip: 'Aggiungi',
-              icon: const Icon(Icons.add, size: 30),
+              icon: const Icon(Icons.menu, size: 30),
               onSelected: (value) async {
                 switch (value) {
                   case _AddMenuAction.match:
@@ -71,9 +71,7 @@ class _MatchesPageState extends State<MatchesPage> {
                   case _AddMenuAction.league:
                     await Navigator.push(
                       context,
-                      MaterialPageRoute(
-                        builder: (_) => const AddNewLeaguePage(),
-                      ),
+                      MaterialPageRoute(builder: (_) => const LeaguesPage()),
                     );
                     if (mounted) _fetchLeagues();
                     break;
@@ -96,7 +94,7 @@ class _MatchesPageState extends State<MatchesPage> {
                     children: [
                       Icon(Icons.emoji_events),
                       SizedBox(width: 8),
-                      Text('Crea campionato'),
+                      Text('Gestisci campionati'),
                     ],
                   ),
                 ),

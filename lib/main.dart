@@ -103,6 +103,5 @@ class _MainAppState extends State<MainApp> {
 /*
 TODO
 - Gestire relazione squadre e campionato
-- Migliorare gestione campionato con modifica/eliminazione?
 - Ulteriori migliore design
 */
