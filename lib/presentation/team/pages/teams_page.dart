@@ -34,13 +34,19 @@ class _TeamsPageState extends State<TeamsPage> {
   @override
   void initState() {
     super.initState();
-    _fetchInitialData();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _fetchInitialData();
+    });
   }
 
   void _fetchInitialData() {
-    context.read<TeamBloc>().add(TeamFetchAllTeams());
-    context.read<LeagueBloc>().add(LeagueFetchAllLeagues());
-    context.read<ScoreBloc>().add(ScoreFetchAllScores());
+    final teamBloc = context.read<TeamBloc>();
+    final leagueBloc = context.read<LeagueBloc>();
+    final scoreBloc = context.read<ScoreBloc>();
+
+    teamBloc.add(TeamFetchAllTeams());
+    leagueBloc.add(LeagueFetchAllLeagues());
+    scoreBloc.add(ScoreFetchAllScores());
   }
 
   Future<void> _refresh() async {
@@ -154,7 +160,9 @@ class _TeamsPageState extends State<TeamsPage> {
           Expanded(
             child: BlocBuilder<TeamBloc, TeamState>(
               builder: (context, teamsState) {
-                if (teamsState is TeamLoading) return const Loader();
+                if (teamsState is TeamLoading || teamsState is TeamInitial) {
+                  return const Center(child: Loader());
+                }
                 if (teamsState is! TeamDisplaySuccess) {
                   return const SizedBox.shrink();
                 }
@@ -164,8 +172,12 @@ class _TeamsPageState extends State<TeamsPage> {
                     if (scoreState is ScoreFailure) {
                       return Center(child: Text(scoreState.error));
                     }
+                    if (scoreState is ScoreLoading ||
+                        scoreState is ScoreInitial) {
+                      return const Center(child: Loader());
+                    }
                     if (scoreState is! ScoreDisplaySuccess) {
-                      return const Loader();
+                      return const SizedBox.shrink();
                     }
 
                     final scores = scoreState.scores;
@@ -177,9 +189,7 @@ class _TeamsPageState extends State<TeamsPage> {
                         final scoreB = _scoreForTeam(b.id, scores);
 
                         final scoreCompare = scoreB.compareTo(scoreA);
-
                         if (scoreCompare != 0) return scoreCompare;
-
                         return a.name.toLowerCase().compareTo(
                           b.name.toLowerCase(),
                         );
@@ -221,14 +231,9 @@ class _TeamsPageState extends State<TeamsPage> {
                                 context,
                                 EditTeamPage.route(team),
                               );
-
                               if (!mounted) return;
-
-                              if (result != null) {
-                                _refresh();
-                              }
+                              if (result != null) _refresh();
                             },
-
                             onEditScore: () async {
                               final result = await Navigator.push<ScoreEntity?>(
                                 context,
@@ -238,11 +243,9 @@ class _TeamsPageState extends State<TeamsPage> {
                                   leagueId: selectedLeague!.id,
                                 ),
                               );
-
                               if (!context.mounted || result == null) return;
 
                               final bloc = context.read<ScoreBloc>();
-
                               if (scores.any((s) => s.id == result.id)) {
                                 bloc.add(
                                   ScoreUpdate(
