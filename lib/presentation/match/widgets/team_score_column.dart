@@ -12,8 +12,33 @@ class TeamScoreColumn extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final team = isHome ? match.homeTeam! : match.awayTeam!;
-    final score = isHome ? match.homeTeamScore : match.awayTeamScore;
+    final team = isHome ? match.homeTeam : match.awayTeam;
+    final score = (isHome ? match.homeTeamScore : match.awayTeamScore) ?? 0;
+
+    if (team == null) {
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            height: 90,
+            width: double.infinity,
+            color: context.isDarkMode ? Colors.grey[800] : Colors.grey[300],
+            child: const Icon(Icons.shield, size: 40),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            score.toString(),
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 24,
+              color: context.isDarkMode
+                  ? AppColors.textDarkPrimary
+                  : AppColors.textLightPrimary,
+            ),
+          ),
+        ],
+      );
+    }
 
     return Column(
       mainAxisSize: MainAxisSize.min,
