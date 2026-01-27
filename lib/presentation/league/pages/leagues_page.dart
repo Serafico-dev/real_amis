@@ -53,29 +53,34 @@ class _LeaguesPageState extends State<LeaguesPage> {
               return const Center(child: Text('Nessun campionato disponibile'));
             }
 
-            return ListView.separated(
-              padding: const EdgeInsets.all(16),
-              itemCount: leagues.length,
-              separatorBuilder: (_, _) => const SizedBox(height: 8),
-              itemBuilder: (context, index) {
-                final league = leagues[index];
-                return Card(
-                  child: ListTile(
-                    title: Text('${league.name} - ${league.year}'),
-                    subtitle: Text('Squadre: ${league.teamIds.length}'),
-                    trailing: const Icon(Icons.edit),
-                    onTap: () async {
-                      await Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => EditLeaguePage(league: league),
-                        ),
-                      );
-                      if (mounted) _fetchLeagues();
-                    },
-                  ),
-                );
+            return RefreshIndicator(
+              onRefresh: () async {
+                _fetchLeagues();
               },
+              child: ListView.separated(
+                padding: const EdgeInsets.all(16),
+                itemCount: leagues.length,
+                separatorBuilder: (_, _) => const SizedBox(height: 8),
+                itemBuilder: (context, index) {
+                  final league = leagues[index];
+                  return Card(
+                    child: ListTile(
+                      title: Text('${league.name} - ${league.year}'),
+                      subtitle: Text('Squadre: ${league.teamIds.length}'),
+                      trailing: const Icon(Icons.edit),
+                      onTap: () async {
+                        await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => EditLeaguePage(league: league),
+                          ),
+                        );
+                        if (mounted) _fetchLeagues();
+                      },
+                    ),
+                  );
+                },
+              ),
             );
           } else if (state is LeagueFailure) {
             return Center(

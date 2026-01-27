@@ -98,60 +98,82 @@ class _EditLeaguePageState extends State<EditLeaguePage> {
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            Form(
-              key: _formKey,
-              child: Column(
-                children: [
-                  TextFieldRequired(
-                    controller: _nameController,
-                    labelText: 'Nome campionato',
-                    hintText: widget.league.name,
-                  ),
-                  const SizedBox(height: 16),
-                  TextFieldRequired(
-                    controller: _yearController,
-                    labelText: 'Anno',
-                    hintText: widget.league.year,
-                    keyboardType: TextInputType.number,
-                  ),
-                  const SizedBox(height: 24),
-                  BlocBuilder<TeamBloc, TeamState>(
-                    builder: (context, state) {
-                      if (state is TeamLoading) return const Loader();
-                      if (state is TeamFailure) {
-                        return Text('Errore caricamento team: ${state.error}');
-                      }
-                      if (state is TeamDisplaySuccess) {
-                        allTeams = state.teams;
-                        selectedTeams = allTeams
-                            .where((t) => widget.league.teamIds.contains(t.id))
-                            .toList();
-                        return TeamsCheckboxSelector(
-                          allTeams: allTeams,
-                          selectedTeams: selectedTeams,
-                          onChanged: (updated) {
-                            setState(() {
-                              selectedTeams = updated;
-                            });
-                          },
-                        );
-                      }
-                      return const SizedBox.shrink();
-                    },
-                  ),
-                  const SizedBox(height: 24),
-                  BasicAppButton(
-                    title: 'Elimina campionato',
-                    onPressed: _deleteLeague,
-                  ),
-                ],
+      body: BlocListener<LeagueBloc, LeagueState>(
+        listener: (context, state) {
+          if (state is LeagueUpdateSuccess) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Campionato aggiornato!')),
+            );
+            Navigator.pop(context, true); // torna alla pagina precedente
+          } else if (state is LeagueFailure) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Errore aggiornamento: ${state.error}')),
+            );
+          }
+        },
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            children: [
+              Form(
+                key: _formKey,
+                child: Column(
+                  children: [
+                    TextFieldRequired(
+                      controller: _nameController,
+                      labelText: 'Nome campionato',
+                      hintText: widget.league.name,
+                    ),
+                    const SizedBox(height: 16),
+                    TextFieldRequired(
+                      controller: _yearController,
+                      labelText: 'Anno',
+                      hintText: widget.league.year,
+                      keyboardType: TextInputType.number,
+                    ),
+                    const SizedBox(height: 24),
+                    BlocBuilder<TeamBloc, TeamState>(
+                      builder: (context, state) {
+                        if (state is TeamLoading) return const Loader();
+                        if (state is TeamFailure) {
+                          return Text(
+                            'Errore caricamento team: ${state.error}',
+                          );
+                        }
+                        if (state is TeamDisplaySuccess) {
+                          if (allTeams.isEmpty) {
+                            allTeams = state.teams;
+                            selectedTeams = allTeams
+                                .where(
+                                  (t) => widget.league.teamIds.contains(t.id),
+                                )
+                                .toList();
+                          }
+
+                          return TeamsCheckboxSelector(
+                            allTeams: allTeams,
+                            selectedTeams: selectedTeams,
+                            onChanged: (updated) {
+                              setState(() {
+                                selectedTeams = updated;
+                              });
+                            },
+                          );
+                        }
+
+                        return const SizedBox.shrink();
+                      },
+                    ),
+                    const SizedBox(height: 24),
+                    BasicAppButton(
+                      title: 'Elimina campionato',
+                      onPressed: _deleteLeague,
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

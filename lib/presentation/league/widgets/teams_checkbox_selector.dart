@@ -18,9 +18,34 @@ class TeamsCheckboxSelector extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Seleziona le squadre',
-          style: TextStyle(fontWeight: FontWeight.bold),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              'Seleziona le squadre',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            PopupMenuButton<String>(
+              icon: const Icon(Icons.more_vert),
+              onSelected: (value) {
+                if (value == 'select_all') {
+                  onChanged(List<TeamEntity>.from(allTeams));
+                } else if (value == 'deselect_all') {
+                  onChanged([]);
+                }
+              },
+              itemBuilder: (context) => [
+                const PopupMenuItem(
+                  value: 'select_all',
+                  child: Text('Seleziona tutte'),
+                ),
+                const PopupMenuItem(
+                  value: 'deselect_all',
+                  child: Text('Deseleziona tutte'),
+                ),
+              ],
+            ),
+          ],
         ),
         const SizedBox(height: 8),
         ...allTeams.map((team) {
