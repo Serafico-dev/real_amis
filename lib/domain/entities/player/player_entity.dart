@@ -28,4 +28,13 @@ class PlayerEntity {
     required this.active,
     this.birthday,
   });
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is PlayerEntity && other.id == id;
+  }
+
+  @override
+  int get hashCode => id.hashCode;
 }

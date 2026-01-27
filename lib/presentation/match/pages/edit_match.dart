@@ -3,9 +3,11 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:real_amis/common/helpers/is_dark_mode.dart';
 import 'package:real_amis/common/widgets/appBar/app_bar_yes_nav.dart';
 import 'package:real_amis/core/configs/theme/app_colors.dart';
+import 'package:real_amis/core/utils/show_snackbar.dart';
 import 'package:real_amis/domain/entities/league/league_entity.dart';
 import 'package:real_amis/domain/entities/match/match_entity.dart';
 import 'package:real_amis/domain/entities/team/team_entity.dart';
+import 'package:real_amis/presentation/league/bloc/league_bloc.dart';
 import 'package:real_amis/presentation/match/bloc/match_bloc.dart';
 import 'package:real_amis/presentation/match/widgets/match_form_section.dart';
 import 'package:real_amis/presentation/match/widgets/teams_dropdown_section.dart';
@@ -33,6 +35,8 @@ class _EditMatchPageState extends State<EditMatchPage> {
   final awayTeamScoreController = TextEditingController();
   final formKey = GlobalKey<FormState>();
 
+  List<TeamEntity> filteredTeams = [];
+
   @override
   void initState() {
     super.initState();
@@ -40,9 +44,16 @@ class _EditMatchPageState extends State<EditMatchPage> {
 
     selectedDate = widget.match.matchDate;
     selectedLeague = widget.match.league;
+    homeTeam = widget.match.homeTeam;
+    awayTeam = widget.match.awayTeam;
+
     matchDayController.text = widget.match.matchDay ?? '';
     homeTeamScoreController.text = (widget.match.homeTeamScore ?? 0).toString();
     awayTeamScoreController.text = (widget.match.awayTeamScore ?? 0).toString();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      setState(() => _updateFilteredTeams());
+    });
   }
 
   @override
@@ -53,8 +64,32 @@ class _EditMatchPageState extends State<EditMatchPage> {
     super.dispose();
   }
 
+  void _updateFilteredTeams() {
+    final allTeamsState = context.read<TeamBloc>().state;
+    if (allTeamsState is TeamDisplaySuccess && selectedLeague != null) {
+      filteredTeams =
+          allTeamsState.teams
+              .where((t) => selectedLeague!.teamIds.contains(t.id))
+              .toList()
+            ..sort(
+              (a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()),
+            );
+
+      if (!filteredTeams.contains(homeTeam)) homeTeam = null;
+      if (!filteredTeams.contains(awayTeam)) awayTeam = null;
+    } else {
+      filteredTeams = [];
+      homeTeam = null;
+      awayTeam = null;
+    }
+  }
+
   void _updateMatch() {
-    if (selectedLeague == null) return;
+    if (selectedLeague == null) {
+      showSnackBar(context, 'Seleziona un campionato!');
+      return;
+    }
+    if (!formKey.currentState!.validate()) return;
 
     context.read<MatchBloc>().add(
       MatchUpdate(
@@ -100,15 +135,58 @@ class _EditMatchPageState extends State<EditMatchPage> {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
+            BlocBuilder<LeagueBloc, LeagueState>(
+              builder: (context, state) {
+                if (state is LeagueDisplaySuccess) {
+                  final leaguesList = List<LeagueEntity>.from(state.leagues)
+                    ..sort((a, b) => b.year.compareTo(a.year));
+
+                  return DropdownButtonFormField<LeagueEntity>(
+                    decoration: const InputDecoration(
+                      labelText: 'Campionato',
+                      border: OutlineInputBorder(),
+                      floatingLabelBehavior: FloatingLabelBehavior.always,
+                    ),
+                    isExpanded: true,
+                    items: leaguesList
+                        .map(
+                          (league) => DropdownMenuItem(
+                            value: league,
+                            child: Text('${league.name} - ${league.year}'),
+                          ),
+                        )
+                        .toList(),
+                    initialValue: selectedLeague,
+                    onChanged: (league) {
+                      setState(() {
+                        selectedLeague = league;
+                        _updateFilteredTeams();
+                      });
+                    },
+                    validator: (value) =>
+                        value == null ? 'Seleziona un campionato' : null,
+                  );
+                } else if (state is LeagueFailure) {
+                  return Text(
+                    'Errore nel caricamento dei campionati',
+                    style: TextStyle(color: AppColors.logoRed),
+                  );
+                } else {
+                  return const Center(child: CircularProgressIndicator());
+                }
+              },
+            ),
+            const SizedBox(height: 16),
+
             TeamsDropdownSection(
               homeTeam: homeTeam,
               awayTeam: awayTeam,
+              filteredTeams: filteredTeams,
               onHomeChanged: (t) => setState(() => homeTeam = t),
               onAwayChanged: (t) => setState(() => awayTeam = t),
-              hintHome: widget.match.homeTeam?.name,
-              hintAway: widget.match.awayTeam?.name,
             ),
             const SizedBox(height: 16),
+
             MatchFormSection(
               formKey: formKey,
               selectedDate: selectedDate,
@@ -117,9 +195,6 @@ class _EditMatchPageState extends State<EditMatchPage> {
               homeTeamScoreController: homeTeamScoreController,
               awayTeamScoreController: awayTeamScoreController,
               match: widget.match,
-              selectedLeague: selectedLeague,
-              onLeagueSelected: (league) =>
-                  setState(() => selectedLeague = league),
               showDeleteButton: true,
             ),
           ],

@@ -33,6 +33,8 @@ class _AddNewMatchPageState extends State<AddNewMatchPage> {
   final awayTeamScoreController = TextEditingController();
   final formKey = GlobalKey<FormState>();
 
+  List<TeamEntity> filteredTeams = [];
+
   @override
   void initState() {
     super.initState();
@@ -46,6 +48,26 @@ class _AddNewMatchPageState extends State<AddNewMatchPage> {
     homeTeamScoreController.dispose();
     awayTeamScoreController.dispose();
     super.dispose();
+  }
+
+  void _updateFilteredTeams() {
+    final allTeamsState = context.read<TeamBloc>().state;
+    if (allTeamsState is TeamDisplaySuccess && selectedLeague != null) {
+      filteredTeams =
+          allTeamsState.teams
+              .where((t) => selectedLeague!.teamIds.contains(t.id))
+              .toList()
+            ..sort(
+              (a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()),
+            );
+
+      if (!filteredTeams.contains(homeTeam)) homeTeam = null;
+      if (!filteredTeams.contains(awayTeam)) awayTeam = null;
+    } else {
+      filteredTeams = [];
+      homeTeam = null;
+      awayTeam = null;
+    }
   }
 
   void _uploadMatch() {
@@ -94,13 +116,58 @@ class _AddNewMatchPageState extends State<AddNewMatchPage> {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
+            BlocBuilder<LeagueBloc, LeagueState>(
+              builder: (context, state) {
+                if (state is LeagueDisplaySuccess) {
+                  final leaguesList = List<LeagueEntity>.from(state.leagues)
+                    ..sort((a, b) => b.year.compareTo(a.year));
+
+                  return DropdownButtonFormField<LeagueEntity>(
+                    decoration: const InputDecoration(
+                      labelText: 'Campionato',
+                      border: OutlineInputBorder(),
+                      floatingLabelBehavior: FloatingLabelBehavior.always,
+                    ),
+                    isExpanded: true,
+                    items: leaguesList
+                        .map(
+                          (league) => DropdownMenuItem(
+                            value: league,
+                            child: Text('${league.name} - ${league.year}'),
+                          ),
+                        )
+                        .toList(),
+                    initialValue: selectedLeague,
+                    onChanged: (league) {
+                      setState(() {
+                        selectedLeague = league;
+                        _updateFilteredTeams();
+                      });
+                    },
+                    validator: (value) =>
+                        value == null ? 'Seleziona un campionato' : null,
+                  );
+                } else if (state is LeagueFailure) {
+                  return Text(
+                    'Errore nel caricamento dei campionati',
+                    style: TextStyle(color: AppColors.logoRed),
+                  );
+                } else {
+                  return const Center(child: CircularProgressIndicator());
+                }
+              },
+            ),
+            const SizedBox(height: 16),
+
             TeamsDropdownSection(
               homeTeam: homeTeam,
               awayTeam: awayTeam,
+              filteredTeams: filteredTeams,
               onHomeChanged: (t) => setState(() => homeTeam = t),
               onAwayChanged: (t) => setState(() => awayTeam = t),
             ),
             const SizedBox(height: 16),
+
             MatchFormSection(
               formKey: formKey,
               selectedDate: selectedDate,
@@ -108,9 +175,6 @@ class _AddNewMatchPageState extends State<AddNewMatchPage> {
               matchDayController: matchDayController,
               homeTeamScoreController: homeTeamScoreController,
               awayTeamScoreController: awayTeamScoreController,
-              selectedLeague: selectedLeague,
-              onLeagueSelected: (league) =>
-                  setState(() => selectedLeague = league),
             ),
           ],
         ),

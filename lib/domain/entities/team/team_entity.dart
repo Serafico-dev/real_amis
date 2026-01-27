@@ -10,4 +10,13 @@ class TeamEntity {
     required this.name,
     required this.imageUrl,
   });
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is TeamEntity && other.id == id;
+  }
+
+  @override
+  int get hashCode => id.hashCode;
 }

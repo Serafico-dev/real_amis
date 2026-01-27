@@ -19,4 +19,13 @@ class EventEntity {
     required this.eventType,
     this.team,
   });
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is EventEntity && other.id == id;
+  }
+
+  @override
+  int get hashCode => id.hashCode;
 }

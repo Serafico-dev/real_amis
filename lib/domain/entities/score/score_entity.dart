@@ -10,4 +10,13 @@ class ScoreEntity {
     required this.leagueId,
     required this.score,
   });
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is ScoreEntity && other.id == id;
+  }
+
+  @override
+  int get hashCode => id.hashCode;
 }
