@@ -10,10 +10,10 @@ class ScoreModel extends ScoreEntity {
 
   factory ScoreModel.fromJson(Map<String, dynamic> json) {
     return ScoreModel(
-      id: json['id'],
-      teamId: json['team_id'],
-      leagueId: json['league_id'],
-      score: json['score'],
+      id: json['id'] as String? ?? '',
+      teamId: json['team_id'] as String? ?? '',
+      leagueId: json['league_id'] as String? ?? '',
+      score: json['score'] as int? ?? 0,
     );
   }
 

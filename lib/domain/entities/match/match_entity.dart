@@ -12,7 +12,7 @@ class MatchEntity {
   final String? matchDay;
   final TeamEntity? homeTeam;
   final TeamEntity? awayTeam;
-  final String leagueId;
+  final String? leagueId;
   final LeagueEntity? league;
 
   MatchEntity({
@@ -26,7 +26,7 @@ class MatchEntity {
     this.matchDay,
     this.homeTeam,
     this.awayTeam,
-    required this.leagueId,
+    this.leagueId,
     this.league,
   });
 }

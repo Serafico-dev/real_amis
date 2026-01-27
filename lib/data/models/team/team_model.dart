@@ -19,20 +19,20 @@ class TeamModel extends TeamEntity {
 
   factory TeamModel.fromJson(Map<String, dynamic> map) {
     return TeamModel(
-      id: map['id'] ?? '',
-      updatedAt: map['updated_at'] == null
-          ? DateTime.now()
-          : DateTime.parse(map['updated_at']),
-      name: map['name'] ?? '',
-      imageUrl: map['image_url'] ?? '',
+      id: map['id'] as String? ?? '',
+      updatedAt: map['updated_at'] != null
+          ? DateTime.tryParse(map['updated_at'].toString()) ?? DateTime.now()
+          : DateTime.now(),
+      name: map['name'] as String? ?? '',
+      imageUrl: map['image_url'] as String? ?? '',
     );
   }
+
   TeamModel copyWith({
     String? id,
     DateTime? updatedAt,
     String? name,
     String? imageUrl,
-    int? score,
   }) {
     return TeamModel(
       id: id ?? this.id,

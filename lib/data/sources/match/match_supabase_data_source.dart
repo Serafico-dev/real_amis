@@ -34,7 +34,7 @@ class MatchSupabaseDataSourceImpl implements MatchSupabaseDataSource {
       final matches = await supabaseClient
           .from('matches')
           .select(
-            '*, HomeTeam:home_team_id(name,image_url), AwayTeam:away_team_id(name,image_url), League:league_id(name,year)',
+            '*, home_team:home_team_id(id,name,image_url), away_team:away_team_id(id,name,image_url)',
           );
       return (matches as List)
           .map((match) => MatchModel.fromJson(match as Map<String, dynamic>))

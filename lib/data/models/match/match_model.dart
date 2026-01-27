@@ -26,34 +26,35 @@ class MatchModel extends MatchEntity {
       'match_date': matchDate.toIso8601String(),
       'home_team_id': homeTeamId,
       'away_team_id': awayTeamId,
-      'home_team_score': homeTeamScore,
-      'away_team_score': awayTeamScore,
-      'match_day': matchDay,
-      'league_id': leagueId, // inviamo solo l'id
+      'home_team_score': homeTeamScore ?? 0,
+      'away_team_score': awayTeamScore ?? 0,
+      'match_day': matchDay ?? '',
+      'league_id': leagueId,
     };
   }
 
   factory MatchModel.fromJson(Map<String, dynamic> map) {
     return MatchModel(
-      id: map['id'] ?? '',
-      updatedAt: map['updated_at'] == null
-          ? DateTime.now()
-          : DateTime.parse(map['updated_at']),
-      matchDate: map['match_date'] == null
-          ? DateTime.now()
-          : DateTime.parse(map['match_date']),
-      homeTeamId: map['home_team_id'] ?? '',
-      awayTeamId: map['away_team_id'] ?? '',
-      homeTeamScore: map['home_team_score'] ?? 0,
-      awayTeamScore: map['away_team_score'] ?? 0,
-      matchDay: map['match_day'] ?? '',
-      homeTeam: map['HomeTeam'] != null
-          ? TeamModel.fromJson(map['HomeTeam'] as Map<String, dynamic>)
+      id: map['id'] as String? ?? '',
+      updatedAt: map['updated_at'] != null
+          ? DateTime.tryParse(map['updated_at'].toString()) ?? DateTime.now()
+          : DateTime.now(),
+      matchDate: map['match_date'] != null
+          ? DateTime.tryParse(map['match_date'].toString()) ?? DateTime.now()
+          : DateTime.now(),
+      homeTeamId: map['home_team_id'] as String? ?? '',
+      awayTeamId: map['away_team_id'] as String? ?? '',
+      homeTeamScore: map['home_team_score'] as int? ?? 0,
+      awayTeamScore: map['away_team_score'] as int? ?? 0,
+      matchDay: map['match_day']?.toString() ?? '',
+      homeTeam: map['home_team'] != null
+          ? TeamModel.fromJson(map['home_team'] as Map<String, dynamic>)
           : null,
-      awayTeam: map['AwayTeam'] != null
-          ? TeamModel.fromJson(map['AwayTeam'] as Map<String, dynamic>)
+      awayTeam: map['away_team'] != null
+          ? TeamModel.fromJson(map['away_team'] as Map<String, dynamic>)
           : null,
-      leagueId: map['league_id'] ?? '',
+
+      leagueId: map['league_id'] as String? ?? '',
       league: map['League'] != null
           ? LeagueModel.fromJson(map['League'] as Map<String, dynamic>)
           : null,

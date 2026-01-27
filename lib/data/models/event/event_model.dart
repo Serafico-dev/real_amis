@@ -26,12 +26,12 @@ class EventModel extends EventEntity {
 
   factory EventModel.fromJson(Map<String, dynamic> map) {
     return EventModel(
-      id: map['id'] ?? '',
-      matchId: map['match_id'] ?? '',
-      teamId: map['team_id'] ?? '',
-      player: map['player'] ?? '',
-      minutes: map['minutes'] ?? 0,
-      eventType: EventTypeX.fromString((map['event'] ?? '') as String),
+      id: map['id'] as String? ?? '',
+      matchId: map['match_id'] as String? ?? '',
+      teamId: map['team_id'] as String? ?? '',
+      player: map['player'] as String? ?? '',
+      minutes: map['minutes'] as int? ?? 0,
+      eventType: EventTypeX.fromString(map['event'] as String? ?? ''),
       team: map['team'] != null
           ? TeamModel.fromJson(map['team'] as Map<String, dynamic>)
           : null,

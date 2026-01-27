@@ -25,10 +25,10 @@ class PlayerModel extends PlayerEntity {
       'full_name': fullName,
       'image_url': imageUrl,
       'role': role.value,
-      'attendances': attendances,
-      'goals': goals,
-      'yellow_cards': yellowCards,
-      'red_cards': redCards,
+      'attendances': attendances ?? 0,
+      'goals': goals ?? 0,
+      'yellow_cards': yellowCards ?? 0,
+      'red_cards': redCards ?? 0,
       'active': active,
       'birthday': birthday?.toIso8601String(),
     };
@@ -36,21 +36,21 @@ class PlayerModel extends PlayerEntity {
 
   factory PlayerModel.fromJson(Map<String, dynamic> map) {
     return PlayerModel(
-      id: map['id'] ?? '',
+      id: map['id'] as String? ?? '',
       updatedAt: map['updated_at'] != null
-          ? DateTime.parse(map['updated_at'])
+          ? DateTime.tryParse(map['updated_at'].toString()) ?? DateTime.now()
           : DateTime.now(),
-      userName: map['username'] ?? '',
-      fullName: map['full_name'] ?? '',
-      imageUrl: map['image_url'] ?? '',
-      role: PlayerRoleX.fromString(map['role'] ?? ''),
-      attendances: map['attendances'] ?? 0,
-      goals: map['goals'] ?? 0,
-      yellowCards: map['yellow_cards'] ?? 0,
-      redCards: map['red_cards'] ?? 0,
-      active: map['active'] ?? false,
+      userName: map['username'] as String? ?? '',
+      fullName: map['full_name'] as String? ?? '',
+      imageUrl: map['image_url'] as String? ?? '',
+      role: PlayerRoleX.fromString(map['role'] as String? ?? ''),
+      attendances: map['attendances'] as int? ?? 0,
+      goals: map['goals'] as int? ?? 0,
+      yellowCards: map['yellow_cards'] as int? ?? 0,
+      redCards: map['red_cards'] as int? ?? 0,
+      active: map['active'] as bool? ?? false,
       birthday: map['birthday'] != null
-          ? DateTime.parse(map['birthday'])
+          ? DateTime.tryParse(map['birthday'].toString())
           : null,
     );
   }

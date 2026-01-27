@@ -100,26 +100,37 @@ class LeagueRepositoryImpl implements LeagueRepository {
         id: league.id,
         name: name ?? league.name,
         year: year ?? league.year,
-        teamIds: teamIds ?? league.teamIds,
       );
 
-      final leagueResult = await leagueSupabaseDataSource.updateLeague(
-        updatedModel,
-      );
+      await leagueSupabaseDataSource.updateLeague(updatedModel);
+
+      List<String> finalTeamIds = league.teamIds;
 
       if (teamIds != null) {
         final existingTeamIds = await leagueSupabaseDataSource
             .getTeamIdsByLeague(league.id);
-        for (var oldId in existingTeamIds) {
-          await leagueSupabaseDataSource.removeTeamFromLeague(league.id, oldId);
+
+        final oldSet = existingTeamIds.toSet();
+        final newSet = teamIds.toSet();
+
+        final toRemove = oldSet.difference(newSet);
+        final toAdd = newSet.difference(oldSet);
+
+        for (final teamId in toRemove) {
+          await leagueSupabaseDataSource.removeTeamFromLeague(
+            league.id,
+            teamId,
+          );
         }
 
-        for (var newId in teamIds) {
-          await leagueSupabaseDataSource.addTeamToLeague(league.id, newId);
+        for (final teamId in toAdd) {
+          await leagueSupabaseDataSource.addTeamToLeague(league.id, teamId);
         }
+
+        finalTeamIds = teamIds;
       }
 
-      return right(leagueResult);
+      return right(updatedModel.copyWith(teamIds: finalTeamIds));
     } on ServerException catch (e) {
       return left(Failure(e.message));
     }

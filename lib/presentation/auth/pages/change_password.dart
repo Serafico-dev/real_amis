@@ -152,7 +152,6 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
 
                     const SizedBox(height: 12),
 
-                    /// Conferma password
                     _PasswordField(
                       controller: _confirmPasswordController,
                       hintText: 'Conferma nuova password',

@@ -19,11 +19,11 @@ class LeagueModel extends LeagueEntity {
 
   factory LeagueModel.fromJson(Map<String, dynamic> map) {
     return LeagueModel(
-      id: map['id'] ?? '',
-      name: map['name'] ?? '',
-      year: map['year'] ?? '',
+      id: map['id'] as String? ?? '',
+      name: map['name'] as String? ?? '',
+      year: map['year'] as String? ?? '',
       teamIds: map['team_ids'] != null
-          ? List<String>.from(map['team_ids'])
+          ? List<String>.from(map['team_ids'] as List<dynamic>)
           : [],
     );
   }

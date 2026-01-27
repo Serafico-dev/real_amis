@@ -4,7 +4,7 @@ class AppColors {
   // =========================================================
   // BRAND (logo – NON usare direttamente per background pieni)
   // =========================================================
-  static const Color logoRed  = Color(0xFF871B2B);
+  static const Color logoRed = Color(0xFF871B2B);
   static const Color logoBlue = Color(0xFF113073);
   static const Color logoGold = Color(0xFFB8A678);
   static const Color logoTeal = Color(0xFF7698A2);
@@ -46,41 +46,41 @@ class AppColors {
   // =========================================================
 
   // Light theme
-  static const Color textLightPrimary   = Color(0xFF111111); // AAA
+  static const Color textLightPrimary = Color(0xFF111111); // AAA
   static const Color textLightSecondary = Color(0xFF5A5F66); // AA
 
   // Dark theme
-  static const Color textDarkPrimary    = Color(0xFFEDEDED); // AAA
-  static const Color textDarkSecondary  = Color(0xFFB5BAC1); // AA
+  static const Color textDarkPrimary = Color(0xFFEDEDED); // AAA
+  static const Color textDarkSecondary = Color(0xFFB5BAC1); // AA
 
   // =========================================================
   // ICONS
   // =========================================================
   static const Color iconLight = textLightPrimary;
-  static const Color iconDark  = textDarkPrimary;
+  static const Color iconDark = textDarkPrimary;
 
   // =========================================================
   // INPUT FIELDS
   // =========================================================
 
   static const Color inputBorderLight = Color(0xFFCED4DA);
-  static const Color inputBorderDark  = Color(0xFF3A4048);
+  static const Color inputBorderDark = Color(0xFF3A4048);
 
   static const Color inputFillLight = Color(0x0D7698A2); // teal @ 5%
-  static const Color inputFillDark  = Color(0x1A7698A2); // teal @ 10%
+  static const Color inputFillDark = Color(0x1A7698A2); // teal @ 10%
 
   static const Color inputTextLight = textLightPrimary;
-  static const Color inputTextDark  = textDarkPrimary;
+  static const Color inputTextDark = textDarkPrimary;
 
   // =========================================================
   // BUTTONS
   // =========================================================
 
   static const Color buttonPrimaryLight = primary;
-  static const Color buttonPrimaryDark  = primary;
+  static const Color buttonPrimaryDark = primary;
 
   static const Color buttonSecondaryLight = secondary;
-  static const Color buttonSecondaryDark  = secondary;
+  static const Color buttonSecondaryDark = secondary;
 
   static const Color buttonDisabled = Color(0xFF9EA3A8);
 
@@ -89,14 +89,14 @@ class AppColors {
   // =========================================================
 
   static const Color dividerLight = Color(0xFFE0E3E7);
-  static const Color dividerDark  = Color(0xFF2A2F36);
+  static const Color dividerDark = Color(0xFF2A2F36);
 
   // =========================================================
   // SHADOWS / ELEVATION
   // =========================================================
 
   static const Color shadowLight = Color.fromRGBO(0, 0, 0, 0.06);
-  static const Color shadowDark  = Color.fromRGBO(0, 0, 0, 0.6);
+  static const Color shadowDark = Color.fromRGBO(0, 0, 0, 0.6);
 
   // =========================================================
   // MATCH CARD / ALTERNATING LIST COLORS

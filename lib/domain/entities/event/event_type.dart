@@ -12,7 +12,7 @@ extension EventTypeX on EventType {
     }
   }
 
-  static EventType fromString(String s) {
+  static EventType fromString(String? s) {
     switch (s) {
       case 'Goal':
         return EventType.goal;

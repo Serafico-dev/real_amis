@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:real_amis/common/helpers/is_dark_mode.dart';
+import 'package:real_amis/common/widgets/button/basic_app_button.dart';
+import 'package:real_amis/common/widgets/textFields/number_field_required.dart';
+import 'package:real_amis/common/widgets/textFields/text_field_required.dart';
 import 'package:real_amis/core/configs/theme/app_colors.dart';
 import 'package:real_amis/core/utils/show_snackbar.dart';
 import 'package:real_amis/domain/entities/event/event_type.dart';
@@ -47,6 +49,7 @@ class _AddEventFormState extends State<AddEventForm> {
         eventType: selectedType,
       ),
     );
+
     setState(() => _submitting = true);
   }
 
@@ -83,147 +86,102 @@ class _AddEventFormState extends State<AddEventForm> {
           setState(() => _submitting = false);
         }
       },
-      child: Column(
-        children: [
-          TeamSelector(
-            match: widget.match,
-            teamSide: teamSide,
-            onChanged: (v) => setState(() => teamSide = v),
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            minWidth: MediaQuery.of(context).size.width,
           ),
-          const SizedBox(height: 12),
-          Form(
-            key: _formKey,
-            child: Column(
-              children: [
-                TextFormField(
-                  controller: playerController,
-                  style: TextStyle(color: textColor),
-                  decoration: InputDecoration(
-                    labelText: 'Giocatore',
-                    labelStyle: TextStyle(color: secondaryTextColor),
-                    filled: true,
-                    fillColor: inputFillColor,
-                    enabledBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: inputBorderColor),
-                      borderRadius: BorderRadius.circular(8),
+          child: Column(
+            children: [
+              TeamSelector(
+                match: widget.match,
+                teamSide: teamSide,
+                onChanged: (v) => setState(() => teamSide = v),
+              ),
+              const SizedBox(height: 12),
+              Form(
+                key: _formKey,
+                child: Column(
+                  children: [
+                    TextFieldRequired(
+                      controller: playerController,
+                      labelText: 'Giocatore',
+                      hintText: 'Nome giocatore',
                     ),
-                    focusedBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: AppColors.primary),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                  validator: (v) => (v == null || v.trim().isEmpty)
-                      ? 'Inserisci un giocatore'
-                      : null,
-                ),
-                const SizedBox(height: 12),
+                    const SizedBox(height: 12),
 
-                TextFormField(
-                  controller: minuteController,
-                  keyboardType: TextInputType.number,
-                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                  style: TextStyle(color: textColor),
-                  decoration: InputDecoration(
-                    labelText: 'Minuto',
-                    labelStyle: TextStyle(color: secondaryTextColor),
-                    filled: true,
-                    fillColor: inputFillColor,
-                    enabledBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: inputBorderColor),
-                      borderRadius: BorderRadius.circular(8),
+                    NumberFieldRequired(
+                      controller: minuteController,
+                      labelText: 'Minuto',
+                      hintText: '0',
                     ),
-                    focusedBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: AppColors.primary),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                  validator: (v) {
-                    if (v == null || v.trim().isEmpty) {
-                      return 'Inserisci il minuto';
-                    }
-                    final n = int.tryParse(v.trim());
-                    if (n == null || n < 0) return 'Minuto non valido';
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 12),
+                    const SizedBox(height: 12),
 
-                DropdownButtonFormField<EventType>(
-                  initialValue: selectedType,
-                  items: EventType.values
-                      .map(
-                        (e) => DropdownMenuItem(
-                          value: e,
-                          child: Text(
-                            e.value,
-                            style: TextStyle(color: textColor),
+                    DropdownButtonFormField<EventType>(
+                      initialValue: selectedType,
+                      items: EventType.values
+                          .map(
+                            (e) => DropdownMenuItem(
+                              value: e,
+                              child: Text(
+                                e.value,
+                                style: TextStyle(color: textColor),
+                              ),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: (v) {
+                        if (v == null) return;
+                        setState(() => selectedType = v);
+                      },
+                      decoration: InputDecoration(
+                        labelText: 'Tipo evento',
+                        labelStyle: TextStyle(color: secondaryTextColor),
+                        filled: true,
+                        fillColor: inputFillColor,
+                        enabledBorder: OutlineInputBorder(
+                          borderSide: BorderSide(color: inputBorderColor),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderSide: BorderSide(color: AppColors.primary),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    Row(
+                      children: [
+                        Expanded(
+                          child: BasicAppButton(
+                            onPressed: _submitting
+                                ? null
+                                : () => Navigator.of(context).pop(),
+                            title: 'Annulla',
+                            isOutline: true,
                           ),
                         ),
-                      )
-                      .toList(),
-                  onChanged: (v) {
-                    if (v == null) return;
-                    setState(() => selectedType = v);
-                  },
-                  decoration: InputDecoration(
-                    labelText: 'Tipo evento',
-                    labelStyle: TextStyle(color: secondaryTextColor),
-                    filled: true,
-                    fillColor: inputFillColor,
-                    enabledBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: inputBorderColor),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: AppColors.primary),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 12),
-
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: _submitting
-                            ? null
-                            : () => Navigator.of(context).pop(),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: textColor,
-                          side: BorderSide(color: AppColors.secondary),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: BasicAppButton(
+                            onPressed: _submitting ? null : _submit,
+                            title: _submitting
+                                ? 'Aggiunta in corso...'
+                                : 'Aggiungi',
+                          ),
                         ),
-                        child: const Text('Annulla'),
-                      ),
+                      ],
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: _submitting ? null : _submit,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                          foregroundColor: Colors.white,
-                        ),
-                        child: _submitting
-                            ? const SizedBox(
-                                height: 16,
-                                width: 16,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Colors.white,
-                                ),
-                              )
-                            : const Text('Aggiungi'),
-                      ),
-                    ),
+
+                    const SizedBox(height: 16),
                   ],
                 ),
-                const SizedBox(height: 16),
-              ],
-            ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
