@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:real_amis/common/helpers/is_dark_mode.dart';
 import 'package:real_amis/common/widgets/loader/loader.dart';
-import 'package:real_amis/core/configs/theme/app_colors.dart';
 import 'package:real_amis/domain/entities/team/team_entity.dart';
 import 'package:real_amis/presentation/team/bloc/team_bloc.dart';
 
@@ -50,61 +48,44 @@ class TeamsDropdownSection extends StatelessWidget {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              SizedBox(
-                width: double.infinity,
-                child: DropdownButtonFormField<TeamEntity>(
-                  isExpanded: true,
-                  initialValue: homeTeams.contains(homeTeam) ? homeTeam : null,
-                  hint: Text(
-                    hintHome ?? 'Squadra in Casa',
-                    style: TextStyle(
-                      color: context.isDarkMode
-                          ? AppColors.textDarkSecondary
-                          : AppColors.textLightSecondary,
-                    ),
-                  ),
-                  items: homeTeams
-                      .map(
-                        (team) => DropdownMenuItem(
-                          value: team,
-                          child: Text(
-                            team.name,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      )
-                      .toList(),
-                  onChanged: onHomeChanged,
+              DropdownButtonFormField<TeamEntity>(
+                isExpanded: true,
+                decoration: InputDecoration(
+                  labelText: 'Squadra in Casa',
+                  hintText: hintHome ?? 'Seleziona la squadra di casa',
+                  border: const OutlineInputBorder(),
+                  floatingLabelBehavior: FloatingLabelBehavior.always,
                 ),
+                initialValue: homeTeams.contains(homeTeam) ? homeTeam : null,
+                items: homeTeams
+                    .map(
+                      (team) => DropdownMenuItem(
+                        value: team,
+                        child: Text(team.name, overflow: TextOverflow.ellipsis),
+                      ),
+                    )
+                    .toList(),
+                onChanged: onHomeChanged,
               ),
               const SizedBox(height: 15),
-
-              SizedBox(
-                width: double.infinity,
-                child: DropdownButtonFormField<TeamEntity>(
-                  isExpanded: true,
-                  initialValue: awayTeams.contains(awayTeam) ? awayTeam : null,
-                  hint: Text(
-                    hintAway ?? 'Squadra Ospite',
-                    style: TextStyle(
-                      color: context.isDarkMode
-                          ? AppColors.textDarkSecondary
-                          : AppColors.textLightSecondary,
-                    ),
-                  ),
-                  items: awayTeams
-                      .map(
-                        (team) => DropdownMenuItem(
-                          value: team,
-                          child: Text(
-                            team.name,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      )
-                      .toList(),
-                  onChanged: onAwayChanged,
+              DropdownButtonFormField<TeamEntity>(
+                isExpanded: true,
+                decoration: InputDecoration(
+                  labelText: 'Squadra Ospite',
+                  hintText: hintAway ?? 'Seleziona la squadra ospite',
+                  border: const OutlineInputBorder(),
+                  floatingLabelBehavior: FloatingLabelBehavior.always,
                 ),
+                initialValue: awayTeams.contains(awayTeam) ? awayTeam : null,
+                items: awayTeams
+                    .map(
+                      (team) => DropdownMenuItem(
+                        value: team,
+                        child: Text(team.name, overflow: TextOverflow.ellipsis),
+                      ),
+                    )
+                    .toList(),
+                onChanged: onAwayChanged,
               ),
             ],
           );

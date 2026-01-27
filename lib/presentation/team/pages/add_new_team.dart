@@ -51,9 +51,9 @@ class _AddNewTeamPageState extends State<AddNewTeamPage> {
   }
 
   Widget _buildImagePicker(BuildContext context) {
-    final isDarkMode = context.isDarkMode;
-    final borderColor = isDarkMode ? AppColors.tertiary : AppColors.secondary;
-    final iconColor = isDarkMode
+    final isDark = context.isDarkMode;
+    final borderColor = isDark ? AppColors.tertiary : AppColors.secondary;
+    final iconColor = isDark
         ? AppColors.textDarkPrimary
         : AppColors.textLightPrimary;
 
@@ -102,27 +102,27 @@ class _AddNewTeamPageState extends State<AddNewTeamPage> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = context.isDarkMode;
+
     return Scaffold(
       appBar: AppBarYesNav(
         title: const Text('Aggiungi una squadra'),
         actions: [
           IconButton(
             onPressed: _uploadTeam,
-            icon: const Icon(Icons.done_rounded, size: 25),
+            icon: Icon(
+              Icons.done_rounded,
+              size: 25,
+              color: isDark ? AppColors.iconDark : AppColors.iconLight,
+            ),
             tooltip: 'Salva',
-            color: context.isDarkMode
-                ? AppColors.iconDark
-                : AppColors.iconLight,
           ),
         ],
       ),
       body: BlocConsumer<TeamBloc, TeamState>(
         listener: (context, state) {
-          if (state is TeamFailure) {
-            showSnackBar(context, state.error);
-          } else if (state is TeamUploadSuccess) {
-            Navigator.pop(context);
-          }
+          if (state is TeamFailure) showSnackBar(context, state.error);
+          if (state is TeamUploadSuccess) Navigator.pop(context);
         },
         builder: (context, state) {
           final isLoading = state is TeamLoading;
@@ -134,10 +134,11 @@ class _AddNewTeamPageState extends State<AddNewTeamPage> {
               child: Column(
                 children: [
                   _buildImagePicker(context),
-                  const SizedBox(height: 30),
+                  const SizedBox(height: 20),
                   TextFieldRequired(
                     controller: _nameController,
-                    hintText: 'Nome',
+                    labelText: 'Nome squadra',
+                    hintText: 'Inserisci il nome',
                   ),
                   if (isLoading)
                     const Padding(

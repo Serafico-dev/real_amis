@@ -50,13 +50,21 @@ class AuthSupabaseDataSourceImpl implements AuthSupabaseDataSource {
   }) async {
     try {
       final response = await supabaseClient.auth.signInWithPassword(
-        password: password,
         email: email,
+        password: password,
       );
+
       if (response.user == null) {
         throw ServerException('User is null!');
       }
-      return UserModel.fromJson(response.user!.toJson());
+
+      final userData = await supabaseClient
+          .from('profiles')
+          .select()
+          .eq('id', response.user!.id)
+          .single();
+
+      return UserModel.fromJson({...userData, 'email': response.user!.email});
     } on AuthException catch (e) {
       throw ServerException(e.message);
     } catch (e) {
@@ -71,18 +79,27 @@ class AuthSupabaseDataSourceImpl implements AuthSupabaseDataSource {
   }) async {
     try {
       final response = await supabaseClient.auth.signUp(
-        password: password,
         email: email,
+        password: password,
       );
+
+      if (response.user == null) {
+        throw ServerException('User is null!');
+      }
+
       final session = supabaseClient.auth.currentSession;
       if (session != null) {
         final sessionJson = jsonEncode(session.toJson());
         await serviceLocator<SecureStorage>().saveSession(sessionJson);
       }
-      if (response.user == null) {
-        throw ServerException('User is null!');
-      }
-      return UserModel.fromJson(response.user!.toJson());
+
+      final userData = await supabaseClient
+          .from('profiles')
+          .select()
+          .eq('id', response.user!.id)
+          .single();
+
+      return UserModel.fromJson({...userData, 'email': response.user!.email});
     } on AuthException catch (e) {
       throw ServerException(e.message);
     } catch (e) {
@@ -93,14 +110,15 @@ class AuthSupabaseDataSourceImpl implements AuthSupabaseDataSource {
   @override
   Future<UserModel?> getCurrentUserData() async {
     try {
-      if (currentUserSession != null) {
+      final session = currentUserSession;
+      if (session != null) {
         final userData = await supabaseClient
             .from('profiles')
             .select()
-            .eq('id', currentUserSession!.user.id);
-        return UserModel.fromJson(
-          userData.first,
-        ).copyWith(email: currentUserSession!.user.email);
+            .eq('id', session.user.id)
+            .single();
+
+        return UserModel.fromJson({...userData, 'email': session.user.email});
       }
       return null;
     } catch (e) {

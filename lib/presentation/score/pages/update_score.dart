@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:real_amis/common/widgets/appBar/app_bar_yes_nav.dart';
+import 'package:real_amis/common/widgets/textFields/number_field_nullable.dart';
 import 'package:real_amis/core/utils/show_snackbar.dart';
 import 'package:real_amis/domain/entities/score/score_entity.dart';
 
@@ -33,7 +34,6 @@ class UpdateScorePage extends StatefulWidget {
 
 class _UpdateScorePageState extends State<UpdateScorePage> {
   late TextEditingController _controller;
-  int currentScore = 0;
 
   @override
   void initState() {
@@ -49,6 +49,7 @@ class _UpdateScorePageState extends State<UpdateScorePage> {
       showSnackBar(context, "Inserisci un numero valido");
       return;
     }
+
     final updatedEntity = ScoreEntity(
       id: widget.scoreEntity.id,
       leagueId: widget.leagueId,
@@ -70,10 +71,10 @@ class _UpdateScorePageState extends State<UpdateScorePage> {
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),
-        child: TextFormField(
+        child: NumberFieldNullable(
           controller: _controller,
-          keyboardType: TextInputType.number,
-          decoration: const InputDecoration(labelText: "Punteggio"),
+          labelText: 'Punteggio',
+          hintText: '0',
         ),
       ),
     );

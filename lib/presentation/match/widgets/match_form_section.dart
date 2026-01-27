@@ -66,6 +66,7 @@ class MatchFormSection extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  // Selettore data
                   Text(
                     selectedDate == null
                         ? 'Non hai ancora scelto una data'
@@ -119,29 +120,22 @@ class MatchFormSection extends StatelessWidget {
                           orElse: () => leaguesList.first,
                         );
 
-                        return SizedBox(
-                          width: double.infinity,
-                          child: DropdownButtonFormField<LeagueEntity>(
-                            decoration: const InputDecoration(
-                              labelText: 'Campionato',
-                              border: OutlineInputBorder(),
-                            ),
-                            initialValue: initialLeague,
-                            isExpanded: true,
-                            items: leaguesList.map((league) {
-                              return DropdownMenuItem(
-                                value: league,
-                                child: Text(
-                                  '${league.name} - ${league.year}',
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              );
-                            }).toList(),
-                            onChanged: onLeagueSelected,
-                            validator: (value) => value == null
-                                ? 'Seleziona un campionato'
-                                : null,
+                        return DropdownButtonFormField<LeagueEntity>(
+                          decoration: const InputDecoration(
+                            labelText: 'Campionato',
+                            border: OutlineInputBorder(),
                           ),
+                          initialValue: initialLeague,
+                          isExpanded: true,
+                          items: leaguesList.map((league) {
+                            return DropdownMenuItem(
+                              value: league,
+                              child: Text('${league.name} - ${league.year}'),
+                            );
+                          }).toList(),
+                          onChanged: onLeagueSelected,
+                          validator: (value) =>
+                              value == null ? 'Seleziona un campionato' : null,
                         );
                       } else if (state is LeagueFailure) {
                         return Text(
@@ -157,21 +151,22 @@ class MatchFormSection extends StatelessWidget {
 
                   TextFieldRequired(
                     controller: matchDayController,
-                    hintText:
-                        'Specifica la giornata (${match?.matchDay ?? 'G0'})',
+                    labelText: 'Giornata',
+                    hintText: 'G0',
                   ),
                   const SizedBox(height: 16),
 
                   NumberFieldNullable(
                     controller: homeTeamScoreController,
-                    hintText:
-                        'Goal squadra in casa (${match?.homeTeamScore ?? '0'})',
+                    labelText: 'Goal squadra in casa',
+                    hintText: '0',
                   ),
                   const SizedBox(height: 16),
+
                   NumberFieldNullable(
                     controller: awayTeamScoreController,
-                    hintText:
-                        'Goal squadra ospite (${match?.awayTeamScore ?? '0'})',
+                    labelText: 'Goal squadra ospite',
+                    hintText: '0',
                   ),
                   const SizedBox(height: 16),
 

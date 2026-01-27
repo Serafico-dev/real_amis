@@ -6,6 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:real_amis/common/helpers/is_dark_mode.dart';
 import 'package:real_amis/common/widgets/appBar/app_bar_yes_nav.dart';
 import 'package:real_amis/common/widgets/loader/loader.dart';
+import 'package:real_amis/common/widgets/textFields/text_field_required.dart';
 import 'package:real_amis/core/configs/theme/app_colors.dart';
 import 'package:real_amis/core/utils/pick_image.dart';
 import 'package:real_amis/core/utils/show_snackbar.dart';
@@ -48,12 +49,12 @@ class _EditTeamPageState extends State<EditTeamPage> {
   void _onSave() {
     if (!(_formKey.currentState?.validate() ?? false)) return;
 
-    final updatedName = _nameController.text.trim();
-
     context.read<TeamBloc>().add(
       TeamUpdate(
         team: widget.team,
-        name: updatedName.isNotEmpty ? updatedName : widget.team.name,
+        name: _nameController.text.trim().isNotEmpty
+            ? _nameController.text.trim()
+            : widget.team.name,
         image: _image,
       ),
     );
@@ -61,31 +62,31 @@ class _EditTeamPageState extends State<EditTeamPage> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = context.isDarkMode;
+
     return Scaffold(
       appBar: AppBarYesNav(
         title: const Text('Modifica squadra'),
         actions: [
           IconButton(
             onPressed: _onSave,
-            icon: const Icon(Icons.done_rounded, size: 25),
+            icon: Icon(
+              Icons.done_rounded,
+              size: 25,
+              color: isDark ? AppColors.iconDark : AppColors.iconLight,
+            ),
             tooltip: 'Salva',
-            color: context.isDarkMode
-                ? AppColors.iconDark
-                : AppColors.iconLight,
           ),
         ],
       ),
       body: BlocConsumer<TeamBloc, TeamState>(
         listener: (context, state) {
-          if (state is TeamFailure) {
-            showSnackBar(context, state.error);
-          } else if (state is TeamUpdateSuccess) {
+          if (state is TeamFailure) showSnackBar(context, state.error);
+          if (state is TeamUpdateSuccess) {
             Navigator.pop(context, state.updatedTeam);
-          } else if (state is TeamDeleteSuccess) {
-            Navigator.pop(context);
           }
+          if (state is TeamDeleteSuccess) Navigator.pop(context);
         },
-
         builder: (context, state) {
           final isLoading = state is TeamLoading;
 
@@ -100,23 +101,22 @@ class _EditTeamPageState extends State<EditTeamPage> {
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(10),
                       child: _image != null
-                          ? Image.file(_image!, height: 200, fit: BoxFit.cover)
+                          ? Image.file(_image!, height: 150, fit: BoxFit.cover)
                           : CachedNetworkImage(
                               imageUrl: widget.team.imageUrl,
                               cacheKey: widget.team.id,
-                              height: 200,
+                              height: 150,
                               fit: BoxFit.cover,
-                              placeholder: (_, _) =>
-                                  const SizedBox(height: 200, child: Loader()),
+                              placeholder: (_, _) => const Loader(),
                               errorWidget: (_, _, _) => Container(
-                                height: 200,
-                                color: context.isDarkMode
+                                height: 150,
+                                color: isDark
                                     ? AppColors.cardDark
                                     : AppColors.cardLight,
                                 child: Icon(
                                   Icons.broken_image,
                                   size: 64,
-                                  color: context.isDarkMode
+                                  color: isDark
                                       ? AppColors.textDarkSecondary
                                       : AppColors.textLightSecondary,
                                 ),
@@ -129,35 +129,24 @@ class _EditTeamPageState extends State<EditTeamPage> {
                     onPressed: _selectImage,
                     icon: Icon(
                       Icons.add_a_photo_outlined,
-                      color: context.isDarkMode
+                      color: isDark
                           ? AppColors.textDarkPrimary
                           : AppColors.textLightPrimary,
                     ),
                     label: Text(
                       'Modifica logo',
                       style: TextStyle(
-                        color: context.isDarkMode
+                        color: isDark
                             ? AppColors.textDarkPrimary
                             : AppColors.textLightPrimary,
                       ),
                     ),
                   ),
                   const SizedBox(height: 12),
-                  TextFormField(
+                  TextFieldRequired(
                     controller: _nameController,
-                    decoration: InputDecoration(
-                      hintText: 'Nome squadra',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      filled: true,
-                    ),
-                    validator: (v) {
-                      if (v == null || v.trim().isEmpty) {
-                        return 'Inserisci il nome della squadra';
-                      }
-                      return null;
-                    },
+                    labelText: 'Nome squadra',
+                    hintText: 'Inserisci il nome',
                   ),
                   if (isLoading)
                     const Padding(

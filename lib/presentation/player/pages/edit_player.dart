@@ -38,8 +38,8 @@ class _EditPlayerPageState extends State<EditPlayerPage> {
   late final TextEditingController _goalsController;
   late final TextEditingController _yellowCardsController;
   late final TextEditingController _redCardsController;
-  late DateTime? _birthday;
 
+  late DateTime? _birthday;
   PlayerRole? _selectedRole;
   File? _image;
   bool _isActive = true;
@@ -78,10 +78,8 @@ class _EditPlayerPageState extends State<EditPlayerPage> {
     super.dispose();
   }
 
-  int _parseOrFallback(String? text, int fallback) {
-    if (text == null || text.trim().isEmpty) return fallback;
-    return int.tryParse(text.trim()) ?? fallback;
-  }
+  int _parseOrFallback(String? text, int fallback) =>
+      int.tryParse(text?.trim() ?? '') ?? fallback;
 
   Future<void> _selectImage() async {
     final picked = await pickImage();
@@ -135,7 +133,7 @@ class _EditPlayerPageState extends State<EditPlayerPage> {
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: Text('Elimina', style: TextStyle(color: Colors.red)),
+            child: const Text('Elimina', style: TextStyle(color: Colors.red)),
           ),
         ],
       ),
@@ -148,6 +146,8 @@ class _EditPlayerPageState extends State<EditPlayerPage> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = context.isDarkMode;
+
     return Scaffold(
       appBar: AppBarYesNav(
         title: const Text('Modifica giocatore'),
@@ -156,9 +156,7 @@ class _EditPlayerPageState extends State<EditPlayerPage> {
             onPressed: _updatePlayer,
             icon: Icon(
               Icons.done_rounded,
-              color: context.isDarkMode
-                  ? AppColors.iconDark
-                  : AppColors.iconLight,
+              color: isDark ? AppColors.iconDark : AppColors.iconLight,
               size: 25,
             ),
             tooltip: 'Salva',
@@ -187,23 +185,22 @@ class _EditPlayerPageState extends State<EditPlayerPage> {
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(10),
                       child: _image != null
-                          ? Image.file(_image!, height: 200, fit: BoxFit.cover)
+                          ? Image.file(_image!, height: 150, fit: BoxFit.cover)
                           : CachedNetworkImage(
                               imageUrl: widget.player.imageUrl,
                               cacheKey: widget.player.id,
-                              height: 200,
+                              height: 150,
                               fit: BoxFit.cover,
-                              placeholder: (_, _) =>
-                                  const SizedBox(height: 200, child: Loader()),
+                              placeholder: (_, _) => const Loader(),
                               errorWidget: (_, _, _) => Container(
-                                height: 200,
-                                color: context.isDarkMode
+                                height: 150,
+                                color: isDark
                                     ? AppColors.cardDark
                                     : AppColors.cardLight,
                                 child: Icon(
                                   Icons.broken_image,
                                   size: 64,
-                                  color: context.isDarkMode
+                                  color: isDark
                                       ? AppColors.textDarkSecondary
                                       : AppColors.textLightSecondary,
                                 ),
@@ -211,74 +208,69 @@ class _EditPlayerPageState extends State<EditPlayerPage> {
                             ),
                     ),
                   ),
-                  const SizedBox(height: 15),
+                  const SizedBox(height: 10),
                   TextButton.icon(
                     onPressed: _selectImage,
                     icon: Icon(
                       Icons.add_a_photo_outlined,
-                      color: context.isDarkMode
+                      color: isDark
                           ? AppColors.textDarkPrimary
                           : AppColors.textLightPrimary,
                     ),
                     label: Text(
                       'Modifica foto',
                       style: TextStyle(
-                        color: context.isDarkMode
+                        color: isDark
                             ? AppColors.textDarkPrimary
                             : AppColors.textLightPrimary,
                       ),
                     ),
                   ),
+
                   TextFieldNullable(
                     controller: _fullNameController,
-                    hintText: '${widget.player.fullName} (Nome e cognome)',
+                    labelText: 'Nome e Cognome',
+                    hintText: widget.player.fullName,
                   ),
-                  const SizedBox(height: 15),
+                  const SizedBox(height: 10),
+
                   DropdownButtonFormField<PlayerRole>(
                     initialValue: _selectedRole,
                     items: PlayerRole.values
                         .map(
-                          (r) => DropdownMenuItem(
-                            value: r,
-                            child: Text(
-                              r.value,
-                              style: Theme.of(context).textTheme.bodyMedium,
-                            ),
-                          ),
+                          (r) =>
+                              DropdownMenuItem(value: r, child: Text(r.value)),
                         )
                         .toList(),
                     onChanged: (v) => setState(() => _selectedRole = v),
-                    decoration: InputDecoration(
-                      hintText: 'Ruolo',
-                      filled: true,
-                      fillColor: Theme.of(
-                        context,
-                      ).inputDecorationTheme.fillColor,
-                      border: Theme.of(context).inputDecorationTheme.border,
+                    decoration: const InputDecoration(
+                      labelText: 'Ruolo',
+                      border: OutlineInputBorder(),
                     ),
                     validator: (v) => v == null ? 'Seleziona un ruolo' : null,
                   ),
-                  const SizedBox(height: 15),
+                  const SizedBox(height: 10),
+
                   TextFieldNullable(
                     controller: _userNameController,
-                    hintText: '${widget.player.userName} (Soprannome)',
+                    labelText: 'Soprannome',
+                    hintText: widget.player.userName,
                   ),
-                  const SizedBox(height: 15),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  const SizedBox(height: 10),
+
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
                         _birthday == null
                             ? 'Data di nascita non selezionata'
                             : 'Data di nascita: ${DateFormat('dd/MM/yyyy').format(_birthday!)}',
                         style: TextStyle(
-                          color: context.isDarkMode
+                          color: isDark
                               ? AppColors.textDarkPrimary
                               : AppColors.textLightPrimary,
-                          fontWeight: FontWeight.w500,
                         ),
                       ),
-                      const SizedBox(height: 8),
                       ElevatedButton.icon(
                         onPressed: () async {
                           final picked = await DatePicker.showDatePicker(
@@ -294,33 +286,37 @@ class _EditPlayerPageState extends State<EditPlayerPage> {
                           }
                         },
                         icon: const Icon(Icons.cake, color: Colors.white),
-                        label: const Text('Seleziona data di nascita'),
+                        label: const Text('Seleziona'),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 15),
+                  const SizedBox(height: 10),
+
                   NumberFieldNullable(
                     controller: _attendancesController,
-                    hintText:
-                        '${widget.player.attendances.toString()} (Presenze)',
+                    labelText: 'Presenze',
+                    hintText: '${widget.player.attendances}',
                   ),
-                  const SizedBox(height: 15),
+                  const SizedBox(height: 10),
                   NumberFieldNullable(
                     controller: _goalsController,
-                    hintText: '${widget.player.goals.toString()} (Goal)',
+                    labelText: 'Goal',
+                    hintText: '${widget.player.goals}',
                   ),
-                  const SizedBox(height: 15),
+                  const SizedBox(height: 10),
                   NumberFieldNullable(
                     controller: _yellowCardsController,
-                    hintText:
-                        '${widget.player.yellowCards.toString()} (Gialli)',
+                    labelText: 'Cartellini gialli',
+                    hintText: '${widget.player.yellowCards}',
                   ),
-                  const SizedBox(height: 15),
+                  const SizedBox(height: 10),
                   NumberFieldNullable(
                     controller: _redCardsController,
-                    hintText: '${widget.player.redCards.toString()} (Rossi)',
+                    labelText: 'Cartellini rossi',
+                    hintText: '${widget.player.redCards}',
                   ),
-                  const SizedBox(height: 15),
+                  const SizedBox(height: 10),
+
                   SegmentedButton<int>(
                     segments: const [
                       ButtonSegment(value: 0, label: Text('Attivo')),
@@ -329,80 +325,9 @@ class _EditPlayerPageState extends State<EditPlayerPage> {
                     selected: _isActive ? {0} : {1},
                     onSelectionChanged: (newSelection) =>
                         setState(() => _isActive = newSelection.contains(0)),
-                    multiSelectionEnabled: false,
-                    style: ButtonStyle(
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      visualDensity: VisualDensity.compact,
-
-                      backgroundColor: WidgetStateProperty.resolveWith((
-                        states,
-                      ) {
-                        final isSelected = states.contains(
-                          WidgetState.selected,
-                        );
-
-                        if (isSelected) {
-                          return context.isDarkMode
-                              ? AppColors.tertiary.withValues(alpha: 0.35)
-                              : AppColors.primary.withValues(alpha: 0.25);
-                        }
-                        return Colors.transparent;
-                      }),
-
-                      foregroundColor: WidgetStateProperty.resolveWith((
-                        states,
-                      ) {
-                        final isSelected = states.contains(
-                          WidgetState.selected,
-                        );
-
-                        if (isSelected) {
-                          return context.isDarkMode
-                              ? AppColors.textDarkPrimary
-                              : AppColors.textLightPrimary;
-                        }
-
-                        return context.isDarkMode
-                            ? AppColors.textDarkSecondary
-                            : AppColors.textLightSecondary;
-                      }),
-
-                      side: WidgetStateProperty.resolveWith((states) {
-                        final isSelected = states.contains(
-                          WidgetState.selected,
-                        );
-
-                        return BorderSide(
-                          color: isSelected
-                              ? (context.isDarkMode
-                                    ? AppColors.tertiary
-                                    : AppColors.primary)
-                              : (context.isDarkMode
-                                    ? AppColors.textDarkSecondary.withValues(
-                                        alpha: 0.3,
-                                      )
-                                    : AppColors.textLightSecondary.withValues(
-                                        alpha: 0.3,
-                                      )),
-                          width: 1,
-                        );
-                      }),
-
-                      shape: WidgetStateProperty.all(
-                        RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-
-                      overlayColor: WidgetStateProperty.all(
-                        (context.isDarkMode
-                                ? AppColors.tertiary
-                                : AppColors.primary)
-                            .withValues(alpha: 0.08),
-                      ),
-                    ),
                   ),
                   const SizedBox(height: 15),
+
                   BasicAppButton(
                     onPressed: state is PlayerLoading
                         ? null

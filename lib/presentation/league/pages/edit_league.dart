@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:real_amis/common/helpers/is_dark_mode.dart';
 import 'package:real_amis/common/widgets/appBar/app_bar_yes_nav.dart';
 import 'package:real_amis/common/widgets/button/basic_app_button.dart';
+import 'package:real_amis/common/widgets/loader/loader.dart';
+import 'package:real_amis/common/widgets/textFields/text_field_required.dart';
 import 'package:real_amis/core/configs/theme/app_colors.dart';
 import 'package:real_amis/domain/entities/league/league_entity.dart';
 import 'package:real_amis/domain/entities/team/team_entity.dart';
 import 'package:real_amis/presentation/league/bloc/league_bloc.dart';
+import 'package:real_amis/presentation/league/widgets/teams_checkbox_selector.dart';
 import 'package:real_amis/presentation/team/bloc/team_bloc.dart';
 
 class EditLeaguePage extends StatefulWidget {
@@ -57,7 +59,6 @@ class _EditLeaguePageState extends State<EditLeaguePage> {
   }
 
   void _deleteLeague() async {
-    final isDark = context.isDarkMode;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
@@ -66,10 +67,7 @@ class _EditLeaguePageState extends State<EditLeaguePage> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: Text(
-              'Annulla',
-              style: TextStyle(color: isDark ? Colors.white70 : Colors.black54),
-            ),
+            child: const Text('Annulla'),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
@@ -89,17 +87,13 @@ class _EditLeaguePageState extends State<EditLeaguePage> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = context.isDarkMode;
-
     return Scaffold(
       appBar: AppBarYesNav(
         title: const Text('Modifica campionato'),
         actions: [
           IconButton(
-            icon: Icon(
-              Icons.done_rounded,
-              color: isDark ? AppColors.iconDark : AppColors.iconLight,
-            ),
+            icon: const Icon(Icons.done_rounded),
+            tooltip: 'Salva',
             onPressed: _updateLeague,
           ),
         ],
@@ -112,38 +106,38 @@ class _EditLeaguePageState extends State<EditLeaguePage> {
               key: _formKey,
               child: Column(
                 children: [
-                  TextFormField(
+                  TextFieldRequired(
                     controller: _nameController,
-                    decoration: const InputDecoration(labelText: 'Nome'),
-                    validator: (v) => v == null || v.trim().isEmpty
-                        ? 'Inserisci un nome'
-                        : null,
+                    labelText: 'Nome campionato',
+                    hintText: widget.league.name,
                   ),
                   const SizedBox(height: 16),
-                  TextFormField(
+                  TextFieldRequired(
                     controller: _yearController,
-                    decoration: const InputDecoration(labelText: 'Anno'),
+                    labelText: 'Anno',
+                    hintText: widget.league.year,
                     keyboardType: TextInputType.number,
-                    validator: (v) => v == null || v.trim().isEmpty
-                        ? 'Inserisci un anno'
-                        : null,
                   ),
                   const SizedBox(height: 24),
                   BlocBuilder<TeamBloc, TeamState>(
                     builder: (context, state) {
-                      if (state is TeamLoading) {
-                        return const CircularProgressIndicator();
+                      if (state is TeamLoading) return const Loader();
+                      if (state is TeamFailure) {
+                        return Text('Errore caricamento team: ${state.error}');
                       }
                       if (state is TeamDisplaySuccess) {
                         allTeams = state.teams;
                         selectedTeams = allTeams
                             .where((t) => widget.league.teamIds.contains(t.id))
                             .toList();
-                        return _buildTeamsSelector();
-                      }
-                      if (state is TeamFailure) {
-                        return Text(
-                          'Errore nel caricamento dei team: ${state.error}',
+                        return TeamsCheckboxSelector(
+                          allTeams: allTeams,
+                          selectedTeams: selectedTeams,
+                          onChanged: (updated) {
+                            setState(() {
+                              selectedTeams = updated;
+                            });
+                          },
                         );
                       }
                       return const SizedBox.shrink();
@@ -160,37 +154,6 @@ class _EditLeaguePageState extends State<EditLeaguePage> {
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildTeamsSelector() {
-    if (allTeams.isEmpty) return const SizedBox.shrink();
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Seleziona le squadre',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 8),
-        ...allTeams.map((team) {
-          final selected = selectedTeams.contains(team);
-          return CheckboxListTile(
-            title: Text(team.name),
-            value: selected,
-            onChanged: (value) {
-              setState(() {
-                if (value == true) {
-                  selectedTeams.add(team);
-                } else {
-                  selectedTeams.remove(team);
-                }
-              });
-            },
-          );
-        }),
-      ],
     );
   }
 }

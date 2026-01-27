@@ -35,8 +35,8 @@ class _AddNewPlayerPageState extends State<AddNewPlayerPage> {
   final TextEditingController _goalsController = TextEditingController();
   final TextEditingController _yellowCardsController = TextEditingController();
   final TextEditingController _redCardsController = TextEditingController();
-  DateTime? _birthday;
 
+  DateTime? _birthday;
   PlayerRole? _selectedRole;
   File? _image;
   bool _isActive = true;
@@ -52,14 +52,11 @@ class _AddNewPlayerPageState extends State<AddNewPlayerPage> {
     super.dispose();
   }
 
-  int _parseOrZero(String? text) {
-    if (text == null || text.trim().isEmpty) return 0;
-    return int.tryParse(text.trim()) ?? 0;
-  }
+  int _parseOrZero(String? text) => int.tryParse(text?.trim() ?? '') ?? 0;
 
   Future<void> _selectImage() async {
-    final pickedImage = await pickImage();
-    if (pickedImage != null) setState(() => _image = pickedImage);
+    final picked = await pickImage();
+    if (picked != null) setState(() => _image = picked);
   }
 
   void _uploadPlayer() {
@@ -90,52 +87,10 @@ class _AddNewPlayerPageState extends State<AddNewPlayerPage> {
     );
   }
 
-  Widget _buildImagePicker() {
-    final borderColor = context.isDarkMode
-        ? AppColors.tertiary
-        : AppColors.secondary;
-
-    if (_image != null) {
-      return GestureDetector(
-        onTap: _selectImage,
-        child: SizedBox(
-          width: double.infinity,
-          height: 150,
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(10),
-            child: Image.file(_image!, fit: BoxFit.cover),
-          ),
-        ),
-      );
-    }
-
-    return GestureDetector(
-      onTap: _selectImage,
-      child: DottedBorder(
-        options: RoundedRectDottedBorderOptions(
-          radius: const Radius.circular(10),
-          color: borderColor,
-          dashPattern: const [20, 4],
-          strokeCap: StrokeCap.round,
-        ),
-        child: SizedBox(
-          height: 150,
-          width: double.infinity,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: const [
-              Icon(Icons.folder_open, size: 50),
-              SizedBox(height: 15),
-              Text('Seleziona un\'immagine', style: TextStyle(fontSize: 15)),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
+    final isDark = context.isDarkMode;
+
     return Scaffold(
       appBar: AppBarYesNav(
         title: const Text('Aggiungi un giocatore'),
@@ -144,9 +99,7 @@ class _AddNewPlayerPageState extends State<AddNewPlayerPage> {
             onPressed: _uploadPlayer,
             icon: Icon(
               Icons.done_rounded,
-              color: context.isDarkMode
-                  ? AppColors.iconDark
-                  : AppColors.iconLight,
+              color: isDark ? AppColors.iconDark : AppColors.iconLight,
               size: 25,
             ),
             tooltip: 'Salva',
@@ -162,63 +115,96 @@ class _AddNewPlayerPageState extends State<AddNewPlayerPage> {
           if (state is PlayerLoading) return const Loader();
 
           return SingleChildScrollView(
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.all(16),
             child: Form(
               key: _formKey,
               child: Column(
                 children: [
-                  _buildImagePicker(),
-                  const SizedBox(height: 30),
+                  GestureDetector(
+                    onTap: _selectImage,
+                    child: _image != null
+                        ? ClipRRect(
+                            borderRadius: BorderRadius.circular(10),
+                            child: Image.file(
+                              _image!,
+                              height: 150,
+                              width: double.infinity,
+                              fit: BoxFit.cover,
+                            ),
+                          )
+                        : DottedBorder(
+                            options: RoundedRectDottedBorderOptions(
+                              radius: const Radius.circular(10),
+                              color: isDark
+                                  ? AppColors.tertiary
+                                  : AppColors.secondary,
+                              dashPattern: const [20, 4],
+                              strokeCap: StrokeCap.round,
+                            ),
+
+                            child: SizedBox(
+                              height: 150,
+                              width: double.infinity,
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: const [
+                                  Icon(Icons.folder_open, size: 50),
+                                  SizedBox(height: 15),
+                                  Text(
+                                    'Seleziona un\'immagine',
+                                    style: TextStyle(fontSize: 15),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                  ),
+                  const SizedBox(height: 20),
+
                   TextFieldRequired(
                     controller: _fullNameController,
-                    hintText: 'Nome e cognome',
+                    labelText: 'Nome e Cognome',
+                    hintText: 'Inserisci il nome e cognome',
                   ),
                   const SizedBox(height: 15),
+
                   DropdownButtonFormField<PlayerRole>(
                     initialValue: _selectedRole,
                     items: PlayerRole.values
                         .map(
-                          (r) => DropdownMenuItem(
-                            value: r,
-                            child: Text(
-                              r.value,
-                              style: Theme.of(context).textTheme.bodyMedium,
-                            ),
-                          ),
+                          (r) =>
+                              DropdownMenuItem(value: r, child: Text(r.value)),
                         )
                         .toList(),
                     onChanged: (v) => setState(() => _selectedRole = v),
-                    decoration: InputDecoration(
-                      hintText: 'Ruolo',
-                      filled: true,
-                      fillColor: Theme.of(
-                        context,
-                      ).inputDecorationTheme.fillColor,
-                      border: Theme.of(context).inputDecorationTheme.border,
+                    decoration: const InputDecoration(
+                      labelText: 'Ruolo',
+                      border: OutlineInputBorder(),
                     ),
                     validator: (v) => v == null ? 'Seleziona un ruolo' : null,
                   ),
                   const SizedBox(height: 15),
+
                   TextFieldRequired(
                     controller: _userNameController,
-                    hintText: 'Soprannome',
+                    labelText: 'Soprannome',
+                    hintText: 'Inserisci il soprannome',
                   ),
                   const SizedBox(height: 15),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
                         _birthday == null
                             ? 'Data di nascita non selezionata'
                             : 'Data di nascita: ${DateFormat('dd/MM/yyyy').format(_birthday!)}',
                         style: TextStyle(
-                          color: context.isDarkMode
+                          color: isDark
                               ? AppColors.textDarkPrimary
                               : AppColors.textLightPrimary,
-                          fontWeight: FontWeight.w500,
                         ),
                       ),
-                      const SizedBox(height: 8),
                       ElevatedButton.icon(
                         onPressed: () async {
                           final picked = await DatePicker.showDatePicker(
@@ -226,7 +212,7 @@ class _AddNewPlayerPageState extends State<AddNewPlayerPage> {
                             showTitleActions: true,
                             minTime: DateTime(1950),
                             maxTime: DateTime.now(),
-                            currentTime: DateTime(2000),
+                            currentTime: _birthday ?? DateTime(2000),
                             locale: LocaleType.it,
                           );
                           if (picked != null) {
@@ -234,112 +220,45 @@ class _AddNewPlayerPageState extends State<AddNewPlayerPage> {
                           }
                         },
                         icon: const Icon(Icons.cake, color: Colors.white),
-                        label: const Text('Seleziona data di nascita'),
+                        label: const Text('Seleziona'),
                       ),
                     ],
                   ),
                   const SizedBox(height: 15),
+
                   NumberFieldNullable(
                     controller: _attendancesController,
-                    hintText: 'Presenze',
+                    labelText: 'Presenze',
+                    hintText: '0',
                   ),
-                  const SizedBox(height: 15),
+                  const SizedBox(height: 10),
                   NumberFieldNullable(
                     controller: _goalsController,
-                    hintText: 'Goal',
+                    labelText: 'Goal',
+                    hintText: '0',
                   ),
-                  const SizedBox(height: 15),
+                  const SizedBox(height: 10),
                   NumberFieldNullable(
                     controller: _yellowCardsController,
-                    hintText: 'Cartellini gialli',
+                    labelText: 'Cartellini gialli',
+                    hintText: '0',
                   ),
-                  const SizedBox(height: 15),
+                  const SizedBox(height: 10),
                   NumberFieldNullable(
                     controller: _redCardsController,
-                    hintText: 'Cartellini rossi',
+                    labelText: 'Cartellini rossi',
+                    hintText: '0',
                   ),
                   const SizedBox(height: 15),
+
                   SegmentedButton<int>(
                     segments: const [
                       ButtonSegment(value: 0, label: Text('Attivo')),
                       ButtonSegment(value: 1, label: Text('Non attivo')),
                     ],
                     selected: _isActive ? {0} : {1},
-                    onSelectionChanged: (newSelection) {
-                      setState(() => _isActive = newSelection.contains(0));
-                    },
-                    multiSelectionEnabled: false,
-                    style: ButtonStyle(
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      visualDensity: VisualDensity.compact,
-
-                      backgroundColor: WidgetStateProperty.resolveWith((
-                        states,
-                      ) {
-                        final isSelected = states.contains(
-                          WidgetState.selected,
-                        );
-
-                        if (isSelected) {
-                          return context.isDarkMode
-                              ? AppColors.tertiary.withValues(alpha: 0.35)
-                              : AppColors.primary.withValues(alpha: 0.25);
-                        }
-                        return Colors.transparent;
-                      }),
-
-                      foregroundColor: WidgetStateProperty.resolveWith((
-                        states,
-                      ) {
-                        final isSelected = states.contains(
-                          WidgetState.selected,
-                        );
-
-                        if (isSelected) {
-                          return context.isDarkMode
-                              ? AppColors.textDarkPrimary
-                              : AppColors.textLightPrimary;
-                        }
-
-                        return context.isDarkMode
-                            ? AppColors.textDarkSecondary
-                            : AppColors.textLightSecondary;
-                      }),
-
-                      side: WidgetStateProperty.resolveWith((states) {
-                        final isSelected = states.contains(
-                          WidgetState.selected,
-                        );
-
-                        return BorderSide(
-                          color: isSelected
-                              ? (context.isDarkMode
-                                    ? AppColors.tertiary
-                                    : AppColors.primary)
-                              : (context.isDarkMode
-                                    ? AppColors.textDarkSecondary.withValues(
-                                        alpha: 0.3,
-                                      )
-                                    : AppColors.textLightSecondary.withValues(
-                                        alpha: 0.3,
-                                      )),
-                          width: 1,
-                        );
-                      }),
-
-                      shape: WidgetStateProperty.all(
-                        RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-
-                      overlayColor: WidgetStateProperty.all(
-                        (context.isDarkMode
-                                ? AppColors.tertiary
-                                : AppColors.primary)
-                            .withValues(alpha: 0.08),
-                      ),
-                    ),
+                    onSelectionChanged: (newSelection) =>
+                        setState(() => _isActive = newSelection.contains(0)),
                   ),
                 ],
               ),

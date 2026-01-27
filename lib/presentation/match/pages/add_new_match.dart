@@ -101,7 +101,6 @@ class _AddNewMatchPageState extends State<AddNewMatchPage> {
               onAwayChanged: (t) => setState(() => awayTeam = t),
             ),
             const SizedBox(height: 16),
-
             MatchFormSection(
               formKey: formKey,
               selectedDate: selectedDate,
