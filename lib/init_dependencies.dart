@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_localization/flutter_localization.dart';
 import 'package:get_it/get_it.dart';
@@ -113,30 +112,6 @@ Future<void> initDependencies() async {
 
   final secureStorage = SecureStorage();
   serviceLocator.registerLazySingleton<SecureStorage>(() => secureStorage);
-  final savedSessionJson = await secureStorage.readSession();
-  if (savedSessionJson != null) {
-    try {
-      final sessionMap = jsonDecode(savedSessionJson);
-      final accessToken = sessionMap['access_token'] as String?;
-      if (accessToken != null) {
-        await supabase.client.auth.setSession(savedSessionJson);
-      }
-    } catch (_) {
-      final access = await secureStorage.readToken();
-      final refresh = await secureStorage.readRefreshToken();
-      final expiresAt = await secureStorage.readExpiresAt();
-      if (access != null) {
-        final sessionMap = <String, dynamic>{
-          'access_token': access,
-          if (refresh != null) 'refresh_token': refresh,
-          if (expiresAt != null) 'expires_at': expiresAt,
-          'token_type': 'bearer',
-          'user': {},
-        };
-        await supabase.client.auth.setSession(jsonEncode(sessionMap));
-      }
-    }
-  }
 
   // core
   serviceLocator.registerLazySingleton(() => AppUserCubit());

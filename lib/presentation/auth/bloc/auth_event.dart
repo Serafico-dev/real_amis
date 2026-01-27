@@ -26,13 +26,9 @@ final class AuthSendPasswordResetEmail extends AuthEvent {
 }
 
 final class AuthCompletePasswordReset extends AuthEvent {
-  final String accessToken;
   final String newPassword;
 
-  AuthCompletePasswordReset({
-    required this.accessToken,
-    required this.newPassword,
-  });
+  AuthCompletePasswordReset({required this.newPassword});
 }
 
 final class AuthChangePassword extends AuthEvent {

@@ -22,10 +22,7 @@ abstract interface class AuthRepository {
     required String redirectTo,
   });
 
-  Future<Either<Failure, UserEntity>> passwordUpdate({
-    required String accessToken,
-    required String newPassword,
-  });
+  Future<Either<Failure, void>> passwordUpdate({required String newPassword});
 
   Future<Either<Failure, void>> changePassword({
     required String currentPassword,

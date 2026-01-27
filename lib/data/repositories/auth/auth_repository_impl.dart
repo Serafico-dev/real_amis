@@ -118,16 +118,12 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<Either<Failure, UserEntity>> passwordUpdate({
-    required String accessToken,
+  Future<Either<Failure, void>> passwordUpdate({
     required String newPassword,
   }) async {
     try {
-      await authSupabaseDataSource.updatePasswordWithAccessToken(
-        accessToken: accessToken,
-        newPassword: newPassword,
-      );
-      return right(UserEntity(id: '', email: '', isAdmin: false));
+      await authSupabaseDataSource.updatePassword(newPassword: newPassword);
+      return right(null);
     } on ServerException catch (e) {
       return left(Failure(e.message));
     }

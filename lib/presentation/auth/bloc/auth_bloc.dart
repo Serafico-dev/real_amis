@@ -123,10 +123,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     emit(AuthLoading());
 
     final res = await _passwordResetComplete(
-      PasswordResetCompleteParams(
-        accessToken: event.accessToken,
-        newPassword: event.newPassword,
-      ),
+      PasswordResetCompleteParams(newPassword: event.newPassword),
     );
 
     res.fold(
@@ -134,7 +131,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         _appUserCubit.clearUser();
         emit(AuthPasswordResetFailure(l.message));
       },
-      (r) {
+      (_) {
         emit(AuthPasswordResetCompleted());
       },
     );

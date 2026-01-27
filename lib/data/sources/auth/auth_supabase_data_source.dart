@@ -26,10 +26,7 @@ abstract interface class AuthSupabaseDataSource {
     required String redirectTo,
   });
 
-  Future<void> updatePasswordWithAccessToken({
-    required String accessToken,
-    required String newPassword,
-  });
+  Future<void> updatePassword({required String newPassword});
 
   Future<void> changePassword({
     required String currentPassword,
@@ -56,22 +53,6 @@ class AuthSupabaseDataSourceImpl implements AuthSupabaseDataSource {
         password: password,
         email: email,
       );
-      final session = supabaseClient.auth.currentSession;
-      if (session != null) {
-        final sessionJson = jsonEncode(session.toJson());
-        await serviceLocator<SecureStorage>().saveSession(sessionJson);
-        await serviceLocator<SecureStorage>().saveToken(session.accessToken);
-        if (session.refreshToken != null) {
-          await serviceLocator<SecureStorage>().saveRefreshToken(
-            session.refreshToken!,
-          );
-        }
-        if (session.expiresAt != null) {
-          await serviceLocator<SecureStorage>().saveExpiresAt(
-            session.expiresAt!,
-          );
-        }
-      }
       if (response.user == null) {
         throw ServerException('User is null!');
       }
@@ -157,30 +138,13 @@ class AuthSupabaseDataSourceImpl implements AuthSupabaseDataSource {
   }
 
   @override
-  Future<void> updatePasswordWithAccessToken({
-    required String accessToken,
-    required String newPassword,
-    String? refreshToken,
-    int? expiresAtSeconds,
-  }) async {
+  Future<void> updatePassword({required String newPassword}) async {
     try {
-      final sessionMap = <String, dynamic>{
-        'access_token': accessToken,
-        if (refreshToken != null) 'refresh_token': refreshToken,
-        if (expiresAtSeconds != null) 'expires_at': expiresAtSeconds,
-        'token_type': 'bearer',
-        'user': {},
-      };
-      final sessionJson = jsonEncode(sessionMap);
-      await supabaseClient.auth.setSession(sessionJson);
       await supabaseClient.auth.updateUser(
         UserAttributes(password: newPassword),
       );
-      await supabaseClient.auth.signOut();
     } on AuthException catch (e) {
       throw ServerException(e.message);
-    } catch (e) {
-      throw ServerException(e.toString());
     }
   }
 
