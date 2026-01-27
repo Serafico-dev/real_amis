@@ -4,8 +4,6 @@ import 'package:real_amis/data/models/auth/user_model.dart';
 import 'package:real_amis/data/sources/auth/auth_supabase_data_source.dart';
 import 'package:real_amis/domain/entities/auth/user_entity.dart';
 
-part 'app_user_state.dart';
-
 class AppUserCubit extends HydratedCubit<AppUserState> {
   final AuthSupabaseDataSource authDataSource;
 
@@ -54,3 +52,15 @@ class AppUserCubit extends HydratedCubit<AppUserState> {
     return null;
   }
 }
+
+@immutable
+sealed class AppUserState {}
+
+final class AppUserInitial extends AppUserState {}
+
+final class AppUserLoggedIn extends AppUserState {
+  final UserEntity user;
+  AppUserLoggedIn(this.user);
+}
+
+class AppUserLoggedOut extends AppUserState {}
