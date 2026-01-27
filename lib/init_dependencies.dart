@@ -114,7 +114,9 @@ Future<void> initDependencies() async {
   serviceLocator.registerLazySingleton<SecureStorage>(() => secureStorage);
 
   // core
-  serviceLocator.registerLazySingleton(() => AppUserCubit());
+  serviceLocator.registerLazySingleton(
+    () => AppUserCubit(serviceLocator<AuthSupabaseDataSource>()),
+  );
   serviceLocator.registerLazySingleton(() => ThemeCubit());
 
   serviceLocator.registerLazySingleton(

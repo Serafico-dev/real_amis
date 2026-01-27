@@ -50,6 +50,8 @@ class MainApp extends StatefulWidget {
 }
 
 class _MainAppState extends State<MainApp> {
+  bool _loadingUser = true;
+
   @override
   void initState() {
     super.initState();
@@ -61,6 +63,16 @@ class _MainAppState extends State<MainApp> {
       initLanguageCode: 'it',
     );
     localization.onTranslatedLanguage = _onTranslatedLanguage;
+    _refreshUser();
+  }
+
+  Future<void> _refreshUser() async {
+    await context.read<AppUserCubit>().refreshUser();
+    if (mounted) {
+      setState(() {
+        _loadingUser = false;
+      });
+    }
   }
 
   @override
@@ -75,6 +87,12 @@ class _MainAppState extends State<MainApp> {
 
   @override
   Widget build(BuildContext context) {
+    if (_loadingUser) {
+      return const MaterialApp(
+        home: Scaffold(body: Center(child: CircularProgressIndicator())),
+      );
+    }
+
     return BlocBuilder<ThemeCubit, ThemeMode>(
       builder: (context, mode) => MaterialApp(
         theme: AppTheme.light(),
@@ -84,13 +102,9 @@ class _MainAppState extends State<MainApp> {
         localizationsDelegates: localization.localizationsDelegates,
         debugShowCheckedModeBanner: false,
         home: BlocSelector<AppUserCubit, AppUserState, bool>(
-          selector: (state) {
-            return state is AppUserLoggedIn;
-          },
+          selector: (state) => state is AppUserLoggedIn,
           builder: (context, isLoggedIn) {
-            if (isLoggedIn) {
-              return SplashLoggedInPage();
-            }
+            if (isLoggedIn) return SplashLoggedInPage();
             return const SplashPage();
           },
         ),

@@ -179,6 +179,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     emit(AuthLoading());
 
     _appUserCubit.updateUser(user);
+    _appUserCubit.refreshUser();
+
     emit(AuthSuccess(user));
   }
 }
