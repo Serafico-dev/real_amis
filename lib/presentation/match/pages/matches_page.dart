@@ -65,7 +65,11 @@ class _MatchesPageState extends State<MatchesPage> {
               onSelected: (value) async {
                 switch (value) {
                   case _AddMenuAction.match:
-                    await Navigator.push(context, AddNewMatchPage.route());
+                    await Navigator.push(
+                      context,
+                      AddNewMatchPage.route(selectedLeague: selectedLeague),
+                    );
+
                     if (mounted) _fetchMatches();
                     break;
                   case _AddMenuAction.league:

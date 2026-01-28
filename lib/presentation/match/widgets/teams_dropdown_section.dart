@@ -43,7 +43,7 @@ class TeamsDropdownSection extends StatelessWidget {
                 (team) => DropdownMenuItem(value: team, child: Text(team.name)),
               )
               .toList(),
-          value: homeTeam,
+          initialValue: homeTeam,
           onChanged: onHomeChanged,
           validator: (v) => v == null ? 'Seleziona la squadra in casa' : null,
         ),
@@ -60,7 +60,7 @@ class TeamsDropdownSection extends StatelessWidget {
                 (team) => DropdownMenuItem(value: team, child: Text(team.name)),
               )
               .toList(),
-          value: awayTeam,
+          initialValue: awayTeam,
           onChanged: onAwayChanged,
           validator: (v) => v == null ? 'Seleziona la squadra ospite' : null,
         ),

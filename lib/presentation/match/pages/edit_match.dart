@@ -3,7 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:real_amis/common/helpers/is_dark_mode.dart';
 import 'package:real_amis/common/widgets/appBar/app_bar_yes_nav.dart';
 import 'package:real_amis/core/configs/theme/app_colors.dart';
-import 'package:real_amis/core/utils/show_snackbar.dart';
 import 'package:real_amis/domain/entities/league/league_entity.dart';
 import 'package:real_amis/domain/entities/match/match_entity.dart';
 import 'package:real_amis/domain/entities/team/team_entity.dart';
@@ -41,19 +40,15 @@ class _EditMatchPageState extends State<EditMatchPage> {
   void initState() {
     super.initState();
     context.read<TeamBloc>().add(TeamFetchAllTeams());
+    context.read<LeagueBloc>().add(LeagueFetchAllLeagues());
 
     selectedDate = widget.match.matchDate;
-    selectedLeague = widget.match.league;
     homeTeam = widget.match.homeTeam;
     awayTeam = widget.match.awayTeam;
 
     matchDayController.text = widget.match.matchDay ?? '';
     homeTeamScoreController.text = (widget.match.homeTeamScore ?? 0).toString();
     awayTeamScoreController.text = (widget.match.awayTeamScore ?? 0).toString();
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      setState(() => _updateFilteredTeams());
-    });
   }
 
   @override
@@ -64,31 +59,7 @@ class _EditMatchPageState extends State<EditMatchPage> {
     super.dispose();
   }
 
-  void _updateFilteredTeams() {
-    final allTeamsState = context.read<TeamBloc>().state;
-    if (allTeamsState is TeamDisplaySuccess && selectedLeague != null) {
-      filteredTeams =
-          allTeamsState.teams
-              .where((t) => selectedLeague!.teamIds.contains(t.id))
-              .toList()
-            ..sort(
-              (a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()),
-            );
-
-      if (!filteredTeams.contains(homeTeam)) homeTeam = null;
-      if (!filteredTeams.contains(awayTeam)) awayTeam = null;
-    } else {
-      filteredTeams = [];
-      homeTeam = null;
-      awayTeam = null;
-    }
-  }
-
   void _updateMatch() {
-    if (selectedLeague == null) {
-      showSnackBar(context, 'Seleziona un campionato!');
-      return;
-    }
     if (!formKey.currentState!.validate()) return;
 
     context.read<MatchBloc>().add(
@@ -109,6 +80,26 @@ class _EditMatchPageState extends State<EditMatchPage> {
         leagueId: selectedLeague!.id,
       ),
     );
+  }
+
+  void _updateFilteredTeams() {
+    final allTeamsState = context.read<TeamBloc>().state;
+    if (allTeamsState is TeamDisplaySuccess && selectedLeague != null) {
+      filteredTeams =
+          allTeamsState.teams
+              .where((t) => selectedLeague!.teamIds.contains(t.id))
+              .toList()
+            ..sort(
+              (a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()),
+            );
+
+      if (!filteredTeams.contains(homeTeam)) homeTeam = null;
+      if (!filteredTeams.contains(awayTeam)) awayTeam = null;
+    } else {
+      filteredTeams = [];
+      homeTeam = null;
+      awayTeam = null;
+    }
   }
 
   @override
@@ -138,33 +129,28 @@ class _EditMatchPageState extends State<EditMatchPage> {
             BlocBuilder<LeagueBloc, LeagueState>(
               builder: (context, state) {
                 if (state is LeagueDisplaySuccess) {
-                  final leaguesList = List<LeagueEntity>.from(state.leagues)
-                    ..sort((a, b) => b.year.compareTo(a.year));
+                  final league = state.leagues.firstWhere(
+                    (l) => l.id == widget.match.leagueId,
+                  );
+                  selectedLeague ??= league;
 
-                  return DropdownButtonFormField<LeagueEntity>(
-                    decoration: const InputDecoration(
-                      labelText: 'Campionato',
-                      border: OutlineInputBorder(),
-                      floatingLabelBehavior: FloatingLabelBehavior.always,
-                    ),
-                    isExpanded: true,
-                    items: leaguesList
-                        .map(
-                          (league) => DropdownMenuItem(
-                            value: league,
-                            child: Text('${league.name} - ${league.year}'),
+                  return SizedBox(
+                    height: 60,
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          '${league.name} - ${league.year}',
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: isDark
+                                ? AppColors.textDarkPrimary
+                                : AppColors.textLightPrimary,
                           ),
-                        )
-                        .toList(),
-                    initialValue: selectedLeague,
-                    onChanged: (league) {
-                      setState(() {
-                        selectedLeague = league;
-                        _updateFilteredTeams();
-                      });
-                    },
-                    validator: (value) =>
-                        value == null ? 'Seleziona un campionato' : null,
+                        ),
+                      ),
+                    ),
                   );
                 } else if (state is LeagueFailure) {
                   return Text(
@@ -176,15 +162,24 @@ class _EditMatchPageState extends State<EditMatchPage> {
                 }
               },
             ),
+
             const SizedBox(height: 16),
 
-            TeamsDropdownSection(
-              homeTeam: homeTeam,
-              awayTeam: awayTeam,
-              filteredTeams: filteredTeams,
-              onHomeChanged: (t) => setState(() => homeTeam = t),
-              onAwayChanged: (t) => setState(() => awayTeam = t),
+            BlocListener<TeamBloc, TeamState>(
+              listener: (context, state) {
+                if (state is TeamDisplaySuccess && selectedLeague != null) {
+                  setState(_updateFilteredTeams);
+                }
+              },
+              child: TeamsDropdownSection(
+                homeTeam: homeTeam,
+                awayTeam: awayTeam,
+                filteredTeams: filteredTeams,
+                onHomeChanged: (t) => setState(() => homeTeam = t),
+                onAwayChanged: (t) => setState(() => awayTeam = t),
+              ),
             ),
+
             const SizedBox(height: 16),
 
             MatchFormSection(

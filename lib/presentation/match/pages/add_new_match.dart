@@ -13,10 +13,14 @@ import 'package:real_amis/presentation/match/widgets/teams_dropdown_section.dart
 import 'package:real_amis/presentation/team/bloc/team_bloc.dart';
 
 class AddNewMatchPage extends StatefulWidget {
-  static MaterialPageRoute route() =>
-      MaterialPageRoute(builder: (_) => const AddNewMatchPage());
+  final LeagueEntity? selectedLeague;
 
-  const AddNewMatchPage({super.key});
+  static MaterialPageRoute route({LeagueEntity? selectedLeague}) =>
+      MaterialPageRoute(
+        builder: (_) => AddNewMatchPage(selectedLeague: selectedLeague),
+      );
+
+  const AddNewMatchPage({super.key, this.selectedLeague});
 
   @override
   State<AddNewMatchPage> createState() => _AddNewMatchPageState();
@@ -38,6 +42,7 @@ class _AddNewMatchPageState extends State<AddNewMatchPage> {
   @override
   void initState() {
     super.initState();
+    selectedLeague = widget.selectedLeague; // precompilato
     context.read<TeamBloc>().add(TeamFetchAllTeams());
     context.read<LeagueBloc>().add(LeagueFetchAllLeagues());
   }
@@ -96,6 +101,8 @@ class _AddNewMatchPageState extends State<AddNewMatchPage> {
   Widget build(BuildContext context) {
     final isDark = context.isDarkMode;
 
+    _updateFilteredTeams();
+
     return Scaffold(
       appBar: AppBarYesNav(
         title: const Text('Aggiungi una partita'),
@@ -116,46 +123,23 @@ class _AddNewMatchPageState extends State<AddNewMatchPage> {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            BlocBuilder<LeagueBloc, LeagueState>(
-              builder: (context, state) {
-                if (state is LeagueDisplaySuccess) {
-                  final leaguesList = List<LeagueEntity>.from(state.leagues)
-                    ..sort((a, b) => b.year.compareTo(a.year));
-
-                  return DropdownButtonFormField<LeagueEntity>(
-                    decoration: const InputDecoration(
-                      labelText: 'Campionato',
-                      border: OutlineInputBorder(),
-                      floatingLabelBehavior: FloatingLabelBehavior.always,
+            SizedBox(
+              height: 60,
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    '${selectedLeague!.name} - ${selectedLeague!.year}',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: isDark
+                          ? AppColors.textDarkPrimary
+                          : AppColors.textLightPrimary,
                     ),
-                    isExpanded: true,
-                    items: leaguesList
-                        .map(
-                          (league) => DropdownMenuItem(
-                            value: league,
-                            child: Text('${league.name} - ${league.year}'),
-                          ),
-                        )
-                        .toList(),
-                    initialValue: selectedLeague,
-                    onChanged: (league) {
-                      setState(() {
-                        selectedLeague = league;
-                        _updateFilteredTeams();
-                      });
-                    },
-                    validator: (value) =>
-                        value == null ? 'Seleziona un campionato' : null,
-                  );
-                } else if (state is LeagueFailure) {
-                  return Text(
-                    'Errore nel caricamento dei campionati',
-                    style: TextStyle(color: AppColors.logoRed),
-                  );
-                } else {
-                  return const Center(child: CircularProgressIndicator());
-                }
-              },
+                  ),
+                ),
+              ),
             ),
             const SizedBox(height: 16),
 

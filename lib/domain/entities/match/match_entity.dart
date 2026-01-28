@@ -31,10 +31,11 @@ class MatchEntity {
   });
 
   @override
-  bool operator ==(Object other) {
-    if (identical(this, other)) return true;
-    return other is MatchEntity && other.id == id;
-  }
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is MatchEntity &&
+          runtimeType == other.runtimeType &&
+          id == other.id;
 
   @override
   int get hashCode => id.hashCode;
