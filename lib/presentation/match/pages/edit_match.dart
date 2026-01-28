@@ -30,8 +30,6 @@ class _EditMatchPageState extends State<EditMatchPage> {
   LeagueEntity? selectedLeague;
 
   final matchDayController = TextEditingController();
-  final homeTeamScoreController = TextEditingController();
-  final awayTeamScoreController = TextEditingController();
   final formKey = GlobalKey<FormState>();
 
   List<TeamEntity> filteredTeams = [];
@@ -47,15 +45,11 @@ class _EditMatchPageState extends State<EditMatchPage> {
     awayTeam = widget.match.awayTeam;
 
     matchDayController.text = widget.match.matchDay ?? '';
-    homeTeamScoreController.text = (widget.match.homeTeamScore ?? 0).toString();
-    awayTeamScoreController.text = (widget.match.awayTeamScore ?? 0).toString();
   }
 
   @override
   void dispose() {
     matchDayController.dispose();
-    homeTeamScoreController.dispose();
-    awayTeamScoreController.dispose();
     super.dispose();
   }
 
@@ -68,12 +62,6 @@ class _EditMatchPageState extends State<EditMatchPage> {
         matchDate: selectedDate ?? widget.match.matchDate,
         homeTeamId: homeTeam?.id ?? widget.match.homeTeamId,
         awayTeamId: awayTeam?.id ?? widget.match.awayTeamId,
-        homeTeamScore:
-            int.tryParse(homeTeamScoreController.text.trim()) ??
-            widget.match.homeTeamScore,
-        awayTeamScore:
-            int.tryParse(awayTeamScoreController.text.trim()) ??
-            widget.match.awayTeamScore,
         matchDay: matchDayController.text.trim().isNotEmpty
             ? matchDayController.text.toUpperCase().trim()
             : widget.match.matchDay,
@@ -187,9 +175,6 @@ class _EditMatchPageState extends State<EditMatchPage> {
               selectedDate: selectedDate,
               onDatePicked: (d) => setState(() => selectedDate = d),
               matchDayController: matchDayController,
-              homeTeamScoreController: homeTeamScoreController,
-              awayTeamScoreController: awayTeamScoreController,
-              match: widget.match,
               showDeleteButton: true,
             ),
           ],

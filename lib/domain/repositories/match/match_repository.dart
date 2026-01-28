@@ -7,8 +7,6 @@ abstract interface class MatchRepository {
     required DateTime matchDate,
     required String homeTeamId,
     required String awayTeamId,
-    int? homeTeamScore,
-    int? awayTeamScore,
     String? matchDay,
     required String leagueId,
   });
@@ -20,8 +18,6 @@ abstract interface class MatchRepository {
     DateTime? matchDate,
     String? homeTeamId,
     String? awayTeamId,
-    int? homeTeamScore,
-    int? awayTeamScore,
     String? matchDay,
     String? leagueId,
   });

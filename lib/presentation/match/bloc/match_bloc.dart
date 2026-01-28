@@ -32,6 +32,7 @@ class MatchBloc extends Bloc<MatchEvent, MatchState> {
     on<MatchUpdate>(_onMatchUpdate);
     on<MatchDelete>(_onMatchDelete);
   }
+
   void _onMatchUpload(MatchUpload event, Emitter<MatchState> emit) async {
     emit(MatchLoading());
 
@@ -40,8 +41,6 @@ class MatchBloc extends Bloc<MatchEvent, MatchState> {
         matchDate: event.matchDate,
         homeTeamId: event.homeTeamId,
         awayTeamId: event.awayTeamId,
-        homeTeamScore: event.homeTeamScore,
-        awayTeamScore: event.awayTeamScore,
         matchDay: event.matchDay,
         leagueId: event.leagueId,
       ),
@@ -76,8 +75,6 @@ class MatchBloc extends Bloc<MatchEvent, MatchState> {
         matchDate: event.matchDate,
         homeTeamId: event.homeTeamId,
         awayTeamId: event.awayTeamId,
-        homeTeamScore: event.homeTeamScore,
-        awayTeamScore: event.awayTeamScore,
         matchDay: event.matchDay,
         leagueId: event.leagueId,
       ),

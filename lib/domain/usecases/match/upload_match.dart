@@ -14,8 +14,6 @@ class UploadMatch implements UseCase<MatchEntity, UploadMatchParams> {
       matchDate: params.matchDate,
       homeTeamId: params.homeTeamId,
       awayTeamId: params.awayTeamId,
-      homeTeamScore: params.homeTeamScore,
-      awayTeamScore: params.awayTeamScore,
       matchDay: params.matchDay,
       leagueId: params.leagueId,
     );
@@ -26,8 +24,6 @@ class UploadMatchParams {
   final DateTime matchDate;
   final String homeTeamId;
   final String awayTeamId;
-  final int? homeTeamScore;
-  final int? awayTeamScore;
   final String? matchDay;
   final String leagueId;
 
@@ -35,8 +31,6 @@ class UploadMatchParams {
     required this.matchDate,
     required this.homeTeamId,
     required this.awayTeamId,
-    this.homeTeamScore,
-    this.awayTeamScore,
     this.matchDay,
     required this.leagueId,
   });

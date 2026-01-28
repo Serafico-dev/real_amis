@@ -33,8 +33,6 @@ class _AddNewMatchPageState extends State<AddNewMatchPage> {
   LeagueEntity? selectedLeague;
 
   final matchDayController = TextEditingController();
-  final homeTeamScoreController = TextEditingController();
-  final awayTeamScoreController = TextEditingController();
   final formKey = GlobalKey<FormState>();
 
   List<TeamEntity> filteredTeams = [];
@@ -42,7 +40,7 @@ class _AddNewMatchPageState extends State<AddNewMatchPage> {
   @override
   void initState() {
     super.initState();
-    selectedLeague = widget.selectedLeague; // precompilato
+    selectedLeague = widget.selectedLeague;
     context.read<TeamBloc>().add(TeamFetchAllTeams());
     context.read<LeagueBloc>().add(LeagueFetchAllLeagues());
   }
@@ -50,8 +48,6 @@ class _AddNewMatchPageState extends State<AddNewMatchPage> {
   @override
   void dispose() {
     matchDayController.dispose();
-    homeTeamScoreController.dispose();
-    awayTeamScoreController.dispose();
     super.dispose();
   }
 
@@ -86,8 +82,6 @@ class _AddNewMatchPageState extends State<AddNewMatchPage> {
           matchDate: selectedDate!,
           homeTeamId: homeTeam!.id,
           awayTeamId: awayTeam!.id,
-          homeTeamScore: int.tryParse(homeTeamScoreController.text.trim()) ?? 0,
-          awayTeamScore: int.tryParse(awayTeamScoreController.text.trim()) ?? 0,
           matchDay: matchDayController.text.toUpperCase().trim(),
           leagueId: selectedLeague!.id,
         ),
@@ -130,7 +124,7 @@ class _AddNewMatchPageState extends State<AddNewMatchPage> {
                 child: Align(
                   alignment: Alignment.centerLeft,
                   child: Text(
-                    '${selectedLeague!.name} - ${selectedLeague!.year}',
+                    '${selectedLeague?.name ?? ""} - ${selectedLeague?.year ?? ""}',
                     style: TextStyle(
                       fontSize: 16,
                       color: isDark
@@ -157,8 +151,7 @@ class _AddNewMatchPageState extends State<AddNewMatchPage> {
               selectedDate: selectedDate,
               onDatePicked: (d) => setState(() => selectedDate = d),
               matchDayController: matchDayController,
-              homeTeamScoreController: homeTeamScoreController,
-              awayTeamScoreController: awayTeamScoreController,
+              showDeleteButton: false,
             ),
           ],
         ),

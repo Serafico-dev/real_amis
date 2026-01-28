@@ -115,7 +115,7 @@ class _MainAppState extends State<MainApp> {
 
 /*
 TODO
-- Gestire relazione squadre e campionato
+- Caricamento pagina squadre troppo lungo
 - Gestione goal avanzata?
 - Ulteriori migliore design
 */
