@@ -85,18 +85,23 @@ class _AddNewLeaguePageState extends ConsumerState<AddNewLeaguePage> {
                   TextFieldRequired(
                     controller: _nameController,
                     labelText: 'Nome campionato',
-                    hintText: 'Ad es. SuperLeague',
+                    hintText: 'Es. SuperLeague',
                   ),
                   const SizedBox(height: 16),
                   TextFieldRequired(
                     controller: _yearController,
                     labelText: 'Anno',
-                    hintText: 'Ad es. 2025/2026',
+                    hintText: 'Es. 2025/2026',
                     keyboardType: TextInputType.number,
                   ),
                   const SizedBox(height: 24),
                   teamState.when(
+                    loading: () => const Loader(),
+                    error: (e, _) => Text('Errore caricamento squadre: $e'),
                     data: (teams) {
+                      if (teams.isEmpty) {
+                        return const Text('Nessuna squadra disponibile.');
+                      }
                       return TeamsCheckboxSelector(
                         allTeams: teams,
                         selectedTeams: selectedTeams,
@@ -105,8 +110,6 @@ class _AddNewLeaguePageState extends ConsumerState<AddNewLeaguePage> {
                         },
                       );
                     },
-                    loading: () => const Loader(),
-                    error: (e, _) => Text('Errore caricamento team: $e'),
                   ),
                 ],
               ),
