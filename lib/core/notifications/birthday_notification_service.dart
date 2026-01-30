@@ -1,5 +1,15 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:real_amis/core/notifications/flutter_notification_plugin_provider.dart';
 import 'package:timezone/timezone.dart' as tz;
+
+final birthdayNotificationServiceProvider =
+    Provider<BirthdayNotificationService>((ref) {
+      final plugin = ref.read(flutterLocalNotificationsPluginProvider);
+      final service = BirthdayNotificationService(plugin);
+      service.init();
+      return service;
+    });
 
 class BirthdayNotificationService {
   final FlutterLocalNotificationsPlugin _notifications;
@@ -41,11 +51,11 @@ class BirthdayNotificationService {
     }
 
     await _notifications.zonedSchedule(
-      _notificationId(playerId),
-      '🎂 Compleanno!',
-      'Oggi è il compleanno di $fullName',
-      tz.TZDateTime.from(nextBirthday, tz.local),
-      const NotificationDetails(
+      id: _notificationId(playerId),
+      title: '🎂 Compleanno!',
+      body: 'Oggi è il compleanno di $fullName',
+      scheduledDate: tz.TZDateTime.from(nextBirthday, tz.local),
+      notificationDetails: const NotificationDetails(
         android: AndroidNotificationDetails(
           _channelId,
           _channelName,
@@ -60,6 +70,6 @@ class BirthdayNotificationService {
   }
 
   Future<void> cancel(String playerId) async {
-    await _notifications.cancel(_notificationId(playerId));
+    await _notifications.cancel(id: _notificationId(playerId));
   }
 }

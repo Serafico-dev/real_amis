@@ -2,8 +2,8 @@ import 'dart:io';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_datetime_picker_plus/flutter_datetime_picker_plus.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:real_amis/common/helpers/is_dark_mode.dart';
 import 'package:real_amis/common/widgets/appBar/app_bar_yes_nav.dart';
@@ -16,9 +16,9 @@ import 'package:real_amis/core/utils/pick_image.dart';
 import 'package:real_amis/core/utils/show_snackbar.dart';
 import 'package:real_amis/domain/entities/player/player_entity.dart';
 import 'package:real_amis/domain/entities/player/player_role.dart';
-import 'package:real_amis/presentation/player/bloc/player_bloc.dart';
+import 'package:real_amis/presentation/player/providers/player_notifier.dart';
 
-class EditPlayerPage extends StatefulWidget {
+class EditPlayerPage extends ConsumerStatefulWidget {
   static MaterialPageRoute route(PlayerEntity player) =>
       MaterialPageRoute(builder: (_) => EditPlayerPage(player: player));
 
@@ -26,10 +26,10 @@ class EditPlayerPage extends StatefulWidget {
   const EditPlayerPage({super.key, required this.player});
 
   @override
-  State<EditPlayerPage> createState() => _EditPlayerPageState();
+  ConsumerState<EditPlayerPage> createState() => _EditPlayerPageState();
 }
 
-class _EditPlayerPageState extends State<EditPlayerPage> {
+class _EditPlayerPageState extends ConsumerState<EditPlayerPage> {
   final _formKey = GlobalKey<FormState>();
 
   late final TextEditingController _userNameController;
@@ -86,34 +86,43 @@ class _EditPlayerPageState extends State<EditPlayerPage> {
     if (picked != null) setState(() => _image = picked);
   }
 
-  void _updatePlayer() {
-    context.read<PlayerBloc>().add(
-      PlayerUpdate(
-        player: widget.player,
-        userName: _userNameController.text.trim().isNotEmpty
-            ? _userNameController.text.trim()
-            : widget.player.userName,
-        fullName: _fullNameController.text.trim().isNotEmpty
-            ? _fullNameController.text.trim()
-            : widget.player.fullName,
-        image: _image,
-        role: _selectedRole ?? widget.player.role,
-        attendances: _parseOrFallback(
-          _attendancesController.text,
-          widget.player.attendances!,
-        ),
-        goals: _parseOrFallback(_goalsController.text, widget.player.goals!),
-        yellowCards: _parseOrFallback(
-          _yellowCardsController.text,
-          widget.player.yellowCards!,
-        ),
-        redCards: _parseOrFallback(
-          _redCardsController.text,
-          widget.player.redCards!,
-        ),
-        active: _isActive,
-        birthday: _birthday,
-      ),
+  Future<void> _updatePlayer() async {
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+
+    await ref
+        .read(playerNotifierProvider.notifier)
+        .updatePlayer(
+          player: widget.player,
+          userName: _userNameController.text.trim().isNotEmpty
+              ? _userNameController.text.trim()
+              : null,
+          fullName: _fullNameController.text.trim().isNotEmpty
+              ? _fullNameController.text.trim()
+              : null,
+          image: _image,
+          role: _selectedRole != widget.player.role ? _selectedRole : null,
+          attendances: _parseOrFallback(
+            _attendancesController.text,
+            widget.player.attendances!,
+          ),
+          goals: _parseOrFallback(_goalsController.text, widget.player.goals!),
+          yellowCards: _parseOrFallback(
+            _yellowCardsController.text,
+            widget.player.yellowCards!,
+          ),
+          redCards: _parseOrFallback(
+            _redCardsController.text,
+            widget.player.redCards!,
+          ),
+          active: _isActive,
+          birthday: _birthday,
+        );
+
+    final state = ref.read(playerNotifierProvider);
+    state.whenOrNull(
+      data: (_) =>
+          Navigator.pop(context, _image != null ? widget.player : null),
+      error: (err, _) => showSnackBar(context, err.toString()),
     );
   }
 
@@ -140,20 +149,28 @@ class _EditPlayerPageState extends State<EditPlayerPage> {
     );
 
     if (confirmed == true && mounted) {
-      context.read<PlayerBloc>().add(PlayerDelete(playerId: widget.player.id));
+      await ref
+          .read(playerNotifierProvider.notifier)
+          .deletePlayer(widget.player.id);
+      final state = ref.read(playerNotifierProvider);
+      state.whenOrNull(
+        data: (_) => Navigator.pop(context, true),
+        error: (err, _) => showSnackBar(context, err.toString()),
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final isDark = context.isDarkMode;
+    final playerState = ref.watch(playerNotifierProvider);
 
     return Scaffold(
       appBar: AppBarYesNav(
         title: const Text('Modifica giocatore'),
         actions: [
           IconButton(
-            onPressed: _updatePlayer,
+            onPressed: playerState is AsyncLoading ? null : _updatePlayer,
             icon: Icon(
               Icons.done_rounded,
               color: isDark ? AppColors.iconDark : AppColors.iconLight,
@@ -163,184 +180,180 @@ class _EditPlayerPageState extends State<EditPlayerPage> {
           ),
         ],
       ),
-      body: BlocConsumer<PlayerBloc, PlayerState>(
-        listener: (context, state) {
-          if (state is PlayerFailure) showSnackBar(context, state.error);
-          if (state is PlayerUpdateSuccess) {
-            Navigator.pop(context, state.updatedPlayer);
-          }
-          if (state is PlayerDeleteSuccess) Navigator.pop(context, true);
+      body: playerState.when(
+        data: (_) => _buildForm(context, isDark),
+        loading: () => const Loader(),
+        error: (err, _) {
+          WidgetsBinding.instance.addPostFrameCallback(
+            (_) => showSnackBar(context, err.toString()),
+          );
+          return _buildForm(context, isDark);
         },
-        builder: (context, state) {
-          if (state is PlayerLoading) return const Loader();
+      ),
+    );
+  }
 
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                children: [
-                  GestureDetector(
-                    onTap: _selectImage,
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(10),
-                      child: _image != null
-                          ? Image.file(_image!, height: 150, fit: BoxFit.cover)
-                          : CachedNetworkImage(
-                              imageUrl: widget.player.imageUrl,
-                              cacheKey: widget.player.id,
-                              height: 150,
-                              fit: BoxFit.cover,
-                              placeholder: (_, _) => const Loader(),
-                              errorWidget: (_, _, _) => Container(
-                                height: 150,
-                                color: isDark
-                                    ? AppColors.cardDark
-                                    : AppColors.cardLight,
-                                child: Icon(
-                                  Icons.broken_image,
-                                  size: 64,
-                                  color: isDark
-                                      ? AppColors.textDarkSecondary
-                                      : AppColors.textLightSecondary,
-                                ),
-                              ),
-                            ),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  TextButton.icon(
-                    onPressed: _selectImage,
-                    icon: Icon(
-                      Icons.add_a_photo_outlined,
-                      color: isDark
-                          ? AppColors.textDarkPrimary
-                          : AppColors.textLightPrimary,
-                    ),
-                    label: Text(
-                      'Modifica foto',
-                      style: TextStyle(
-                        color: isDark
-                            ? AppColors.textDarkPrimary
-                            : AppColors.textLightPrimary,
-                      ),
-                    ),
-                  ),
+  Widget _buildForm(BuildContext context, bool isDark) {
+    final playerState = ref.watch(playerNotifierProvider);
 
-                  TextFieldNullable(
-                    controller: _fullNameController,
-                    labelText: 'Nome e Cognome',
-                    hintText: widget.player.fullName,
-                  ),
-                  const SizedBox(height: 10),
-
-                  DropdownButtonFormField<PlayerRole>(
-                    initialValue: _selectedRole,
-                    items: PlayerRole.values
-                        .map(
-                          (r) =>
-                              DropdownMenuItem(value: r, child: Text(r.value)),
-                        )
-                        .toList(),
-                    onChanged: (v) => setState(() => _selectedRole = v),
-                    decoration: const InputDecoration(
-                      labelText: 'Ruolo',
-                      border: OutlineInputBorder(),
-                    ),
-                    validator: (v) => v == null ? 'Seleziona un ruolo' : null,
-                  ),
-                  const SizedBox(height: 10),
-
-                  TextFieldNullable(
-                    controller: _userNameController,
-                    labelText: 'Soprannome',
-                    hintText: widget.player.userName,
-                  ),
-                  const SizedBox(height: 10),
-
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        _birthday == null
-                            ? 'Data di nascita non selezionata'
-                            : 'Data di nascita: ${DateFormat('dd/MM/yyyy').format(_birthday!)}',
-                        style: TextStyle(
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Form(
+        key: _formKey,
+        child: Column(
+          children: [
+            GestureDetector(
+              onTap: _selectImage,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: _image != null
+                    ? Image.file(_image!, height: 150, fit: BoxFit.cover)
+                    : CachedNetworkImage(
+                        imageUrl: widget.player.imageUrl,
+                        cacheKey: widget.player.id,
+                        height: 150,
+                        fit: BoxFit.cover,
+                        placeholder: (_, _) => const Loader(),
+                        errorWidget: (_, _, _) => Container(
+                          height: 150,
                           color: isDark
-                              ? AppColors.textDarkPrimary
-                              : AppColors.textLightPrimary,
+                              ? AppColors.cardDark
+                              : AppColors.cardLight,
+                          child: Icon(
+                            Icons.broken_image,
+                            size: 64,
+                            color: isDark
+                                ? AppColors.textDarkSecondary
+                                : AppColors.textLightSecondary,
+                          ),
                         ),
                       ),
-                      ElevatedButton.icon(
-                        onPressed: () async {
-                          final picked = await DatePicker.showDatePicker(
-                            context,
-                            showTitleActions: true,
-                            minTime: DateTime(1950),
-                            maxTime: DateTime.now(),
-                            currentTime: _birthday ?? DateTime(2000),
-                            locale: LocaleType.it,
-                          );
-                          if (picked != null) {
-                            setState(() => _birthday = picked);
-                          }
-                        },
-                        icon: const Icon(Icons.cake, color: Colors.white),
-                        label: const Text('Seleziona'),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-
-                  NumberFieldNullable(
-                    controller: _attendancesController,
-                    labelText: 'Presenze',
-                    hintText: '${widget.player.attendances}',
-                  ),
-                  const SizedBox(height: 10),
-                  NumberFieldNullable(
-                    controller: _goalsController,
-                    labelText: 'Goal',
-                    hintText: '${widget.player.goals}',
-                  ),
-                  const SizedBox(height: 10),
-                  NumberFieldNullable(
-                    controller: _yellowCardsController,
-                    labelText: 'Cartellini gialli',
-                    hintText: '${widget.player.yellowCards}',
-                  ),
-                  const SizedBox(height: 10),
-                  NumberFieldNullable(
-                    controller: _redCardsController,
-                    labelText: 'Cartellini rossi',
-                    hintText: '${widget.player.redCards}',
-                  ),
-                  const SizedBox(height: 10),
-
-                  SegmentedButton<int>(
-                    segments: const [
-                      ButtonSegment(value: 0, label: Text('Attivo')),
-                      ButtonSegment(value: 1, label: Text('Non attivo')),
-                    ],
-                    selected: _isActive ? {0} : {1},
-                    onSelectionChanged: (newSelection) =>
-                        setState(() => _isActive = newSelection.contains(0)),
-                  ),
-                  const SizedBox(height: 15),
-
-                  BasicAppButton(
-                    onPressed: state is PlayerLoading
-                        ? null
-                        : _confirmAndDelete,
-                    title: state is PlayerLoading
-                        ? 'Eliminazione in corso...'
-                        : 'Elimina giocatore',
-                  ),
-                ],
               ),
             ),
-          );
-        },
+            const SizedBox(height: 10),
+            TextButton.icon(
+              onPressed: _selectImage,
+              icon: Icon(
+                Icons.add_a_photo_outlined,
+                color: isDark
+                    ? AppColors.textDarkPrimary
+                    : AppColors.textLightPrimary,
+              ),
+              label: Text(
+                'Modifica foto',
+                style: TextStyle(
+                  color: isDark
+                      ? AppColors.textDarkPrimary
+                      : AppColors.textLightPrimary,
+                ),
+              ),
+            ),
+            const SizedBox(height: 10),
+
+            TextFieldNullable(
+              controller: _fullNameController,
+              labelText: 'Nome e Cognome',
+              hintText: widget.player.fullName,
+            ),
+            const SizedBox(height: 10),
+
+            DropdownButtonFormField<PlayerRole>(
+              initialValue: _selectedRole,
+              items: PlayerRole.values
+                  .map((r) => DropdownMenuItem(value: r, child: Text(r.value)))
+                  .toList(),
+              onChanged: (v) => setState(() => _selectedRole = v),
+              decoration: const InputDecoration(
+                labelText: 'Ruolo',
+                border: OutlineInputBorder(),
+              ),
+              validator: (v) => v == null ? 'Seleziona un ruolo' : null,
+            ),
+            const SizedBox(height: 10),
+
+            TextFieldNullable(
+              controller: _userNameController,
+              labelText: 'Soprannome',
+              hintText: widget.player.userName,
+            ),
+            const SizedBox(height: 10),
+
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  _birthday == null
+                      ? 'Data di nascita non selezionata'
+                      : 'Data di nascita: ${DateFormat('dd/MM/yyyy').format(_birthday!)}',
+                  style: TextStyle(
+                    color: isDark
+                        ? AppColors.textDarkPrimary
+                        : AppColors.textLightPrimary,
+                  ),
+                ),
+                ElevatedButton.icon(
+                  onPressed: () async {
+                    final picked = await DatePicker.showDatePicker(
+                      context,
+                      showTitleActions: true,
+                      minTime: DateTime(1950),
+                      maxTime: DateTime.now(),
+                      currentTime: _birthday ?? DateTime(2000),
+                      locale: LocaleType.it,
+                    );
+                    if (picked != null) setState(() => _birthday = picked);
+                  },
+                  icon: const Icon(Icons.cake, color: Colors.white),
+                  label: const Text('Seleziona'),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+
+            NumberFieldNullable(
+              controller: _attendancesController,
+              labelText: 'Presenze',
+              hintText: '${widget.player.attendances}',
+            ),
+            const SizedBox(height: 10),
+            NumberFieldNullable(
+              controller: _goalsController,
+              labelText: 'Goal',
+              hintText: '${widget.player.goals}',
+            ),
+            const SizedBox(height: 10),
+            NumberFieldNullable(
+              controller: _yellowCardsController,
+              labelText: 'Cartellini gialli',
+              hintText: '${widget.player.yellowCards}',
+            ),
+            const SizedBox(height: 10),
+            NumberFieldNullable(
+              controller: _redCardsController,
+              labelText: 'Cartellini rossi',
+              hintText: '${widget.player.redCards}',
+            ),
+            const SizedBox(height: 10),
+
+            SegmentedButton<int>(
+              segments: const [
+                ButtonSegment(value: 0, label: Text('Attivo')),
+                ButtonSegment(value: 1, label: Text('Non attivo')),
+              ],
+              selected: _isActive ? {0} : {1},
+              onSelectionChanged: (newSelection) =>
+                  setState(() => _isActive = newSelection.contains(0)),
+            ),
+            const SizedBox(height: 15),
+
+            BasicAppButton(
+              onPressed: playerState is AsyncLoading ? null : _confirmAndDelete,
+              title: playerState is AsyncLoading
+                  ? 'Eliminazione in corso...'
+                  : 'Elimina giocatore',
+            ),
+          ],
+        ),
       ),
     );
   }

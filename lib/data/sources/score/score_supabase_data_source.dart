@@ -1,4 +1,6 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:real_amis/core/errors/exceptions.dart';
+import 'package:real_amis/core/providers/supabase_client_provider.dart';
 import 'package:real_amis/data/models/score/score_model.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -9,6 +11,12 @@ abstract interface class ScoreSupabaseDataSource {
   Future<ScoreModel> updateScore(ScoreModel score);
   Future<ScoreModel> deleteScore({required String scoreId});
 }
+
+final scoreSupabaseDataSourceProvider = Provider<ScoreSupabaseDataSource>((
+  ref,
+) {
+  return ScoreSupabaseDataSourceImpl(ref.read(supabaseClientProvider));
+});
 
 class ScoreSupabaseDataSourceImpl implements ScoreSupabaseDataSource {
   final SupabaseClient supabaseClient;

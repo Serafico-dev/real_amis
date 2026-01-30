@@ -1,121 +1,75 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_localization/flutter_localization.dart';
-import 'package:real_amis/core/cubits/app_user/app_user_cubit.dart';
-import 'package:real_amis/core/configs/locale/local_language.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:real_amis/core/configs/theme/app_theme.dart';
 import 'package:real_amis/init_dependencies.dart';
-import 'package:real_amis/presentation/auth/bloc/auth_bloc.dart';
-import 'package:real_amis/presentation/choose_mode/bloc/theme_cubit.dart';
-import 'package:real_amis/presentation/event/bloc/event_bloc.dart';
-import 'package:real_amis/presentation/league/bloc/league_bloc.dart';
-import 'package:real_amis/presentation/match/bloc/match_bloc.dart';
-import 'package:real_amis/presentation/player/bloc/player_bloc.dart';
-import 'package:real_amis/presentation/score/bloc/score_bloc.dart';
+import 'package:real_amis/presentation/auth/providers/app_user_notifier.dart';
+import 'package:real_amis/presentation/auth/providers/app_user_provider.dart';
 import 'package:real_amis/presentation/splash/pages/splash.dart';
 import 'package:real_amis/presentation/splash/pages/splash_logged_in.dart';
-import 'package:real_amis/presentation/team/bloc/team_bloc.dart';
+import 'package:real_amis/presentation/choose_mode/providers/theme_provider.dart';
 
-void main() async {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await FlutterLocalization.instance.ensureInitialized();
   await initDependencies();
 
-  runApp(
-    MultiBlocProvider(
-      providers: [
-        BlocProvider(create: (_) => serviceLocator<ThemeCubit>()),
-        BlocProvider(create: (_) => serviceLocator<AppUserCubit>()),
-        BlocProvider(create: (_) => serviceLocator<AuthBloc>()),
-        BlocProvider(create: (_) => serviceLocator<LeagueBloc>()),
-        BlocProvider(create: (_) => serviceLocator<MatchBloc>()),
-        BlocProvider(create: (_) => serviceLocator<PlayerBloc>()),
-        BlocProvider(create: (_) => serviceLocator<EventBloc>()),
-        BlocProvider(create: (_) => serviceLocator<ScoreBloc>()),
-        BlocProvider(create: (_) => serviceLocator<TeamBloc>()),
-      ],
-      child: MainApp(),
-    ),
-  );
+  runApp(const ProviderScope(child: MainApp()));
 }
 
-class MainApp extends StatefulWidget {
+class MainApp extends ConsumerWidget {
   const MainApp({super.key});
 
-  static MaterialPageRoute route() =>
-      MaterialPageRoute(builder: (context) => const MainApp());
-
   @override
-  State<MainApp> createState() => _MainAppState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final themeMode = ref.watch(themeNotifierProvider);
+    final userAsync = ref.watch(appUserProvider);
 
-class _MainAppState extends State<MainApp> {
-  bool _loadingUser = true;
+    final supportedLocales = const [Locale('en', 'US'), Locale('it', 'IT')];
+    final localizationDelegates = [
+      GlobalMaterialLocalizations.delegate,
+      GlobalWidgetsLocalizations.delegate,
+      GlobalCupertinoLocalizations.delegate,
+      ...localization.localizationsDelegates,
+    ];
 
-  @override
-  void initState() {
-    super.initState();
-    localization.init(
-      mapLocales: [
-        const MapLocale('en', AppLocale.english),
-        const MapLocale('it', AppLocale.italian),
-      ],
-      initLanguageCode: 'it',
-    );
-    localization.onTranslatedLanguage = _onTranslatedLanguage;
-    _refreshUser();
-  }
+    return userAsync.when(
+      data: (userState) {
+        final home = userState.isLoggedIn
+            ? const SplashLoggedInPage()
+            : const SplashPage();
 
-  Future<void> _refreshUser() async {
-    await context.read<AppUserCubit>().refreshUser();
-    if (mounted) {
-      setState(() {
-        _loadingUser = false;
-      });
-    }
-  }
-
-  @override
-  void dispose() {
-    localization.onTranslatedLanguage = null;
-    super.dispose();
-  }
-
-  void _onTranslatedLanguage(Locale? locale) {
-    setState(() {});
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    if (_loadingUser) {
-      return const MaterialApp(
-        home: Scaffold(body: Center(child: CircularProgressIndicator())),
-      );
-    }
-
-    return BlocBuilder<ThemeCubit, ThemeMode>(
-      builder: (context, mode) => MaterialApp(
+        return MaterialApp(
+          theme: AppTheme.light(),
+          darkTheme: AppTheme.dark(),
+          themeMode: themeMode,
+          supportedLocales: supportedLocales,
+          localizationsDelegates: localizationDelegates,
+          debugShowCheckedModeBanner: false,
+          home: home,
+        );
+      },
+      loading: () => MaterialApp(
         theme: AppTheme.light(),
         darkTheme: AppTheme.dark(),
-        themeMode: mode,
-        supportedLocales: localization.supportedLocales,
-        localizationsDelegates: localization.localizationsDelegates,
+        themeMode: themeMode,
+        supportedLocales: supportedLocales,
+        localizationsDelegates: localizationDelegates,
         debugShowCheckedModeBanner: false,
-        home: BlocSelector<AppUserCubit, AppUserState, bool>(
-          selector: (state) => state is AppUserLoggedIn,
-          builder: (context, isLoggedIn) {
-            if (isLoggedIn) return SplashLoggedInPage();
-            return const SplashPage();
-          },
+        home: const Scaffold(body: Center(child: CircularProgressIndicator())),
+      ),
+      error: (_, _) => MaterialApp(
+        theme: AppTheme.light(),
+        darkTheme: AppTheme.dark(),
+        themeMode: themeMode,
+        supportedLocales: supportedLocales,
+        localizationsDelegates: localizationDelegates,
+        debugShowCheckedModeBanner: false,
+        home: const Scaffold(
+          body: Center(child: Text('Errore durante il caricamento utente')),
         ),
       ),
     );
   }
 }
-
-/*
-TODO
-- Gestire relazione squadre e campionato
-- Gestione goal avanzata?
-- Ulteriori migliore design
-*/

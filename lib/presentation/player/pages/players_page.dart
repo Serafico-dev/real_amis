@@ -1,33 +1,35 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:real_amis/core/cubits/app_user/app_user_cubit.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:real_amis/common/helpers/is_dark_mode.dart';
 import 'package:real_amis/common/widgets/appBar/app_bar_no_nav.dart';
 import 'package:real_amis/common/widgets/loader/loader.dart';
 import 'package:real_amis/core/configs/theme/app_colors.dart';
+import 'package:real_amis/core/utils/admin_only.dart';
 import 'package:real_amis/core/utils/show_snackbar.dart';
 import 'package:real_amis/domain/entities/player/player_entity.dart';
 import 'package:real_amis/domain/entities/player/player_role.dart';
-import 'package:real_amis/presentation/player/bloc/player_bloc.dart';
+import 'package:real_amis/presentation/auth/providers/app_user_provider.dart';
 import 'package:real_amis/presentation/player/pages/add_new_player.dart';
 import 'package:real_amis/presentation/player/widgets/player_card.dart';
+import 'package:real_amis/presentation/player/providers/player_notifier.dart';
+import 'package:real_amis/presentation/auth/providers/app_user_notifier.dart';
 
-class PlayersPage extends StatefulWidget {
+class PlayersPage extends ConsumerStatefulWidget {
   const PlayersPage({super.key});
 
   static MaterialPageRoute route() =>
       MaterialPageRoute(builder: (_) => const PlayersPage());
 
   @override
-  State<PlayersPage> createState() => _PlayersPageState();
+  ConsumerState<PlayersPage> createState() => _PlayersPageState();
 }
 
-class _PlayersPageState extends State<PlayersPage>
+class _PlayersPageState extends ConsumerState<PlayersPage>
     with SingleTickerProviderStateMixin {
   final TextEditingController _searchController = TextEditingController();
+  late final TabController _tabController;
   final PageStorageBucket _bucket = PageStorageBucket();
   String _query = '';
-  late final TabController _tabController;
 
   final Set<PlayerRole> playerRoles = {
     PlayerRole.portiere,
@@ -49,10 +51,12 @@ class _PlayersPageState extends State<PlayersPage>
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
-    context.read<PlayerBloc>().add(PlayerFetchAllPlayers());
-    _searchController.addListener(
-      () => setState(() => _query = _searchController.text.trim()),
-    );
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(playerNotifierProvider.notifier).fetchAllPlayers();
+    });
+    _searchController.addListener(() {
+      setState(() => _query = _searchController.text.trim());
+    });
   }
 
   @override
@@ -70,155 +74,149 @@ class _PlayersPageState extends State<PlayersPage>
     return players.where((p) => p.fullName.toLowerCase().contains(q)).toList();
   }
 
-  Color _getCardColor(int index, bool isDarkMode) {
-    return index.isEven
-        ? (isDarkMode ? AppColors.cardDark : AppColors.cardLight)
-        : (isDarkMode ? AppColors.tertiary : AppColors.primary);
-  }
+  Color _getCardColor(int index, bool isDarkMode) => index.isEven
+      ? (isDarkMode ? AppColors.cardDark : AppColors.cardLight)
+      : (isDarkMode ? AppColors.tertiary : AppColors.primary);
 
   @override
   Widget build(BuildContext context) {
     final isDarkMode = context.isDarkMode;
+    final userAsync = ref.watch(appUserProvider);
 
-    return Scaffold(
-      appBar: AppBarNoNav(
-        actions: [
-          BlocSelector<AppUserCubit, AppUserState, bool?>(
-            selector: (state) =>
-                state is AppUserLoggedIn ? state.user.isAdmin : false,
-            builder: (context, isAdmin) {
-              if (isAdmin != true) return const SizedBox.shrink();
-              return IconButton(
-                onPressed: () async {
-                  await Navigator.push(context, AddNewPlayerPage.route());
-                  if (context.mounted) {
-                    context.read<PlayerBloc>().add(PlayerFetchAllPlayers());
-                  }
-                },
-                icon: Icon(
-                  Icons.add,
-                  size: 30,
-                  color: isDarkMode
-                      ? AppColors.textDarkPrimary
-                      : AppColors.textLightPrimary,
-                ),
-                tooltip: 'Aggiungi giocatore',
-              );
-            },
-          ),
-        ],
-      ),
-      body: BlocConsumer<PlayerBloc, PlayerState>(
-        listener: (context, state) {
-          if (state is PlayerFailure) showSnackBar(context, state.error);
-          if (state is PlayerUpdateSuccess || state is PlayerDeleteSuccess) {
-            context.read<PlayerBloc>().add(PlayerFetchAllPlayers());
-          }
-        },
-        builder: (context, state) {
-          if (state is PlayerLoading) return const Loader();
+    return userAsync.when(
+      loading: () =>
+          const Scaffold(body: Center(child: CircularProgressIndicator())),
+      error: (_, _) =>
+          const Scaffold(body: Center(child: Text('Errore utente'))),
+      data: (userState) {
+        final user = userState.user;
+        if (user == null) {
+          return const Scaffold(
+            body: Center(child: Text('Utente non loggato')),
+          );
+        }
 
-          if (state is PlayerDisplaySuccess) {
-            final allPlayers = List<PlayerEntity>.from(state.players)
-              ..sort((a, b) => a.fullName.compareTo(b.fullName));
-            final filteredBySearch = _filterPlayers(allPlayers, _query);
+        final playerState = ref.watch(playerNotifierProvider);
 
-            final giocatori = filteredBySearch
-                .where((p) => _isPlayerRole(p.role))
-                .toList();
-            final leggende = filteredBySearch
-                .where((p) => p.role == PlayerRole.leggenda)
-                .toList();
-            final staff = filteredBySearch
-                .where(
-                  (p) =>
-                      !_isPlayerRole(p.role) && p.role != PlayerRole.leggenda,
-                )
-                .toList();
-
-            return PageStorage(
-              bucket: _bucket,
-              child: Column(
-                children: [
-                  TabBar(
-                    controller: _tabController,
-                    tabs: const [
-                      Tab(text: 'Giocatori'),
-                      Tab(text: 'Leggende'),
-                      Tab(text: 'Staff'),
-                    ],
-                    indicatorColor: AppColors.accent,
-                    labelColor: isDarkMode
+        return Scaffold(
+          appBar: AppBarNoNav(
+            actions: [
+              AdminOnly(
+                child: IconButton(
+                  onPressed: () async {
+                    await Navigator.push(context, AddNewPlayerPage.route());
+                    if (!mounted) return;
+                    ref.read(playerNotifierProvider.notifier).fetchAllPlayers();
+                  },
+                  icon: Icon(
+                    Icons.add,
+                    size: 30,
+                    color: isDarkMode
                         ? AppColors.textDarkPrimary
                         : AppColors.textLightPrimary,
-                    unselectedLabelColor:
-                        (isDarkMode
-                                ? AppColors.textDarkPrimary
-                                : AppColors.textLightPrimary)
-                            .withValues(alpha: 0.7),
                   ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 8,
-                    ),
-                    child: TextField(
-                      key: const PageStorageKey('players_search'),
-                      controller: _searchController,
-                      decoration: InputDecoration(
-                        hintText: 'Cerca giocatore',
-                        prefixIcon: const Icon(Icons.search),
-                        suffixIcon: _query.isNotEmpty
-                            ? IconButton(
-                                icon: const Icon(Icons.clear),
-                                onPressed: () {
-                                  _searchController.clear();
-                                  setState(() => _query = '');
-                                },
-                              )
-                            : null,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide.none,
-                        ),
-                        filled: true,
-                        fillColor: isDarkMode
-                            ? AppColors.inputFillDark
-                            : AppColors.inputFillLight,
-                      ),
-                      style: TextStyle(
-                        color: isDarkMode
-                            ? AppColors.textDarkPrimary
-                            : AppColors.textLightPrimary,
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    child: TabBarView(
-                      controller: _tabController,
-                      children: [
-                        _buildListForGroup(
-                          giocatori,
-                          'giocatori_list',
-                          isDarkMode,
-                        ),
-                        _buildListForGroup(
-                          leggende,
-                          'leggende_list',
-                          isDarkMode,
-                        ),
-                        _buildListForGroup(staff, 'staff_list', isDarkMode),
-                      ],
-                    ),
-                  ),
-                ],
+                  tooltip: 'Aggiungi giocatore',
+                ),
               ),
-            );
-          }
+            ],
+          ),
+          body: playerState.when(
+            data: (players) {
+              final filteredPlayers = _filterPlayers(players, _query);
+              final giocatori = filteredPlayers
+                  .where((p) => _isPlayerRole(p.role))
+                  .toList();
+              final leggende = filteredPlayers
+                  .where((p) => p.role == PlayerRole.leggenda)
+                  .toList();
+              final staff = filteredPlayers
+                  .where(
+                    (p) =>
+                        !_isPlayerRole(p.role) && p.role != PlayerRole.leggenda,
+                  )
+                  .toList();
 
-          return const SizedBox.shrink();
-        },
-      ),
+              return PageStorage(
+                bucket: _bucket,
+                child: Column(
+                  children: [
+                    TabBar(
+                      controller: _tabController,
+                      tabs: const [
+                        Tab(text: 'Giocatori'),
+                        Tab(text: 'Leggende'),
+                        Tab(text: 'Staff'),
+                      ],
+                      indicatorColor: AppColors.accent,
+                      labelColor: isDarkMode
+                          ? AppColors.textDarkPrimary
+                          : AppColors.textLightPrimary,
+                      unselectedLabelColor:
+                          (isDarkMode
+                                  ? AppColors.textDarkPrimary
+                                  : AppColors.textLightPrimary)
+                              .withValues(alpha: 0.7),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: TextField(
+                        key: const PageStorageKey('players_search'),
+                        controller: _searchController,
+                        decoration: InputDecoration(
+                          hintText: 'Cerca giocatore',
+                          prefixIcon: const Icon(Icons.search),
+                          suffixIcon: _query.isNotEmpty
+                              ? IconButton(
+                                  icon: const Icon(Icons.clear),
+                                  onPressed: () {
+                                    _searchController.clear();
+                                    setState(() => _query = '');
+                                  },
+                                )
+                              : null,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: BorderSide.none,
+                          ),
+                          filled: true,
+                          fillColor: isDarkMode
+                              ? AppColors.inputFillDark
+                              : AppColors.inputFillLight,
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: TabBarView(
+                        controller: _tabController,
+                        children: [
+                          _buildListForGroup(
+                            giocatori,
+                            'giocatori_list',
+                            isDarkMode,
+                          ),
+                          _buildListForGroup(
+                            leggende,
+                            'leggende_list',
+                            isDarkMode,
+                          ),
+                          _buildListForGroup(staff, 'staff_list', isDarkMode),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+            loading: () => const Loader(),
+            error: (err, _) {
+              WidgetsBinding.instance.addPostFrameCallback(
+                (_) => showSnackBar(context, err.toString()),
+              );
+              return const SizedBox.shrink();
+            },
+          ),
+        );
+      },
     );
   }
 
@@ -248,7 +246,7 @@ class _PlayersPageState extends State<PlayersPage>
 
     return RefreshIndicator(
       onRefresh: () async {
-        context.read<PlayerBloc>().add(PlayerFetchAllPlayers());
+        await ref.read(playerNotifierProvider.notifier).fetchAllPlayers();
         await Future.delayed(const Duration(milliseconds: 300));
       },
       child: ListView.builder(
@@ -257,8 +255,10 @@ class _PlayersPageState extends State<PlayersPage>
         itemCount: list.length,
         itemBuilder: (context, index) {
           final player = list[index];
-          final cardColor = _getCardColor(index, isDarkMode);
-          return PlayerCard(player: player, color: cardColor);
+          return PlayerCard(
+            player: player,
+            color: _getCardColor(index, isDarkMode),
+          );
         },
       ),
     );

@@ -21,7 +21,7 @@ class _MainPageState extends State<MainPage> {
   int _selectedIndex = 0;
   final PageStorageBucket _bucket = PageStorageBucket();
 
-  List<Widget> get _pages => const [
+  List<Widget> get _pages => [
     MatchesPage(),
     PlayersPage(),
     TeamsPage(),

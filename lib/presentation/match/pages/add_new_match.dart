@@ -1,18 +1,19 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:real_amis/common/helpers/is_dark_mode.dart';
 import 'package:real_amis/common/widgets/appBar/app_bar_yes_nav.dart';
 import 'package:real_amis/core/configs/theme/app_colors.dart';
 import 'package:real_amis/core/utils/show_snackbar.dart';
 import 'package:real_amis/domain/entities/league/league_entity.dart';
 import 'package:real_amis/domain/entities/team/team_entity.dart';
-import 'package:real_amis/presentation/league/bloc/league_bloc.dart';
-import 'package:real_amis/presentation/match/bloc/match_bloc.dart';
+import 'package:real_amis/domain/usecases/match/upload_match.dart';
 import 'package:real_amis/presentation/match/widgets/match_form_section.dart';
 import 'package:real_amis/presentation/match/widgets/teams_dropdown_section.dart';
-import 'package:real_amis/presentation/team/bloc/team_bloc.dart';
+import 'package:real_amis/presentation/team/providers/team_notifier.dart';
+import 'package:real_amis/presentation/league/providers/league_notifier.dart';
+import 'package:real_amis/presentation/match/providers/match_notifier.dart';
 
-class AddNewMatchPage extends StatefulWidget {
+class AddNewMatchPage extends ConsumerStatefulWidget {
   final LeagueEntity? selectedLeague;
 
   static MaterialPageRoute route({LeagueEntity? selectedLeague}) =>
@@ -23,18 +24,16 @@ class AddNewMatchPage extends StatefulWidget {
   const AddNewMatchPage({super.key, this.selectedLeague});
 
   @override
-  State<AddNewMatchPage> createState() => _AddNewMatchPageState();
+  ConsumerState<AddNewMatchPage> createState() => _AddNewMatchPageState();
 }
 
-class _AddNewMatchPageState extends State<AddNewMatchPage> {
+class _AddNewMatchPageState extends ConsumerState<AddNewMatchPage> {
   DateTime? selectedDate;
   TeamEntity? homeTeam;
   TeamEntity? awayTeam;
   LeagueEntity? selectedLeague;
 
   final matchDayController = TextEditingController();
-  final homeTeamScoreController = TextEditingController();
-  final awayTeamScoreController = TextEditingController();
   final formKey = GlobalKey<FormState>();
 
   List<TeamEntity> filteredTeams = [];
@@ -42,66 +41,76 @@ class _AddNewMatchPageState extends State<AddNewMatchPage> {
   @override
   void initState() {
     super.initState();
-    selectedLeague = widget.selectedLeague; // precompilato
-    context.read<TeamBloc>().add(TeamFetchAllTeams());
-    context.read<LeagueBloc>().add(LeagueFetchAllLeagues());
+    selectedLeague = widget.selectedLeague;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(teamNotifierProvider.notifier).fetchAllTeams();
+      ref.read(leagueNotifierProvider.notifier).fetchAllLeagues();
+    });
   }
 
   @override
   void dispose() {
     matchDayController.dispose();
-    homeTeamScoreController.dispose();
-    awayTeamScoreController.dispose();
     super.dispose();
   }
 
-  void _updateFilteredTeams() {
-    final allTeamsState = context.read<TeamBloc>().state;
-    if (allTeamsState is TeamDisplaySuccess && selectedLeague != null) {
+  void _updateFilteredTeams(List<TeamEntity> allTeams, [LeagueEntity? league]) {
+    if (league != null) {
       filteredTeams =
-          allTeamsState.teams
-              .where((t) => selectedLeague!.teamIds.contains(t.id))
-              .toList()
-            ..sort(
-              (a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()),
-            );
+          allTeams.where((t) => league.teamIds.contains(t.id)).toList()..sort(
+            (a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()),
+          );
 
-      if (!filteredTeams.contains(homeTeam)) homeTeam = null;
-      if (!filteredTeams.contains(awayTeam)) awayTeam = null;
+      if (homeTeam != null && !filteredTeams.contains(homeTeam)) {
+        filteredTeams.insert(0, homeTeam!);
+      }
+      if (awayTeam != null && !filteredTeams.contains(awayTeam)) {
+        filteredTeams.insert(0, awayTeam!);
+      }
     } else {
-      filteredTeams = [];
-      homeTeam = null;
-      awayTeam = null;
+      filteredTeams = List<TeamEntity>.from(allTeams)
+        ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
     }
   }
 
-  void _uploadMatch() {
-    if (formKey.currentState!.validate() &&
-        selectedDate != null &&
-        homeTeam != null &&
-        awayTeam != null &&
-        selectedLeague != null) {
-      context.read<MatchBloc>().add(
-        MatchUpload(
-          matchDate: selectedDate!,
-          homeTeamId: homeTeam!.id,
-          awayTeamId: awayTeam!.id,
-          homeTeamScore: int.tryParse(homeTeamScoreController.text.trim()) ?? 0,
-          awayTeamScore: int.tryParse(awayTeamScoreController.text.trim()) ?? 0,
-          matchDay: matchDayController.text.toUpperCase().trim(),
-          leagueId: selectedLeague!.id,
-        ),
-      );
-    } else if (selectedLeague == null) {
-      showSnackBar(context, 'Seleziona un campionato!');
+  Future<void> _uploadMatch() async {
+    if (!formKey.currentState!.validate() ||
+        selectedDate == null ||
+        homeTeam == null ||
+        awayTeam == null ||
+        selectedLeague == null) {
+      if (selectedLeague == null) {
+        showSnackBar(context, 'Seleziona un campionato!');
+      }
+      return;
+    }
+
+    try {
+      await ref
+          .read(matchNotifierProvider.notifier)
+          .uploadMatch(
+            UploadMatchParams(
+              matchDate: selectedDate!,
+              homeTeamId: homeTeam!.id,
+              awayTeamId: awayTeam!.id,
+              matchDay: matchDayController.text.toUpperCase().trim(),
+              leagueId: selectedLeague!.id,
+            ),
+          );
+      if (mounted) {
+        showSnackBar(context, 'Partita aggiunta con successo');
+        Navigator.of(context).pop();
+      }
+    } catch (e) {
+      if (mounted) showSnackBar(context, 'Errore: $e');
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final isDark = context.isDarkMode;
-
-    _updateFilteredTeams();
+    final allTeams = ref.watch(teamNotifierProvider).value ?? [];
+    _updateFilteredTeams(allTeams);
 
     return Scaffold(
       appBar: AppBarYesNav(
@@ -130,7 +139,9 @@ class _AddNewMatchPageState extends State<AddNewMatchPage> {
                 child: Align(
                   alignment: Alignment.centerLeft,
                   child: Text(
-                    '${selectedLeague!.name} - ${selectedLeague!.year}',
+                    selectedLeague != null
+                        ? '${selectedLeague!.name} - ${selectedLeague!.year}'
+                        : 'Seleziona un campionato',
                     style: TextStyle(
                       fontSize: 16,
                       color: isDark
@@ -142,7 +153,6 @@ class _AddNewMatchPageState extends State<AddNewMatchPage> {
               ),
             ),
             const SizedBox(height: 16),
-
             TeamsDropdownSection(
               homeTeam: homeTeam,
               awayTeam: awayTeam,
@@ -151,14 +161,11 @@ class _AddNewMatchPageState extends State<AddNewMatchPage> {
               onAwayChanged: (t) => setState(() => awayTeam = t),
             ),
             const SizedBox(height: 16),
-
             MatchFormSection(
               formKey: formKey,
               selectedDate: selectedDate,
               onDatePicked: (d) => setState(() => selectedDate = d),
               matchDayController: matchDayController,
-              homeTeamScoreController: homeTeamScoreController,
-              awayTeamScoreController: awayTeamScoreController,
             ),
           ],
         ),

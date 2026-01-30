@@ -11,41 +11,47 @@ import 'package:real_amis/domain/repositories/auth/auth_repository.dart';
 class AuthRepositoryImpl implements AuthRepository {
   final AuthSupabaseDataSource authSupabaseDataSource;
   final ConnectionChecker connectionChecker;
+
   AuthRepositoryImpl(this.authSupabaseDataSource, this.connectionChecker);
+
+  UserEntity _fromSessionOrModel(UserModel model) {
+    return UserEntity(id: model.id, email: model.email, isAdmin: model.isAdmin);
+  }
 
   @override
   Future<Either<Failure, UserEntity>> currentUser() async {
     try {
-      if (!await (connectionChecker.isConnected)) {
+      if (!await connectionChecker.isConnected) {
         final session = authSupabaseDataSource.currentUserSession;
-
-        if (session == null) {
-          return left(Failure('User not logged in!'));
-        }
+        if (session == null) return left(Failure('User not logged in!'));
         return right(
-          UserModel(
-            id: session.user.id,
-            email: session.user.email ?? '',
-            isAdmin: false,
-          ),
-        );
-      }
-      final user = await authSupabaseDataSource.getCurrentUserData();
-      if (user == null) {
-        final session = authSupabaseDataSource.currentUserSession;
-        if (session != null) {
-          return right(
+          _fromSessionOrModel(
             UserModel(
               id: session.user.id,
               email: session.user.email ?? '',
               isAdmin: false,
             ),
-          );
-        }
-        return left(Failure('User not logged in!'));
+          ),
+        );
       }
 
-      return right(user);
+      final user = await authSupabaseDataSource.getCurrentUserData();
+      if (user != null) return right(_fromSessionOrModel(user));
+
+      final session = authSupabaseDataSource.currentUserSession;
+      if (session != null) {
+        return right(
+          _fromSessionOrModel(
+            UserModel(
+              id: session.user.id,
+              email: session.user.email ?? '',
+              isAdmin: false,
+            ),
+          ),
+        );
+      }
+
+      return left(Failure('User not logged in!'));
     } on ServerException catch (e) {
       return left(Failure(e.message));
     }
@@ -81,7 +87,7 @@ class AuthRepositoryImpl implements AuthRepository {
     Future<UserEntity> Function() fn,
   ) async {
     try {
-      if (!await (connectionChecker.isConnected)) {
+      if (!await connectionChecker.isConnected) {
         return left(Failure(Constants.noConnectionErrorMessage));
       }
       final user = await fn();

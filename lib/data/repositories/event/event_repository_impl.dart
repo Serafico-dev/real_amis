@@ -1,8 +1,10 @@
 import 'package:dartz/dartz.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:real_amis/core/constants/constants.dart';
 import 'package:real_amis/core/errors/exceptions.dart';
 import 'package:real_amis/core/errors/failure.dart';
 import 'package:real_amis/core/network/connection_checker.dart';
+import 'package:real_amis/core/providers/connection_checker_provider.dart';
 import 'package:real_amis/data/models/event/event_model.dart';
 import 'package:real_amis/data/models/team/team_model.dart';
 import 'package:real_amis/data/sources/event/event_local_data_source.dart';
@@ -11,6 +13,14 @@ import 'package:real_amis/domain/entities/event/event_entity.dart';
 import 'package:real_amis/domain/entities/event/event_type.dart';
 import 'package:real_amis/domain/repositories/event/event_repository.dart';
 import 'package:uuid/uuid.dart';
+
+final eventRepositoryProvider = Provider<EventRepositoryImpl>((ref) {
+  return EventRepositoryImpl(
+    ref.read(eventSupabaseDataSourceProvider),
+    ref.read(eventLocalDataSourceProvider),
+    ref.read(connectionCheckerProvider),
+  );
+});
 
 class EventRepositoryImpl implements EventRepository {
   final EventSupabaseDataSource eventSupabaseDataSource;
@@ -23,6 +33,18 @@ class EventRepositoryImpl implements EventRepository {
     this.connectionChecker,
   );
 
+  EventEntity _toEntity(EventModel model) {
+    return EventEntity(
+      id: model.id,
+      matchId: model.matchId,
+      teamId: model.teamId,
+      player: model.player,
+      minutes: model.minutes,
+      eventType: model.eventType,
+      team: model.team,
+    );
+  }
+
   @override
   Future<Either<Failure, EventEntity>> uploadEvent({
     required String matchId,
@@ -32,10 +54,10 @@ class EventRepositoryImpl implements EventRepository {
     required EventType eventType,
   }) async {
     try {
-      if (!await (connectionChecker.isConnected)) {
+      if (!await connectionChecker.isConnected) {
         return left(Failure(Constants.noConnectionErrorMessage));
       }
-      EventModel eventModel = EventModel(
+      final eventModel = EventModel(
         id: Uuid().v1(),
         matchId: matchId,
         teamId: teamId,
@@ -43,8 +65,10 @@ class EventRepositoryImpl implements EventRepository {
         minutes: minutes,
         eventType: eventType,
       );
-      await eventSupabaseDataSource.uploadEvent(eventModel);
-      return right(eventModel);
+      final uploadedEvent = await eventSupabaseDataSource.uploadEvent(
+        eventModel,
+      );
+      return right(_toEntity(uploadedEvent));
     } on ServerException catch (e) {
       return left(Failure(e.message));
     }
@@ -53,13 +77,14 @@ class EventRepositoryImpl implements EventRepository {
   @override
   Future<Either<Failure, List<EventEntity>>> getAllEvents() async {
     try {
-      if (!await (connectionChecker.isConnected)) {
-        final events = eventLocalDataSource.loadEvents();
-        return right(events);
+      List<EventModel> events;
+      if (!await connectionChecker.isConnected) {
+        events = eventLocalDataSource.loadEvents();
+      } else {
+        events = await eventSupabaseDataSource.getAllEvents();
+        eventLocalDataSource.uploadLocalEvents(events: events);
       }
-      final events = await eventSupabaseDataSource.getAllEvents();
-      eventLocalDataSource.uploadLocalEvents(events: events);
-      return right(events);
+      return right(events.map(_toEntity).toList());
     } on ServerException catch (e) {
       return left(Failure(e.message));
     }
@@ -70,18 +95,19 @@ class EventRepositoryImpl implements EventRepository {
     required String matchId,
   }) async {
     try {
-      if (!await (connectionChecker.isConnected)) {
-        final events = eventLocalDataSource
+      List<EventModel> events;
+      if (!await connectionChecker.isConnected) {
+        events = eventLocalDataSource
             .loadEvents()
             .where((e) => e.matchId == matchId)
             .toList();
-        return right(events);
+      } else {
+        events = await eventSupabaseDataSource.getEventsByMatch(
+          matchId: matchId,
+        );
+        eventLocalDataSource.uploadLocalEvents(events: events);
       }
-      final events = await eventSupabaseDataSource.getEventsByMatch(
-        matchId: matchId,
-      );
-      eventLocalDataSource.uploadLocalEvents(events: events);
-      return right(events);
+      return right(events.map(_toEntity).toList());
     } on ServerException catch (e) {
       return left(Failure(e.message));
     }
@@ -98,10 +124,10 @@ class EventRepositoryImpl implements EventRepository {
     TeamModel? team,
   }) async {
     try {
-      if (!await (connectionChecker.isConnected)) {
+      if (!await connectionChecker.isConnected) {
         return left(Failure(Constants.noConnectionErrorMessage));
       }
-      EventModel eventModel = EventModel(
+      final eventModel = EventModel(
         id: event.id,
         matchId: matchId ?? event.matchId,
         teamId: teamId ?? event.teamId,
@@ -110,8 +136,10 @@ class EventRepositoryImpl implements EventRepository {
         eventType: eventType ?? event.eventType,
         team: team ?? event.team,
       );
-      await eventSupabaseDataSource.updateEvent(eventModel);
-      return right(eventModel);
+      final updatedEvent = await eventSupabaseDataSource.updateEvent(
+        eventModel,
+      );
+      return right(_toEntity(updatedEvent));
     } on ServerException catch (e) {
       return left(Failure(e.message));
     }
@@ -122,13 +150,13 @@ class EventRepositoryImpl implements EventRepository {
     required String eventId,
   }) async {
     try {
-      if (!await (connectionChecker.isConnected)) {
+      if (!await connectionChecker.isConnected) {
         return left(Failure(Constants.noConnectionErrorMessage));
       }
       final deletedEvent = await eventSupabaseDataSource.deleteEvent(
         eventId: eventId,
       );
-      return right(deletedEvent);
+      return right(_toEntity(deletedEvent));
     } on ServerException catch (e) {
       return left(Failure(e.message));
     }

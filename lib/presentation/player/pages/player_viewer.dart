@@ -1,9 +1,8 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/intl.dart';
-import 'package:real_amis/core/cubits/app_user/app_user_cubit.dart';
 import 'package:real_amis/common/helpers/is_dark_mode.dart';
 import 'package:real_amis/common/widgets/appBar/app_bar_yes_nav.dart';
 import 'package:real_amis/common/widgets/loader/loader.dart';
@@ -12,10 +11,12 @@ import 'package:real_amis/core/configs/theme/app_colors.dart';
 import 'package:real_amis/core/utils/show_snackbar.dart';
 import 'package:real_amis/domain/entities/player/player_entity.dart';
 import 'package:real_amis/domain/entities/player/player_role.dart';
-import 'package:real_amis/presentation/player/bloc/player_bloc.dart';
+import 'package:real_amis/presentation/auth/providers/app_user_notifier.dart';
+import 'package:real_amis/presentation/auth/providers/app_user_provider.dart';
 import 'package:real_amis/presentation/player/pages/edit_player.dart';
+import 'package:real_amis/presentation/player/providers/player_notifier.dart';
 
-class PlayerViewerPage extends StatelessWidget {
+class PlayerViewerPage extends ConsumerWidget {
   static MaterialPageRoute route(String playerId, {Color? cardColor}) =>
       MaterialPageRoute(
         builder: (_) =>
@@ -27,13 +28,13 @@ class PlayerViewerPage extends StatelessWidget {
 
   const PlayerViewerPage({super.key, required this.playerId, this.cardColor});
 
-  PlayerEntity? _findCurrentPlayer(PlayerState state) {
-    if (state is PlayerUpdateSuccess) return state.updatedPlayer;
-    if (state is PlayerDisplaySuccess) {
-      final players = state.players.where((p) => p.id == playerId);
-      return players.isEmpty ? null : players.first;
-    }
-    return null;
+  PlayerEntity? _findCurrentPlayer(AsyncValue<List<PlayerEntity>> state) {
+    return state.whenOrNull(
+      data: (players) {
+        final match = players.where((p) => p.id == playerId);
+        return match.isEmpty ? null : match.first;
+      },
+    );
   }
 
   Widget _statTile(BuildContext context, String value, Widget icon) => Column(
@@ -51,55 +52,47 @@ class PlayerViewerPage extends StatelessWidget {
   );
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final isDark = context.isDarkMode;
+    final playerState = ref.watch(playerNotifierProvider);
+    final isAdmin = ref.watch(
+      appUserProvider.select(
+        (userAsync) => userAsync.value?.user?.isAdmin ?? false,
+      ),
+    );
+
+    final player = _findCurrentPlayer(playerState);
+
+    final bgColor =
+        cardColor?.withValues(alpha: 0.25) ??
+        (isDark ? AppColors.cardDark : AppColors.cardLight);
 
     return Scaffold(
       appBar: AppBarYesNav(
         title: const Text('Dettaglio giocatore'),
         actions: [
-          BlocSelector<AppUserCubit, AppUserState, bool?>(
-            selector: (state) =>
-                state is AppUserLoggedIn ? state.user.isAdmin : false,
-            builder: (context, isAdmin) {
-              if (isAdmin != true) return const SizedBox.shrink();
-              return IconButton(
-                onPressed: () async {
-                  final bloc = context.read<PlayerBloc>();
-                  final currentPlayer = _findCurrentPlayer(bloc.state);
-                  if (currentPlayer == null) {
-                    showSnackBar(context, 'Giocatore non trovato');
-                    return;
-                  }
-                  await Navigator.push(
-                    context,
-                    EditPlayerPage.route(currentPlayer),
-                  );
-                  if (context.mounted) {
-                    bloc.add(PlayerFetchAllPlayers());
-                  }
-                },
-                icon: const Icon(Icons.edit, size: 25),
-                tooltip: 'Modifica giocatore',
-              );
-            },
-          ),
+          if (isAdmin)
+            IconButton(
+              onPressed: () async {
+                if (player == null) {
+                  showSnackBar(context, 'Giocatore non trovato');
+                  return;
+                }
+                await Navigator.push(context, EditPlayerPage.route(player));
+                if (context.mounted) {
+                  ref.read(playerNotifierProvider.notifier).fetchAllPlayers();
+                }
+              },
+              icon: const Icon(Icons.edit, size: 25),
+              tooltip: 'Modifica giocatore',
+            ),
         ],
       ),
-
-      body: BlocBuilder<PlayerBloc, PlayerState>(
-        builder: (context, state) {
-          if (state is PlayerLoading) return const Loader();
-
-          final player = _findCurrentPlayer(state);
-          if (player == null || state is PlayerDeleteSuccess) {
-            return Center(child: Text('Giocatore non trovato.'));
+      body: playerState.when(
+        data: (_) {
+          if (player == null) {
+            return const Center(child: Text('Giocatore non trovato.'));
           }
-
-          final bgColor =
-              cardColor?.withValues(alpha: 0.25) ??
-              (isDark ? AppColors.cardDark : AppColors.cardLight);
-
           return Scrollbar(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(16),
@@ -140,12 +133,12 @@ class PlayerViewerPage extends StatelessWidget {
                       Text(
                         '🎂 ${DateFormat('dd/MM/yyyy').format(player.birthday!)}',
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: context.isDarkMode
+                          color: isDark
                               ? AppColors.textDarkPrimary
                               : AppColors.textLightPrimary,
                         ),
                       ),
-
+                    const SizedBox(height: 16),
                     Center(
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(10),
@@ -154,7 +147,7 @@ class PlayerViewerPage extends StatelessWidget {
                           cacheKey: player.id,
                           height: 200,
                           fit: BoxFit.cover,
-                          placeholder: (context, url) => Container(
+                          placeholder: (_, _) => Container(
                             height: 200,
                             color: isDark
                                 ? AppColors.cardDark
@@ -163,7 +156,7 @@ class PlayerViewerPage extends StatelessWidget {
                               child: CircularProgressIndicator(),
                             ),
                           ),
-                          errorWidget: (context, url, error) => Container(
+                          errorWidget: (_, _, _) => Container(
                             height: 200,
                             color: isDark
                                 ? AppColors.cardDark
@@ -210,6 +203,8 @@ class PlayerViewerPage extends StatelessWidget {
             ),
           );
         },
+        loading: () => const Loader(),
+        error: (e, _) => Center(child: Text('Errore: $e')),
       ),
     );
   }

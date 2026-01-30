@@ -1,20 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:real_amis/common/helpers/is_dark_mode.dart';
 import 'package:real_amis/core/configs/assets/app_vectors.dart';
 import 'package:real_amis/core/configs/theme/app_colors.dart';
 import 'package:real_amis/presentation/choose_mode/pages/choose_mode.dart';
 
-class SplashPage extends StatefulWidget {
+class SplashPage extends ConsumerStatefulWidget {
   const SplashPage({super.key});
 
   static MaterialPageRoute route() =>
       MaterialPageRoute(builder: (_) => const SplashPage());
 
   @override
-  State<SplashPage> createState() => _SplashPageState();
+  ConsumerState<SplashPage> createState() => _SplashPageState();
 }
 
-class _SplashPageState extends State<SplashPage>
+class _SplashPageState extends ConsumerState<SplashPage>
     with SingleTickerProviderStateMixin {
   static const _logoWidth = 250.0;
   static const _fadeDuration = Duration(milliseconds: 800);

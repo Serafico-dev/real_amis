@@ -1,25 +1,26 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:real_amis/common/helpers/is_dark_mode.dart';
 import 'package:real_amis/common/widgets/appBar/app_bar_no_nav.dart';
 import 'package:real_amis/common/widgets/button/basic_app_button.dart';
 import 'package:real_amis/core/configs/theme/app_colors.dart';
 import 'package:real_amis/core/utils/show_snackbar.dart';
-import 'package:real_amis/presentation/auth/bloc/auth_bloc.dart';
 import 'package:real_amis/presentation/auth/pages/forgot_password.dart';
 import 'package:real_amis/presentation/auth/pages/signup.dart';
+import 'package:real_amis/presentation/auth/providers/app_user_notifier.dart';
+import 'package:real_amis/presentation/auth/providers/app_user_provider.dart';
 import 'package:real_amis/presentation/main/pages/main_page.dart';
 
-class SigninPage extends StatefulWidget {
+class SigninPage extends ConsumerStatefulWidget {
   const SigninPage({super.key});
   static MaterialPageRoute route() =>
       MaterialPageRoute(builder: (_) => const SigninPage());
 
   @override
-  State<SigninPage> createState() => _SigninPageState();
+  ConsumerState<SigninPage> createState() => _SigninPageState();
 }
 
-class _SigninPageState extends State<SigninPage> {
+class _SigninPageState extends ConsumerState<SigninPage> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
@@ -46,69 +47,69 @@ class _SigninPageState extends State<SigninPage> {
         ? AppColors.inputFillDark
         : AppColors.inputFillLight;
 
+    final authState = ref.watch(appUserProvider);
+    final isLoading = authState is AsyncLoading;
+
+    ref.listen<AsyncValue<AppUserState>>(appUserProvider, (prev, next) {
+      next.when(
+        data: (state) {
+          if (state is AppUserLoggedIn) {
+            _handleAuthSuccess();
+          }
+        },
+        loading: () {},
+        error: (e, st) {
+          if (mounted) {
+            showSnackBar(context, getFriendlyErrorMessage(e.toString()));
+          }
+        },
+      );
+    });
+
     return Scaffold(
       appBar: AppBarNoNav(),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 40),
-          child: BlocConsumer<AuthBloc, AuthState>(
-            listener: (context, state) {
-              if (state is AuthFailure) {
-                if (mounted) {
-                  final friendlyMsg = getFriendlyErrorMessage(state.message);
-                  showSnackBar(context, friendlyMsg);
-                }
-              } else if (state is AuthSuccess) {
-                _handleAuthSuccess();
-              }
-            },
-            builder: (context, state) {
-              final isLoading = state is AuthLoading;
-
-              return Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    const Text(
-                      'Accedi',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 25,
-                      ),
-                    ),
-                    const SizedBox(height: 40),
-                    _EmailField(
-                      controller: _emailController,
-                      inputFill: inputFill,
-                      textColor: textPrimary,
-                    ),
-                    const SizedBox(height: 20),
-                    _PasswordField(
-                      controller: _passwordController,
-                      inputFill: inputFill,
-                      textColor: textPrimary,
-                    ),
-                    const SizedBox(height: 30),
-                    _LoginButton(
-                      isLoading: isLoading,
-                      onPressed: () {
-                        if (_formKey.currentState!.validate()) {
-                          context.read<AuthBloc>().add(
-                            AuthLogin(
-                              email: _emailController.text.trim(),
-                              password: _passwordController.text.trim(),
-                            ),
-                          );
-                        }
-                      },
-                    ),
-                    const SizedBox(height: 10),
-                    const _ForgotPasswordButton(),
-                  ],
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                const Text(
+                  'Accedi',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 25),
                 ),
-              );
-            },
+                const SizedBox(height: 40),
+                _EmailField(
+                  controller: _emailController,
+                  inputFill: inputFill,
+                  textColor: textPrimary,
+                ),
+                const SizedBox(height: 20),
+                _PasswordField(
+                  controller: _passwordController,
+                  inputFill: inputFill,
+                  textColor: textPrimary,
+                ),
+                const SizedBox(height: 30),
+                _LoginButton(
+                  isLoading: isLoading,
+                  onPressed: () {
+                    if (_formKey.currentState!.validate()) {
+                      ref
+                          .read(appUserProvider.notifier)
+                          .signIn(
+                            email: _emailController.text.trim(),
+                            password: _passwordController.text.trim(),
+                          );
+                    }
+                  },
+                ),
+                const SizedBox(height: 10),
+                const _ForgotPasswordButton(),
+              ],
+            ),
           ),
         ),
       ),

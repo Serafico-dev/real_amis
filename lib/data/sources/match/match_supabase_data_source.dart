@@ -1,4 +1,6 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:real_amis/core/errors/exceptions.dart';
+import 'package:real_amis/core/providers/supabase_client_provider.dart';
 import 'package:real_amis/data/models/match/match_model.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -8,6 +10,12 @@ abstract interface class MatchSupabaseDataSource {
   Future<MatchModel> updateMatch(MatchModel match);
   Future<MatchModel> deleteMatch({required String matchId});
 }
+
+final matchSupabaseDataSourceProvider = Provider<MatchSupabaseDataSource>((
+  ref,
+) {
+  return MatchSupabaseDataSourceImpl(ref.read(supabaseClientProvider));
+});
 
 class MatchSupabaseDataSourceImpl implements MatchSupabaseDataSource {
   final SupabaseClient supabaseClient;

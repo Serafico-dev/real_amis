@@ -1,16 +1,17 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:real_amis/common/helpers/is_dark_mode.dart';
 import 'package:real_amis/core/configs/theme/app_colors.dart';
 import 'package:real_amis/domain/entities/team/team_entity.dart';
-import 'package:real_amis/presentation/team/bloc/team_bloc.dart';
 import 'package:real_amis/presentation/team/pages/edit_team.dart';
+import 'package:real_amis/presentation/team/providers/team_notifier.dart';
 
-class TeamCard extends StatelessWidget {
+class TeamCard extends ConsumerWidget {
   final TeamEntity team;
   final Color color;
   final bool isAdmin;
+
   const TeamCard({
     super.key,
     required this.team,
@@ -19,7 +20,7 @@ class TeamCard extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final textColor = context.isDarkMode
         ? AppColors.textDarkPrimary
         : AppColors.textLightPrimary;
@@ -29,7 +30,7 @@ class TeamCard extends StatelessWidget {
           ? () async {
               await Navigator.push(context, EditTeamPage.route(team));
               if (context.mounted) {
-                context.read<TeamBloc>().add(TeamFetchAllTeams());
+                await ref.read(teamNotifierProvider.notifier).fetchAllTeams();
               }
             }
           : null,

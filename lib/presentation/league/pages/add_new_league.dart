@@ -1,35 +1,34 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:real_amis/common/widgets/appBar/app_bar_yes_nav.dart';
 import 'package:real_amis/common/widgets/loader/loader.dart';
 import 'package:real_amis/common/widgets/textFields/text_field_required.dart';
 import 'package:real_amis/domain/entities/team/team_entity.dart';
-import 'package:real_amis/presentation/league/bloc/league_bloc.dart';
+import 'package:real_amis/presentation/league/providers/league_notifier.dart';
 import 'package:real_amis/presentation/league/widgets/teams_checkbox_selector.dart';
-import 'package:real_amis/presentation/team/bloc/team_bloc.dart';
+import 'package:real_amis/presentation/team/providers/team_notifier.dart';
 
-class AddNewLeaguePage extends StatefulWidget {
+class AddNewLeaguePage extends ConsumerStatefulWidget {
   static MaterialPageRoute route() =>
       MaterialPageRoute(builder: (_) => const AddNewLeaguePage());
 
   const AddNewLeaguePage({super.key});
 
   @override
-  State<AddNewLeaguePage> createState() => _AddNewLeaguePageState();
+  ConsumerState<AddNewLeaguePage> createState() => _AddNewLeaguePageState();
 }
 
-class _AddNewLeaguePageState extends State<AddNewLeaguePage> {
+class _AddNewLeaguePageState extends ConsumerState<AddNewLeaguePage> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _yearController = TextEditingController();
 
-  List<TeamEntity> allTeams = [];
   List<TeamEntity> selectedTeams = [];
 
   @override
   void initState() {
     super.initState();
-    context.read<TeamBloc>().add(TeamFetchAllTeams());
+    ref.read(teamNotifierProvider.notifier).fetchAllTeams();
   }
 
   @override
@@ -39,20 +38,31 @@ class _AddNewLeaguePageState extends State<AddNewLeaguePage> {
     super.dispose();
   }
 
-  void _uploadLeague() {
-    if (_formKey.currentState!.validate()) {
-      context.read<LeagueBloc>().add(
-        LeagueUpload(
-          name: _nameController.text.trim(),
-          year: _yearController.text.trim(),
-          teamIds: selectedTeams.map((t) => t.id).toList(),
-        ),
+  Future<void> _uploadLeague() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    try {
+      await ref
+          .read(leagueNotifierProvider.notifier)
+          .uploadLeague(
+            name: _nameController.text.trim(),
+            year: _yearController.text.trim(),
+            teamIds: selectedTeams.map((t) => t.id).toList(),
+          );
+      if (!mounted) return;
+      Navigator.pop(context, 'created');
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Errore creazione campionato: $e')),
       );
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final teamState = ref.watch(teamNotifierProvider);
+
     return Scaffold(
       appBar: AppBarYesNav(
         title: const Text('Aggiungi un campionato'),
@@ -85,26 +95,18 @@ class _AddNewLeaguePageState extends State<AddNewLeaguePage> {
                     keyboardType: TextInputType.number,
                   ),
                   const SizedBox(height: 24),
-                  BlocBuilder<TeamBloc, TeamState>(
-                    builder: (context, state) {
-                      if (state is TeamLoading) return const Loader();
-                      if (state is TeamFailure) {
-                        return Text('Errore caricamento team: ${state.error}');
-                      }
-                      if (state is TeamDisplaySuccess) {
-                        allTeams = state.teams;
-                        return TeamsCheckboxSelector(
-                          allTeams: allTeams,
-                          selectedTeams: selectedTeams,
-                          onChanged: (updated) {
-                            setState(() {
-                              selectedTeams = updated;
-                            });
-                          },
-                        );
-                      }
-                      return const SizedBox.shrink();
+                  teamState.when(
+                    data: (teams) {
+                      return TeamsCheckboxSelector(
+                        allTeams: teams,
+                        selectedTeams: selectedTeams,
+                        onChanged: (updated) {
+                          setState(() => selectedTeams = updated);
+                        },
+                      );
                     },
+                    loading: () => const Loader(),
+                    error: (e, _) => Text('Errore caricamento team: $e'),
                   ),
                 ],
               ),

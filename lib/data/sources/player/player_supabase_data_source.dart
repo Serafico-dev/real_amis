@@ -1,6 +1,8 @@
 import 'dart:io';
 
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:real_amis/core/errors/exceptions.dart';
+import 'package:real_amis/core/providers/supabase_client_provider.dart';
 import 'package:real_amis/data/models/player/player_model.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -15,6 +17,12 @@ abstract interface class PlayerSupabaseDataSource {
   Future<String> updatePlayerImage({File? image, required PlayerModel player});
   Future<PlayerModel> deletePlayer({required String playerId});
 }
+
+final playerSupabaseDataSourceProvider = Provider<PlayerSupabaseDataSource>((
+  ref,
+) {
+  return PlayerSupabaseDataSourceImpl(ref.read(supabaseClientProvider));
+});
 
 class PlayerSupabaseDataSourceImpl implements PlayerSupabaseDataSource {
   final SupabaseClient supabaseClient;

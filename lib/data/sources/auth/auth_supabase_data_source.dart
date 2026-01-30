@@ -1,9 +1,10 @@
 import 'dart:convert';
 
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:real_amis/core/errors/exceptions.dart';
+import 'package:real_amis/core/providers/supabase_client_provider.dart';
 import 'package:real_amis/core/utils/secure_storage.dart';
 import 'package:real_amis/data/models/auth/user_model.dart';
-import 'package:real_amis/init_dependencies.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 abstract interface class AuthSupabaseDataSource {
@@ -36,12 +37,54 @@ abstract interface class AuthSupabaseDataSource {
   Future<void> deleteAccount({required String id});
 }
 
+final authSupabaseDataSourceProvider = Provider<AuthSupabaseDataSource>((ref) {
+  final client = ref.read(supabaseClientProvider);
+  final storage = ref.read(secureStorageProvider);
+  return AuthSupabaseDataSourceImpl(client, storage);
+});
+
 class AuthSupabaseDataSourceImpl implements AuthSupabaseDataSource {
   final SupabaseClient supabaseClient;
-  AuthSupabaseDataSourceImpl(this.supabaseClient);
+  final SecureStorage secureStorage;
+
+  AuthSupabaseDataSourceImpl(this.supabaseClient, this.secureStorage);
 
   @override
   Session? get currentUserSession => supabaseClient.auth.currentSession;
+
+  @override
+  Future<UserModel> signUpWithEmailPassword({
+    required String email,
+    required String password,
+  }) async {
+    try {
+      final response = await supabaseClient.auth.signUp(
+        email: email,
+        password: password,
+      );
+
+      if (response.user == null) {
+        throw ServerException('User is null!');
+      }
+
+      final session = supabaseClient.auth.currentSession;
+      if (session != null) {
+        await secureStorage.saveSession(jsonEncode(session.toJson()));
+      }
+
+      final userData = await supabaseClient
+          .from('profiles')
+          .select()
+          .eq('id', response.user!.id)
+          .single();
+
+      return UserModel.fromJson({...userData, 'email': response.user!.email});
+    } on AuthException catch (e) {
+      throw ServerException(e.message);
+    } catch (e) {
+      throw ServerException(e.toString());
+    }
+  }
 
   @override
   Future<UserModel> logInWithEmailPassword({
@@ -73,41 +116,6 @@ class AuthSupabaseDataSourceImpl implements AuthSupabaseDataSource {
   }
 
   @override
-  Future<UserModel> signUpWithEmailPassword({
-    required String email,
-    required String password,
-  }) async {
-    try {
-      final response = await supabaseClient.auth.signUp(
-        email: email,
-        password: password,
-      );
-
-      if (response.user == null) {
-        throw ServerException('User is null!');
-      }
-
-      final session = supabaseClient.auth.currentSession;
-      if (session != null) {
-        final sessionJson = jsonEncode(session.toJson());
-        await serviceLocator<SecureStorage>().saveSession(sessionJson);
-      }
-
-      final userData = await supabaseClient
-          .from('profiles')
-          .select()
-          .eq('id', response.user!.id)
-          .single();
-
-      return UserModel.fromJson({...userData, 'email': response.user!.email});
-    } on AuthException catch (e) {
-      throw ServerException(e.message);
-    } catch (e) {
-      throw ServerException(e.toString());
-    }
-  }
-
-  @override
   Future<UserModel?> getCurrentUserData() async {
     try {
       final session = currentUserSession;
@@ -117,7 +125,6 @@ class AuthSupabaseDataSourceImpl implements AuthSupabaseDataSource {
             .select()
             .eq('id', session.user.id)
             .single();
-
         return UserModel.fromJson({...userData, 'email': session.user.email});
       }
       return null;
@@ -130,7 +137,7 @@ class AuthSupabaseDataSourceImpl implements AuthSupabaseDataSource {
   Future<void> logOut() async {
     try {
       await supabaseClient.auth.signOut(scope: SignOutScope.global);
-      await serviceLocator<SecureStorage>().clearAll();
+      await secureStorage.clearAll();
     } on AuthException catch (e) {
       throw ServerException(e.message);
     } catch (e) {
@@ -188,7 +195,7 @@ class AuthSupabaseDataSourceImpl implements AuthSupabaseDataSource {
   Future<void> deleteAccount({required String id}) async {
     try {
       await supabaseClient.auth.admin.deleteUser(id);
-      await serviceLocator<SecureStorage>().clearAll();
+      await secureStorage.clearAll();
     } on AuthException catch (e) {
       throw ServerException(e.message);
     } catch (e) {

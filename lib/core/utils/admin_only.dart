@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:real_amis/core/cubits/app_user/app_user_cubit.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:real_amis/core/utils/show_snackbar.dart';
+import 'package:real_amis/presentation/auth/providers/app_user_notifier.dart';
+import 'package:real_amis/presentation/auth/providers/app_user_provider.dart';
 
-class AdminOnly extends StatelessWidget {
+class AdminOnly extends ConsumerWidget {
   final Widget child;
   final bool hideWhileLoading;
 
@@ -13,16 +15,23 @@ class AdminOnly extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
-    return BlocBuilder<AppUserCubit, AppUserState>(
-      builder: (context, state) {
-        if (state is AppUserLoggedIn) {
-          return state.user.isAdmin ? child : const SizedBox.shrink();
-        } else if (state is AppUserInitial && hideWhileLoading) {
-          return const SizedBox.shrink();
+  Widget build(BuildContext context, WidgetRef ref) {
+    final userStateAsync = ref.watch(appUserProvider);
+
+    return userStateAsync.when(
+      data: (userState) {
+        if (userState is AppUserLoggedIn && userState.user.isAdmin) {
+          return child;
         } else {
           return const SizedBox.shrink();
         }
+      },
+      loading: () => hideWhileLoading ? const SizedBox.shrink() : child,
+      error: (err, st) {
+        WidgetsBinding.instance.addPostFrameCallback(
+          (_) => showSnackBar(context, err.toString()),
+        );
+        return Center(child: Text('Errore: ${err.toString()}'));
       },
     );
   }

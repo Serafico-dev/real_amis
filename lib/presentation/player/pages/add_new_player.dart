@@ -2,8 +2,8 @@ import 'dart:io';
 
 import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_datetime_picker_plus/flutter_datetime_picker_plus.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:real_amis/common/helpers/is_dark_mode.dart';
 import 'package:real_amis/common/widgets/appBar/app_bar_yes_nav.dart';
@@ -14,19 +14,19 @@ import 'package:real_amis/core/configs/theme/app_colors.dart';
 import 'package:real_amis/core/utils/pick_image.dart';
 import 'package:real_amis/core/utils/show_snackbar.dart';
 import 'package:real_amis/domain/entities/player/player_role.dart';
-import 'package:real_amis/presentation/player/bloc/player_bloc.dart';
+import 'package:real_amis/presentation/player/providers/player_notifier.dart';
 
-class AddNewPlayerPage extends StatefulWidget {
+class AddNewPlayerPage extends ConsumerStatefulWidget {
+  const AddNewPlayerPage({super.key});
+
   static MaterialPageRoute route() =>
       MaterialPageRoute(builder: (_) => const AddNewPlayerPage());
 
-  const AddNewPlayerPage({super.key});
-
   @override
-  State<AddNewPlayerPage> createState() => _AddNewPlayerPageState();
+  ConsumerState<AddNewPlayerPage> createState() => _AddNewPlayerPageState();
 }
 
-class _AddNewPlayerPageState extends State<AddNewPlayerPage> {
+class _AddNewPlayerPageState extends ConsumerState<AddNewPlayerPage> {
   final _formKey = GlobalKey<FormState>();
 
   final TextEditingController _userNameController = TextEditingController();
@@ -59,7 +59,7 @@ class _AddNewPlayerPageState extends State<AddNewPlayerPage> {
     if (picked != null) setState(() => _image = picked);
   }
 
-  void _uploadPlayer() {
+  Future<void> _uploadPlayer() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
 
     if (_selectedRole == null) {
@@ -70,26 +70,37 @@ class _AddNewPlayerPageState extends State<AddNewPlayerPage> {
       showSnackBar(context, 'Seleziona un\'immagine');
       return;
     }
+    if (_birthday == null) {
+      showSnackBar(context, 'Seleziona la data di nascita');
+      return;
+    }
 
-    context.read<PlayerBloc>().add(
-      PlayerUpload(
-        userName: _userNameController.text.trim(),
-        fullName: _fullNameController.text.trim(),
-        image: _image!,
-        role: _selectedRole!,
-        attendances: _parseOrZero(_attendancesController.text),
-        goals: _parseOrZero(_goalsController.text),
-        yellowCards: _parseOrZero(_yellowCardsController.text),
-        redCards: _parseOrZero(_redCardsController.text),
-        active: _isActive,
-        birthday: _birthday,
-      ),
+    await ref
+        .read(playerNotifierProvider.notifier)
+        .uploadPlayer(
+          userName: _userNameController.text.trim(),
+          fullName: _fullNameController.text.trim(),
+          image: _image!,
+          role: _selectedRole!,
+          attendances: _parseOrZero(_attendancesController.text),
+          goals: _parseOrZero(_goalsController.text),
+          yellowCards: _parseOrZero(_yellowCardsController.text),
+          redCards: _parseOrZero(_redCardsController.text),
+          active: _isActive,
+          birthday: _birthday!,
+        );
+
+    final state = ref.read(playerNotifierProvider);
+    state.whenOrNull(
+      data: (_) => Navigator.pop(context),
+      error: (err, _) => showSnackBar(context, err.toString()),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     final isDark = context.isDarkMode;
+    final playerState = ref.watch(playerNotifierProvider);
 
     return Scaffold(
       appBar: AppBarYesNav(
@@ -106,165 +117,162 @@ class _AddNewPlayerPageState extends State<AddNewPlayerPage> {
           ),
         ],
       ),
-      body: BlocConsumer<PlayerBloc, PlayerState>(
-        listener: (context, state) {
-          if (state is PlayerFailure) showSnackBar(context, state.error);
-          if (state is PlayerUploadSuccess) Navigator.pop(context);
+      body: playerState.when(
+        data: (_) => _buildForm(context, isDark),
+        loading: () => const Loader(),
+        error: (err, _) {
+          WidgetsBinding.instance.addPostFrameCallback(
+            (_) => showSnackBar(context, err.toString()),
+          );
+          return _buildForm(context, isDark);
         },
-        builder: (context, state) {
-          if (state is PlayerLoading) return const Loader();
+      ),
+    );
+  }
 
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                children: [
-                  GestureDetector(
-                    onTap: _selectImage,
-                    child: _image != null
-                        ? ClipRRect(
-                            borderRadius: BorderRadius.circular(10),
-                            child: Image.file(
-                              _image!,
-                              height: 150,
-                              width: double.infinity,
-                              fit: BoxFit.cover,
+  Widget _buildForm(BuildContext context, bool isDark) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Form(
+        key: _formKey,
+        child: Column(
+          children: [
+            GestureDetector(
+              onTap: _selectImage,
+              child: _image != null
+                  ? ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+                      child: Image.file(
+                        _image!,
+                        height: 150,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                      ),
+                    )
+                  : DottedBorder(
+                      options: RoundedRectDottedBorderOptions(
+                        radius: const Radius.circular(10),
+                        color: isDark
+                            ? AppColors.tertiary
+                            : AppColors.secondary,
+                        dashPattern: const [20, 4],
+                        strokeCap: StrokeCap.round,
+                      ),
+                      child: SizedBox(
+                        height: 150,
+                        width: double.infinity,
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: const [
+                            Icon(Icons.folder_open, size: 50),
+                            SizedBox(height: 15),
+                            Text(
+                              'Seleziona un\'immagine',
+                              style: TextStyle(fontSize: 15),
                             ),
-                          )
-                        : DottedBorder(
-                            options: RoundedRectDottedBorderOptions(
-                              radius: const Radius.circular(10),
-                              color: isDark
-                                  ? AppColors.tertiary
-                                  : AppColors.secondary,
-                              dashPattern: const [20, 4],
-                              strokeCap: StrokeCap.round,
-                            ),
-
-                            child: SizedBox(
-                              height: 150,
-                              width: double.infinity,
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: const [
-                                  Icon(Icons.folder_open, size: 50),
-                                  SizedBox(height: 15),
-                                  Text(
-                                    'Seleziona un\'immagine',
-                                    style: TextStyle(fontSize: 15),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                  ),
-                  const SizedBox(height: 20),
-
-                  TextFieldRequired(
-                    controller: _fullNameController,
-                    labelText: 'Nome e Cognome',
-                    hintText: 'Inserisci il nome e cognome',
-                  ),
-                  const SizedBox(height: 15),
-
-                  DropdownButtonFormField<PlayerRole>(
-                    initialValue: _selectedRole,
-                    items: PlayerRole.values
-                        .map(
-                          (r) =>
-                              DropdownMenuItem(value: r, child: Text(r.value)),
-                        )
-                        .toList(),
-                    onChanged: (v) => setState(() => _selectedRole = v),
-                    decoration: const InputDecoration(
-                      labelText: 'Ruolo',
-                      border: OutlineInputBorder(),
-                    ),
-                    validator: (v) => v == null ? 'Seleziona un ruolo' : null,
-                  ),
-                  const SizedBox(height: 15),
-
-                  TextFieldRequired(
-                    controller: _userNameController,
-                    labelText: 'Soprannome',
-                    hintText: 'Inserisci il soprannome',
-                  ),
-                  const SizedBox(height: 15),
-
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        _birthday == null
-                            ? 'Data di nascita non selezionata'
-                            : 'Data di nascita: ${DateFormat('dd/MM/yyyy').format(_birthday!)}',
-                        style: TextStyle(
-                          color: isDark
-                              ? AppColors.textDarkPrimary
-                              : AppColors.textLightPrimary,
+                          ],
                         ),
                       ),
-                      ElevatedButton.icon(
-                        onPressed: () async {
-                          final picked = await DatePicker.showDatePicker(
-                            context,
-                            showTitleActions: true,
-                            minTime: DateTime(1950),
-                            maxTime: DateTime.now(),
-                            currentTime: _birthday ?? DateTime(2000),
-                            locale: LocaleType.it,
-                          );
-                          if (picked != null) {
-                            setState(() => _birthday = picked);
-                          }
-                        },
-                        icon: const Icon(Icons.cake, color: Colors.white),
-                        label: const Text('Seleziona'),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 15),
-
-                  NumberFieldNullable(
-                    controller: _attendancesController,
-                    labelText: 'Presenze',
-                    hintText: '0',
-                  ),
-                  const SizedBox(height: 10),
-                  NumberFieldNullable(
-                    controller: _goalsController,
-                    labelText: 'Goal',
-                    hintText: '0',
-                  ),
-                  const SizedBox(height: 10),
-                  NumberFieldNullable(
-                    controller: _yellowCardsController,
-                    labelText: 'Cartellini gialli',
-                    hintText: '0',
-                  ),
-                  const SizedBox(height: 10),
-                  NumberFieldNullable(
-                    controller: _redCardsController,
-                    labelText: 'Cartellini rossi',
-                    hintText: '0',
-                  ),
-                  const SizedBox(height: 15),
-
-                  SegmentedButton<int>(
-                    segments: const [
-                      ButtonSegment(value: 0, label: Text('Attivo')),
-                      ButtonSegment(value: 1, label: Text('Non attivo')),
-                    ],
-                    selected: _isActive ? {0} : {1},
-                    onSelectionChanged: (newSelection) =>
-                        setState(() => _isActive = newSelection.contains(0)),
-                  ),
-                ],
-              ),
+                    ),
             ),
-          );
-        },
+            const SizedBox(height: 20),
+
+            TextFieldRequired(
+              controller: _fullNameController,
+              labelText: 'Nome e Cognome',
+              hintText: 'Inserisci il nome e cognome',
+            ),
+            const SizedBox(height: 15),
+
+            DropdownButtonFormField<PlayerRole>(
+              initialValue: _selectedRole,
+              items: PlayerRole.values
+                  .map((r) => DropdownMenuItem(value: r, child: Text(r.value)))
+                  .toList(),
+              onChanged: (v) => setState(() => _selectedRole = v),
+              decoration: const InputDecoration(
+                labelText: 'Ruolo',
+                border: OutlineInputBorder(),
+              ),
+              validator: (v) => v == null ? 'Seleziona un ruolo' : null,
+            ),
+            const SizedBox(height: 15),
+
+            TextFieldRequired(
+              controller: _userNameController,
+              labelText: 'Soprannome',
+              hintText: 'Inserisci il soprannome',
+            ),
+            const SizedBox(height: 15),
+
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  _birthday == null
+                      ? 'Data di nascita non selezionata'
+                      : 'Data di nascita: ${DateFormat('dd/MM/yyyy').format(_birthday!)}',
+                  style: TextStyle(
+                    color: isDark
+                        ? AppColors.textDarkPrimary
+                        : AppColors.textLightPrimary,
+                  ),
+                ),
+                ElevatedButton.icon(
+                  onPressed: () async {
+                    final picked = await DatePicker.showDatePicker(
+                      context,
+                      showTitleActions: true,
+                      minTime: DateTime(1950),
+                      maxTime: DateTime.now(),
+                      currentTime: _birthday ?? DateTime(2000),
+                      locale: LocaleType.it,
+                    );
+                    if (picked != null) setState(() => _birthday = picked);
+                  },
+                  icon: const Icon(Icons.cake, color: Colors.white),
+                  label: const Text('Seleziona'),
+                ),
+              ],
+            ),
+            const SizedBox(height: 15),
+
+            NumberFieldNullable(
+              controller: _attendancesController,
+              labelText: 'Presenze',
+              hintText: '0',
+            ),
+            const SizedBox(height: 10),
+            NumberFieldNullable(
+              controller: _goalsController,
+              labelText: 'Goal',
+              hintText: '0',
+            ),
+            const SizedBox(height: 10),
+            NumberFieldNullable(
+              controller: _yellowCardsController,
+              labelText: 'Cartellini gialli',
+              hintText: '0',
+            ),
+            const SizedBox(height: 10),
+            NumberFieldNullable(
+              controller: _redCardsController,
+              labelText: 'Cartellini rossi',
+              hintText: '0',
+            ),
+            const SizedBox(height: 15),
+
+            SegmentedButton<int>(
+              segments: const [
+                ButtonSegment(value: 0, label: Text('Attivo')),
+                ButtonSegment(value: 1, label: Text('Non attivo')),
+              ],
+              selected: _isActive ? {0} : {1},
+              onSelectionChanged: (newSelection) =>
+                  setState(() => _isActive = newSelection.contains(0)),
+            ),
+          ],
+        ),
       ),
     );
   }

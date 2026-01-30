@@ -19,14 +19,16 @@ class TeamsDropdownSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final homeTeams = [
-      if (homeTeam != null && !filteredTeams.contains(homeTeam)) homeTeam!,
-      ...filteredTeams.where((t) => t != awayTeam),
-    ];
-    final awayTeams = [
-      if (awayTeam != null && !filteredTeams.contains(awayTeam)) awayTeam!,
-      ...filteredTeams.where((t) => t != homeTeam),
-    ];
+    final homeTeams = filteredTeams
+        .where((t) => awayTeam == null || t.id != awayTeam!.id)
+        .toList();
+
+    final awayTeams = filteredTeams
+        .where((t) => homeTeam == null || t.id != homeTeam!.id)
+        .toList();
+
+    final uniqueHomeTeams = {for (var t in homeTeams) t.id: t}.values.toList();
+    final uniqueAwayTeams = {for (var t in awayTeams) t.id: t}.values.toList();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -38,7 +40,7 @@ class TeamsDropdownSection extends StatelessWidget {
             border: OutlineInputBorder(),
             floatingLabelBehavior: FloatingLabelBehavior.always,
           ),
-          items: homeTeams
+          items: uniqueHomeTeams
               .map(
                 (team) => DropdownMenuItem(value: team, child: Text(team.name)),
               )
@@ -55,7 +57,7 @@ class TeamsDropdownSection extends StatelessWidget {
             border: OutlineInputBorder(),
             floatingLabelBehavior: FloatingLabelBehavior.always,
           ),
-          items: awayTeams
+          items: uniqueAwayTeams
               .map(
                 (team) => DropdownMenuItem(value: team, child: Text(team.name)),
               )

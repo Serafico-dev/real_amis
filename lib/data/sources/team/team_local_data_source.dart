@@ -1,33 +1,52 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
 import 'package:real_amis/data/models/team/team_model.dart';
 
+/// Provider sicuro della box Hive per le squadre
+final teamBoxProvider = Provider<Box>((ref) {
+  const boxName = 'teamsBox';
+  if (!Hive.isBoxOpen(boxName)) {
+    throw Exception(
+      "Box '$boxName' non aperta! Assicurati di chiamare Hive.openBox('$boxName') in initDependencies() prima di leggere questo provider.",
+    );
+  }
+  return Hive.box(boxName);
+});
+
+/// Interfaccia per il local data source delle squadre
 abstract interface class TeamLocalDataSource {
   void uploadLocalTeams({required List<TeamModel> teams});
   List<TeamModel> loadTeams();
 }
 
+/// Provider del local data source delle squadre
+final teamLocalDataSourceProvider = Provider<TeamLocalDataSource>((ref) {
+  return TeamLocalDataSourceImpl(ref.read(teamBoxProvider));
+});
+
+/// Implementazione concreta del local data source delle squadre
 class TeamLocalDataSourceImpl implements TeamLocalDataSource {
   final Box box;
+
   TeamLocalDataSourceImpl(this.box);
 
   @override
   List<TeamModel> loadTeams() {
-    List<TeamModel> teams = [];
-    box.read(() {
-      for (int i = 0; i < box.length; i++) {
-        teams.add(TeamModel.fromJson(box.get(i.toString())));
+    final teams = <TeamModel>[];
+    for (int i = 0; i < box.length; i++) {
+      final data = box.get(i.toString());
+      if (data != null) {
+        teams.add(TeamModel.fromJson(Map<String, dynamic>.from(data)));
       }
-    });
+    }
     return teams;
   }
 
   @override
   void uploadLocalTeams({required List<TeamModel> teams}) {
     box.clear();
-    box.write(() {
-      for (int i = 0; i < teams.length; i++) {
-        box.put(i.toString(), teams[i].toJson());
-      }
-    });
+    for (int i = 0; i < teams.length; i++) {
+      box.put(i.toString(), teams[i].toJson());
+    }
   }
 }

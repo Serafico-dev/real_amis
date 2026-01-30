@@ -7,38 +7,49 @@ environment:
   sdk: ^3.9.2
 
 dependencies:
-  app_links: ^6.4.1
-  cached_network_image: ^3.4.1
-  collection: ^1.19.1
-  dartz: ^0.10.1
-  dotted_border: ^3.1.0
   flutter:
     sdk: flutter
-  flutter_bloc: ^9.1.1
-  flutter_cache_manager: ^3.4.0
-  flutter_datetime_picker_plus: ^2.2.0
-  flutter_local_notifications: ^19.5.0
+
+  # Core / Utilities
+  collection: ^1.19.1
+  dartz: ^0.10.1
+  fpdart: ^1.1.1
+  intl: ^0.20.2
+  uuid: ^4.5.1
+  path_provider: ^2.1.5
+  package_info_plus: ^9.0.0
+  url_launcher: ^6.3.2
+
+  # Flutter Widgets / UI
+  flutter_local_notifications: ^20.0.0
   flutter_localization: ^0.3.3
   flutter_secure_storage: ^10.0.0
   flutter_svg: ^2.2.1
-  fpdart: ^1.1.1
-  get_it: ^9.0.5
-  hive: ^4.0.0-dev.2
-  hydrated_bloc: ^10.1.1
+  cached_network_image: ^3.4.1
+  flutter_cache_manager: ^3.4.0
+  dotted_border: ^3.1.0
   image_picker: ^1.2.0
-  internet_connection_checker_plus: ^2.9.0
-  intl: ^0.20.2
-  isar_flutter_libs: 
-  package_info_plus: ^9.0.0
-  path_provider: ^2.1.5
+  flutter_datetime_picker_plus: ^2.2.0
+
+  # State management (Riverpod 3)
+  flutter_riverpod: ^3.0.3
+
+  # Database / Storage
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0
   supabase_flutter: ^2.10.3
+
+  # Networking / Utilities
+  internet_connection_checker_plus: ^2.9.0
   timezone: ^0.10.1
-  url_launcher: ^6.3.2
-  uuid: ^4.5.1
+  shared_preferences: ^2.5.4
+  flutter_localizations:
+    sdk: flutter
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
+
   flutter_lints: ^6.0.0
 
 flutter:

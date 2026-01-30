@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:real_amis/common/helpers/is_dark_mode.dart';
 import 'package:real_amis/common/widgets/appBar/app_bar_yes_nav.dart';
 import 'package:real_amis/common/widgets/loader/loader.dart';
@@ -10,19 +10,19 @@ import 'package:real_amis/common/widgets/textFields/text_field_required.dart';
 import 'package:real_amis/core/configs/theme/app_colors.dart';
 import 'package:real_amis/core/utils/pick_image.dart';
 import 'package:real_amis/core/utils/show_snackbar.dart';
-import 'package:real_amis/presentation/team/bloc/team_bloc.dart';
+import 'package:real_amis/presentation/team/providers/team_notifier.dart';
 
-class AddNewTeamPage extends StatefulWidget {
+class AddNewTeamPage extends ConsumerStatefulWidget {
   static MaterialPageRoute route() =>
       MaterialPageRoute(builder: (_) => const AddNewTeamPage());
 
   const AddNewTeamPage({super.key});
 
   @override
-  State<AddNewTeamPage> createState() => _AddNewTeamPageState();
+  ConsumerState<AddNewTeamPage> createState() => _AddNewTeamPageState();
 }
 
-class _AddNewTeamPageState extends State<AddNewTeamPage> {
+class _AddNewTeamPageState extends ConsumerState<AddNewTeamPage> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   File? _image;
@@ -38,16 +38,25 @@ class _AddNewTeamPageState extends State<AddNewTeamPage> {
     if (picked != null) setState(() => _image = picked);
   }
 
-  void _uploadTeam() {
+  Future<void> _uploadTeam() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
     if (_image == null) {
       showSnackBar(context, "Seleziona un'immagine");
       return;
     }
 
-    context.read<TeamBloc>().add(
-      TeamUpload(name: _nameController.text.trim(), image: _image!),
+    final notifier = ref.read(teamNotifierProvider.notifier);
+    await notifier.uploadTeam(
+      name: _nameController.text.trim(),
+      image: _image!,
     );
+
+    final state = ref.read(teamNotifierProvider);
+    if (state is AsyncData && mounted) {
+      Navigator.pop(context);
+    } else if (state is AsyncError && mounted) {
+      showSnackBar(context, state.error.toString());
+    }
   }
 
   Widget _buildImagePicker(BuildContext context) {
@@ -103,6 +112,7 @@ class _AddNewTeamPageState extends State<AddNewTeamPage> {
   @override
   Widget build(BuildContext context) {
     final isDark = context.isDarkMode;
+    final teamState = ref.watch(teamNotifierProvider);
 
     return Scaffold(
       appBar: AppBarYesNav(
@@ -119,37 +129,27 @@ class _AddNewTeamPageState extends State<AddNewTeamPage> {
           ),
         ],
       ),
-      body: BlocConsumer<TeamBloc, TeamState>(
-        listener: (context, state) {
-          if (state is TeamFailure) showSnackBar(context, state.error);
-          if (state is TeamUploadSuccess) Navigator.pop(context);
-        },
-        builder: (context, state) {
-          final isLoading = state is TeamLoading;
-
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                children: [
-                  _buildImagePicker(context),
-                  const SizedBox(height: 20),
-                  TextFieldRequired(
-                    controller: _nameController,
-                    labelText: 'Nome squadra',
-                    hintText: 'Inserisci il nome',
-                  ),
-                  if (isLoading)
-                    const Padding(
-                      padding: EdgeInsets.only(top: 20),
-                      child: Loader(),
-                    ),
-                ],
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            children: [
+              _buildImagePicker(context),
+              const SizedBox(height: 20),
+              TextFieldRequired(
+                controller: _nameController,
+                labelText: 'Nome squadra',
+                hintText: 'Inserisci il nome',
               ),
-            ),
-          );
-        },
+              if (teamState is AsyncLoading)
+                const Padding(
+                  padding: EdgeInsets.only(top: 20),
+                  child: Loader(),
+                ),
+            ],
+          ),
+        ),
       ),
     );
   }

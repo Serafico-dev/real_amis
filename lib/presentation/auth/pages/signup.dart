@@ -1,24 +1,25 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:real_amis/common/helpers/is_dark_mode.dart';
 import 'package:real_amis/common/widgets/appBar/app_bar_no_nav.dart';
 import 'package:real_amis/common/widgets/button/basic_app_button.dart';
 import 'package:real_amis/core/configs/theme/app_colors.dart';
 import 'package:real_amis/core/utils/show_snackbar.dart';
-import 'package:real_amis/presentation/auth/bloc/auth_bloc.dart';
 import 'package:real_amis/presentation/auth/pages/signin.dart';
+import 'package:real_amis/presentation/auth/providers/app_user_provider.dart';
 import 'package:real_amis/presentation/main/pages/main_page.dart';
 
-class SignupPage extends StatefulWidget {
+class SignupPage extends ConsumerStatefulWidget {
   const SignupPage({super.key});
+
   static MaterialPageRoute route() =>
       MaterialPageRoute(builder: (_) => const SignupPage());
 
   @override
-  State<SignupPage> createState() => _SignupPageState();
+  ConsumerState<SignupPage> createState() => _SignupPageState();
 }
 
-class _SignupPageState extends State<SignupPage> {
+class _SignupPageState extends ConsumerState<SignupPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
@@ -32,7 +33,10 @@ class _SignupPageState extends State<SignupPage> {
 
   void _handleAuthSuccess() {
     if (!mounted) return;
-    Navigator.pushAndRemoveUntil(context, MainPage.route(), (route) => false);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      Navigator.pushAndRemoveUntil(context, MainPage.route(), (_) => false);
+    });
   }
 
   @override
@@ -42,60 +46,57 @@ class _SignupPageState extends State<SignupPage> {
         ? AppColors.textDarkPrimary
         : AppColors.textLightPrimary;
 
+    ref.listen(appUserProvider, (previous, next) {
+      next.whenOrNull(
+        data: (_) => _handleAuthSuccess(),
+        error: (e, _) => showSnackBar(context, e.toString()),
+      );
+    });
+
+    final authState = ref.watch(appUserProvider);
+    final isLoading = authState is AsyncLoading;
+
     return Scaffold(
       appBar: AppBarNoNav(),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 50),
-          child: BlocConsumer<AuthBloc, AuthState>(
-            listener: (context, state) {
-              if (state is AuthFailure) {
-                if (mounted) showSnackBar(context, state.message);
-              } else if (state is AuthSuccess) {
-                _handleAuthSuccess();
-              }
-            },
-            builder: (context, state) {
-              final isLoading = state is AuthLoading;
-
-              return Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    const SizedBox(height: 60),
-                    Text(
-                      'Unisciti al club',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 25,
-                        color: textPrimary,
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    _EmailField(controller: _emailController),
-                    const SizedBox(height: 20),
-                    _PasswordField(controller: _passwordController),
-                    const SizedBox(height: 30),
-                    BasicAppButton(
-                      onPressed: isLoading
-                          ? null
-                          : () {
-                              if (_formKey.currentState!.validate()) {
-                                context.read<AuthBloc>().add(
-                                  AuthSignUp(
-                                    email: _emailController.text.trim(),
-                                    password: _passwordController.text.trim(),
-                                  ),
-                                );
-                              }
-                            },
-                      title: isLoading ? 'Caricamento...' : 'Registrati',
-                    ),
-                  ],
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                const SizedBox(height: 60),
+                Text(
+                  'Unisciti al club',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 25,
+                    color: textPrimary,
+                  ),
                 ),
-              );
-            },
+                const SizedBox(height: 20),
+                _EmailField(controller: _emailController),
+                const SizedBox(height: 20),
+                _PasswordField(controller: _passwordController),
+                const SizedBox(height: 30),
+                BasicAppButton(
+                  onPressed: isLoading
+                      ? null
+                      : () {
+                          if (_formKey.currentState!.validate()) {
+                            ref
+                                .read(appUserProvider.notifier)
+                                .signUp(
+                                  email: _emailController.text.trim(),
+                                  password: _passwordController.text.trim(),
+                                );
+                          }
+                        },
+                  title: isLoading ? 'Caricamento...' : 'Registrati',
+                ),
+              ],
+            ),
           ),
         ),
       ),

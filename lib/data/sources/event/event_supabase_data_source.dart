@@ -1,4 +1,6 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:real_amis/core/errors/exceptions.dart';
+import 'package:real_amis/core/providers/supabase_client_provider.dart';
 import 'package:real_amis/data/models/event/event_model.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -9,6 +11,12 @@ abstract interface class EventSupabaseDataSource {
   Future<EventModel> updateEvent(EventModel event);
   Future<EventModel> deleteEvent({required String eventId});
 }
+
+final eventSupabaseDataSourceProvider = Provider<EventSupabaseDataSource>((
+  ref,
+) {
+  return EventSupabaseDataSourceImpl(ref.read(supabaseClientProvider));
+});
 
 class EventSupabaseDataSourceImpl implements EventSupabaseDataSource {
   final SupabaseClient supabaseClient;
@@ -34,7 +42,7 @@ class EventSupabaseDataSourceImpl implements EventSupabaseDataSource {
     try {
       final events = await supabaseClient
           .from('events')
-          .select('*, team:team_id(name,image_url)');
+          .select('*, team:team_id(*)');
       return events.map((event) => EventModel.fromJson(event)).toList();
     } on PostgrestException catch (e) {
       throw ServerException(e.message);

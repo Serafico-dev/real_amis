@@ -1,4 +1,6 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:real_amis/core/errors/exceptions.dart';
+import 'package:real_amis/core/providers/supabase_client_provider.dart';
 import 'package:real_amis/data/models/league/league_model.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -12,6 +14,12 @@ abstract interface class LeagueSupabaseDataSource {
   Future<void> addTeamToLeague(String leagueId, String teamId);
   Future<void> removeTeamFromLeague(String leagueId, String teamId);
 }
+
+final leagueSupabaseDataSourceProvider = Provider<LeagueSupabaseDataSource>((
+  ref,
+) {
+  return LeagueSupabaseDataSourceImpl(ref.read(supabaseClientProvider));
+});
 
 class LeagueSupabaseDataSourceImpl implements LeagueSupabaseDataSource {
   final SupabaseClient supabaseClient;

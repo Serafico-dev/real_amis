@@ -1,13 +1,33 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
 import 'package:real_amis/data/models/league/league_model.dart';
 
+/// Provider sicuro della box Hive per i campionati
+final leagueBoxProvider = Provider<Box>((ref) {
+  const boxName = 'leaguesBox';
+  if (!Hive.isBoxOpen(boxName)) {
+    throw Exception(
+      "Box '$boxName' non aperta! Assicurati di chiamare Hive.openBox('$boxName') in initDependencies() prima di leggere questo provider.",
+    );
+  }
+  return Hive.box(boxName);
+});
+
+/// Interfaccia per il local data source dei campionati
 abstract interface class LeagueLocalDataSource {
   void uploadLocalLeagues({required List<LeagueModel> leagues});
   List<LeagueModel> loadLeagues();
 }
 
+/// Provider del local data source dei campionati
+final leagueLocalDataSourceProvider = Provider<LeagueLocalDataSource>((ref) {
+  return LeagueLocalDataSourceImpl(ref.read(leagueBoxProvider));
+});
+
+/// Implementazione concreta del local data source
 class LeagueLocalDataSourceImpl implements LeagueLocalDataSource {
   final Box box;
+
   LeagueLocalDataSourceImpl(this.box);
 
   @override
@@ -16,7 +36,7 @@ class LeagueLocalDataSourceImpl implements LeagueLocalDataSource {
     for (int i = 0; i < box.length; i++) {
       final json = box.get(i.toString());
       if (json != null) {
-        leagues.add(LeagueModel.fromJson(json));
+        leagues.add(LeagueModel.fromJson(Map<String, dynamic>.from(json)));
       }
     }
     return leagues;

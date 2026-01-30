@@ -1,10 +1,12 @@
 import 'dart:io';
 
 import 'package:dartz/dartz.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:real_amis/core/constants/constants.dart';
 import 'package:real_amis/core/errors/exceptions.dart';
 import 'package:real_amis/core/errors/failure.dart';
 import 'package:real_amis/core/network/connection_checker.dart';
+import 'package:real_amis/core/providers/connection_checker_provider.dart';
 import 'package:real_amis/data/models/player/player_model.dart';
 import 'package:real_amis/data/sources/player/player_local_data_source.dart';
 import 'package:real_amis/data/sources/player/player_supabase_data_source.dart';
@@ -12,6 +14,14 @@ import 'package:real_amis/domain/entities/player/player_entity.dart';
 import 'package:real_amis/domain/entities/player/player_role.dart';
 import 'package:real_amis/domain/repositories/player/player_repository.dart';
 import 'package:uuid/uuid.dart';
+
+final playerRepositoryProvider = Provider<PlayerRepositoryImpl>((ref) {
+  return PlayerRepositoryImpl(
+    ref.read(playerSupabaseDataSourceProvider),
+    ref.read(playerLocalDataSourceProvider),
+    ref.read(connectionCheckerProvider),
+  );
+});
 
 class PlayerRepositoryImpl implements PlayerRepository {
   final PlayerSupabaseDataSource playerSupabaseDataSource;
@@ -23,6 +33,23 @@ class PlayerRepositoryImpl implements PlayerRepository {
     this.playerLocalDataSource,
     this.connectionChecker,
   );
+
+  PlayerEntity _toEntity(PlayerModel model) {
+    return PlayerEntity(
+      id: model.id,
+      updatedAt: model.updatedAt,
+      userName: model.userName,
+      fullName: model.fullName,
+      imageUrl: model.imageUrl,
+      role: model.role,
+      attendances: model.attendances,
+      goals: model.goals,
+      yellowCards: model.yellowCards,
+      redCards: model.redCards,
+      active: model.active,
+      birthday: model.birthday,
+    );
+  }
 
   @override
   Future<Either<Failure, PlayerEntity>> uploadPlayer({
@@ -38,10 +65,11 @@ class PlayerRepositoryImpl implements PlayerRepository {
     DateTime? birthday,
   }) async {
     try {
-      if (!await (connectionChecker.isConnected)) {
+      if (!await connectionChecker.isConnected) {
         return left(Failure(Constants.noConnectionErrorMessage));
       }
-      PlayerModel playerModel = PlayerModel(
+
+      var playerModel = PlayerModel(
         id: Uuid().v1(),
         updatedAt: DateTime.now(),
         userName: userName,
@@ -65,7 +93,8 @@ class PlayerRepositoryImpl implements PlayerRepository {
       final uploadedPlayer = await playerSupabaseDataSource.uploadPlayer(
         playerModel,
       );
-      return right(uploadedPlayer);
+
+      return right(_toEntity(uploadedPlayer));
     } on ServerException catch (e) {
       return left(Failure(e.message));
     }
@@ -74,13 +103,15 @@ class PlayerRepositoryImpl implements PlayerRepository {
   @override
   Future<Either<Failure, List<PlayerEntity>>> getAllPlayers() async {
     try {
-      if (!await (connectionChecker.isConnected)) {
-        final players = playerLocalDataSource.loadPlayers();
-        return right(players);
+      List<PlayerModel> players;
+      if (!await connectionChecker.isConnected) {
+        players = playerLocalDataSource.loadPlayers();
+      } else {
+        players = await playerSupabaseDataSource.getAllPlayers();
+        playerLocalDataSource.uploadLocalPlayers(players: players);
       }
-      final players = await playerSupabaseDataSource.getAllPlayers();
-      playerLocalDataSource.uploadLocalPlayers(players: players);
-      return right(players);
+
+      return right(players.map(_toEntity).toList());
     } on ServerException catch (e) {
       return left(Failure(e.message));
     }
@@ -101,10 +132,11 @@ class PlayerRepositoryImpl implements PlayerRepository {
     DateTime? birthday,
   }) async {
     try {
-      if (!await (connectionChecker.isConnected)) {
+      if (!await connectionChecker.isConnected) {
         return left(Failure(Constants.noConnectionErrorMessage));
       }
-      PlayerModel playerModel = PlayerModel(
+
+      var playerModel = PlayerModel(
         id: player.id,
         updatedAt: DateTime.now(),
         userName: userName ?? player.userName,
@@ -128,7 +160,8 @@ class PlayerRepositoryImpl implements PlayerRepository {
       final updatedPlayer = await playerSupabaseDataSource.updatePlayer(
         playerModel,
       );
-      return right(updatedPlayer);
+
+      return right(_toEntity(updatedPlayer));
     } on ServerException catch (e) {
       return left(Failure(e.message));
     }
@@ -139,13 +172,15 @@ class PlayerRepositoryImpl implements PlayerRepository {
     required String playerId,
   }) async {
     try {
-      if (!await (connectionChecker.isConnected)) {
+      if (!await connectionChecker.isConnected) {
         return left(Failure(Constants.noConnectionErrorMessage));
       }
+
       final deletedPlayer = await playerSupabaseDataSource.deletePlayer(
         playerId: playerId,
       );
-      return right(deletedPlayer);
+
+      return right(_toEntity(deletedPlayer));
     } on ServerException catch (e) {
       return left(Failure(e.message));
     }

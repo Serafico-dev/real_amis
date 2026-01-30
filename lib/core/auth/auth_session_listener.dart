@@ -1,29 +1,29 @@
-import 'package:real_amis/core/cubits/app_user/app_user_cubit.dart';
-import 'package:real_amis/data/models/auth/user_model.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:real_amis/presentation/auth/providers/app_user_notifier.dart';
+import 'package:real_amis/domain/entities/auth/user_entity.dart';
 
 class AuthSessionListener {
   final SupabaseClient supabase;
-  final AppUserCubit appUserCubit;
+  final AppUserNotifier appUserNotifier;
 
-  AuthSessionListener({required this.supabase, required this.appUserCubit});
+  AuthSessionListener({required this.supabase, required this.appUserNotifier});
 
   void start() {
     supabase.auth.onAuthStateChange.listen((data) async {
       final session = data.session;
 
       if (session == null) {
-        appUserCubit.clearUser();
+        appUserNotifier.setLoggedOut();
         return;
       }
 
-      final user = UserModel(
+      final user = UserEntity(
         id: session.user.id,
         email: session.user.email ?? '',
         isAdmin: false,
       );
 
-      appUserCubit.updateUser(user);
+      appUserNotifier.setLoggedIn(user);
     });
   }
 }

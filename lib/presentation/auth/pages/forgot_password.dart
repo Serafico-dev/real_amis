@@ -1,22 +1,22 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:real_amis/common/helpers/is_dark_mode.dart';
 import 'package:real_amis/common/widgets/appBar/app_bar_yes_nav.dart';
 import 'package:real_amis/common/widgets/button/basic_app_button.dart';
 import 'package:real_amis/core/configs/theme/app_colors.dart';
 import 'package:real_amis/core/utils/show_snackbar.dart';
-import 'package:real_amis/presentation/auth/bloc/auth_bloc.dart';
+import 'package:real_amis/presentation/auth/providers/app_user_provider.dart';
 
-class ForgotPasswordPage extends StatefulWidget {
+class ForgotPasswordPage extends ConsumerStatefulWidget {
   const ForgotPasswordPage({super.key});
   static MaterialPageRoute route() =>
       MaterialPageRoute(builder: (_) => const ForgotPasswordPage());
 
   @override
-  State<ForgotPasswordPage> createState() => _ForgotPasswordPageState();
+  ConsumerState<ForgotPasswordPage> createState() => _ForgotPasswordPageState();
 }
 
-class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
+class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
   final _emailController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
 
@@ -39,55 +39,55 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
         ? AppColors.textDarkSecondary
         : AppColors.textLightSecondary;
 
+    final asyncState = ref.watch(appUserProvider);
+
+    final isLoading = asyncState is AsyncLoading;
+
     return Scaffold(
       appBar: AppBarYesNav(),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(20),
-          child: BlocConsumer<AuthBloc, AuthState>(
-            listener: (context, state) {
-              if (state is AuthPasswordResetEmailSent) {
-                _handleEmailSent();
-              } else if (state is AuthPasswordResetFailure) {
-                if (mounted) showSnackBar(context, state.message);
-              }
-            },
-            builder: (context, state) {
-              final isLoading = state is AuthLoading;
-
-              return Form(
-                key: _formKey,
-                child: Column(
-                  children: [
-                    const SizedBox(height: 48),
-                    Text(
-                      'Inserisci la tua email per ricevere il link di reset',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(color: textSecondary, fontSize: 16),
-                    ),
-                    const SizedBox(height: 12),
-                    _EmailField(controller: _emailController),
-                    const SizedBox(height: 12),
-                    BasicAppButton(
-                      title: isLoading
-                          ? 'Invio in corso...'
-                          : 'Invia email di recupero',
-                      onPressed: isLoading
-                          ? null
-                          : () {
-                              if (_formKey.currentState!.validate()) {
-                                context.read<AuthBloc>().add(
-                                  AuthSendPasswordResetEmail(
-                                    email: _emailController.text.trim(),
-                                  ),
-                                );
-                              }
-                            },
-                    ),
-                  ],
+          child: Form(
+            key: _formKey,
+            child: Column(
+              children: [
+                const SizedBox(height: 48),
+                Text(
+                  'Inserisci la tua email per ricevere il link di reset',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: textSecondary, fontSize: 16),
                 ),
-              );
-            },
+                const SizedBox(height: 12),
+                _EmailField(controller: _emailController),
+                const SizedBox(height: 12),
+                BasicAppButton(
+                  title: isLoading
+                      ? 'Invio in corso...'
+                      : 'Invia email di recupero',
+                  onPressed: isLoading
+                      ? null
+                      : () async {
+                          if (_formKey.currentState!.validate()) {
+                            try {
+                              await ref
+                                  .read(appUserProvider.notifier)
+                                  .requestPasswordReset(
+                                    email: _emailController.text.trim(),
+                                  );
+                              _handleEmailSent();
+                            } catch (e) {
+                              if (!context.mounted) return;
+                              showSnackBar(
+                                context,
+                                'Errore durante l\'invio: $e',
+                              );
+                            }
+                          }
+                        },
+                ),
+              ],
+            ),
           ),
         ),
       ),

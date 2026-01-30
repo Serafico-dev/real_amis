@@ -15,8 +15,6 @@ class UpdateMatch implements UseCase<MatchEntity, UpdateMatchParams> {
       matchDate: params.matchDate,
       homeTeamId: params.homeTeamId,
       awayTeamId: params.awayTeamId,
-      homeTeamScore: params.homeTeamScore,
-      awayTeamScore: params.awayTeamScore,
       matchDay: params.matchDay,
       leagueId: params.leagueId,
     );
@@ -28,8 +26,6 @@ class UpdateMatchParams {
   final DateTime? matchDate;
   final String? homeTeamId;
   final String? awayTeamId;
-  final int? homeTeamScore;
-  final int? awayTeamScore;
   final String? matchDay;
   final String? leagueId;
 
@@ -38,8 +34,6 @@ class UpdateMatchParams {
     this.matchDate,
     this.homeTeamId,
     this.awayTeamId,
-    this.homeTeamScore,
-    this.awayTeamScore,
     this.matchDay,
     this.leagueId,
   });

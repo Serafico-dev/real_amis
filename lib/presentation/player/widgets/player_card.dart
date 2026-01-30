@@ -1,14 +1,14 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:real_amis/common/helpers/is_dark_mode.dart';
 import 'package:real_amis/core/configs/theme/app_colors.dart';
 import 'package:real_amis/domain/entities/player/player_entity.dart';
 import 'package:real_amis/domain/entities/player/player_role.dart';
-import 'package:real_amis/presentation/player/bloc/player_bloc.dart';
 import 'package:real_amis/presentation/player/pages/player_viewer.dart';
+import 'package:real_amis/presentation/player/providers/player_notifier.dart';
 
-class PlayerCard extends StatelessWidget {
+class PlayerCard extends ConsumerWidget {
   final PlayerEntity player;
   final Color color;
 
@@ -29,7 +29,7 @@ class PlayerCard extends StatelessWidget {
   );
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final isDark = context.isDarkMode;
     final textPrimary = Theme.of(context).textTheme.bodyMedium!.color;
     final textSecondary = Theme.of(context).textTheme.bodySmall!.color;
@@ -41,7 +41,7 @@ class PlayerCard extends StatelessWidget {
           PlayerViewerPage.route(player.id, cardColor: color),
         );
         if (context.mounted) {
-          context.read<PlayerBloc>().add(PlayerFetchAllPlayers());
+          ref.read(playerNotifierProvider.notifier).fetchAllPlayers();
         }
       },
       child: Container(
@@ -104,9 +104,7 @@ class PlayerCard extends StatelessWidget {
                 ],
               ),
             ),
-
             const SizedBox(width: 16),
-
             ClipRRect(
               borderRadius: BorderRadius.circular(10),
               child: CachedNetworkImage(

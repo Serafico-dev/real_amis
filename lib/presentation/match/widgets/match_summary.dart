@@ -3,11 +3,13 @@ import 'package:real_amis/common/helpers/is_dark_mode.dart';
 import 'package:real_amis/core/configs/theme/app_colors.dart';
 import 'package:real_amis/core/utils/format_data.dart';
 import 'package:real_amis/domain/entities/match/match_entity.dart';
+import 'package:real_amis/domain/entities/event/event_entity.dart';
 import 'package:real_amis/presentation/match/widgets/full_time_label.dart';
 import 'package:real_amis/presentation/match/widgets/match_score_row.dart';
 
 class MatchSummary extends StatelessWidget {
   final MatchEntity match;
+  final List<EventEntity> events;
   final Color? backgroundColor;
   final void Function()? onTap;
   final bool showFullTime;
@@ -15,6 +17,7 @@ class MatchSummary extends StatelessWidget {
   const MatchSummary({
     super.key,
     required this.match,
+    required this.events,
     this.backgroundColor,
     this.onTap,
     this.showFullTime = true,
@@ -52,7 +55,7 @@ class MatchSummary extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 12),
-        MatchScoreRow(match: match),
+        MatchScoreRow(match: match, events: events),
         if (showFullTime && match.matchDate.isBefore(DateTime.now()))
           const Padding(
             padding: EdgeInsets.only(top: 8),
