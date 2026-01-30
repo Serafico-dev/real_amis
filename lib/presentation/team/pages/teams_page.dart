@@ -3,7 +3,6 @@ import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:real_amis/presentation/auth/providers/app_user_notifier.dart';
-import 'package:real_amis/presentation/score/pages/update_score.dart';
 import 'package:uuid/uuid.dart';
 
 import 'package:real_amis/common/helpers/is_dark_mode.dart';
@@ -15,6 +14,7 @@ import 'package:real_amis/domain/entities/score/score_entity.dart';
 import 'package:real_amis/domain/entities/team/team_entity.dart';
 import 'package:real_amis/presentation/auth/providers/app_user_provider.dart';
 import 'package:real_amis/presentation/league/providers/league_notifier.dart';
+import 'package:real_amis/presentation/score/pages/update_score.dart'; 
 import 'package:real_amis/presentation/score/providers/score_notifier.dart';
 import 'package:real_amis/presentation/team/pages/add_new_team.dart';
 import 'package:real_amis/presentation/team/pages/edit_team.dart';
@@ -83,6 +83,7 @@ class _TeamsPageState extends ConsumerState<TeamsPage> {
           backgroundColor: isDark ? AppColors.bgDark : AppColors.bgLight,
           appBar: AppBarNoNav(
             actions: [
+              // Solo admin può aggiungere squadre
               AdminOnly(
                 child: IconButton(
                   tooltip: 'Aggiungi squadra',
@@ -98,6 +99,7 @@ class _TeamsPageState extends ConsumerState<TeamsPage> {
           ),
           body: Column(
             children: [
+              // Selezione campionato
               leaguesAsync.when(
                 data: (leagues) {
                   if (leagues.isEmpty) return const SizedBox.shrink();
@@ -169,9 +171,7 @@ class _TeamsPageState extends ConsumerState<TeamsPage> {
                 ),
                 error: (err, _) => Center(child: Text('Errore: $err')),
               ),
-
               const SizedBox(height: 8),
-
               Expanded(
                 child: teamsAsync.when(
                   data: (teams) {
@@ -227,46 +227,57 @@ class _TeamsPageState extends ConsumerState<TeamsPage> {
                                 team: team,
                                 score: scoreEntity.score,
                                 index: index,
-                                onTap: () async {
-                                  await Navigator.push(
-                                    context,
-                                    EditTeamPage.route(team),
-                                  );
-                                  _refresh();
-                                },
-                                onEditScore: () async {
-                                  final result =
-                                      await Navigator.push<ScoreEntity?>(
-                                        context,
-                                        UpdateScorePage.route(
-                                          scoreEntity: scoreEntity,
-                                          teamId: team.id,
-                                          leagueId: selectedLeague!.id,
-                                        ),
-                                      );
+                                onTap: user.isAdmin
+                                    ? () async {
+                                        await Navigator.push(
+                                          context,
+                                          EditTeamPage.route(team),
+                                        );
+                                        _refresh();
+                                      }
+                                    : null,
+                                onEditScore: user.isAdmin
+                                    ? () async {
+                                        final result =
+                                            await Navigator.push<ScoreEntity?>(
+                                              context,
+                                              UpdateScorePage.route(
+                                                scoreEntity: scoreEntity,
+                                                teamId: team.id,
+                                                leagueId: selectedLeague!.id,
+                                              ),
+                                            );
 
-                                  if (!mounted || result == null) return;
+                                        if (!mounted || result == null) return;
 
-                                  final scoresNotifier = ref.read(
-                                    scoreNotifierProvider.notifier,
-                                  );
-                                  final allScores =
-                                      ref.read(scoreNotifierProvider).value ??
-                                      [];
+                                        final scoresNotifier = ref.read(
+                                          scoreNotifierProvider.notifier,
+                                        );
+                                        final allScores =
+                                            ref
+                                                .read(scoreNotifierProvider)
+                                                .value ??
+                                            [];
 
-                                  final exists = allScores.any(
-                                    (s) => s.id == result.id,
-                                  );
-                                  if (exists) {
-                                    await scoresNotifier.updateScore(result);
-                                  } else {
-                                    await scoresNotifier.uploadScore(result);
-                                  }
+                                        final exists = allScores.any(
+                                          (s) => s.id == result.id,
+                                        );
+                                        if (exists) {
+                                          await scoresNotifier.updateScore(
+                                            result,
+                                          );
+                                        } else {
+                                          await scoresNotifier.uploadScore(
+                                            result,
+                                          );
+                                        }
 
-                                  await scoresNotifier.fetchScoresByLeague(
-                                    selectedLeague!.id,
-                                  );
-                                },
+                                        await scoresNotifier
+                                            .fetchScoresByLeague(
+                                              selectedLeague!.id,
+                                            );
+                                      }
+                                    : null,
                               );
                             },
                           ),
@@ -297,14 +308,14 @@ class _TeamRow extends StatelessWidget {
   final TeamEntity team;
   final int score;
   final int index;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
   final VoidCallback? onEditScore;
 
   const _TeamRow({
     required this.team,
     required this.score,
     required this.index,
-    required this.onTap,
+    this.onTap,
     this.onEditScore,
   });
 
@@ -370,10 +381,11 @@ class _TeamRow extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 8),
-                IconButton(
-                  icon: const Icon(Icons.edit, size: 20),
-                  onPressed: onEditScore,
-                ),
+                if (onEditScore != null)
+                  IconButton(
+                    icon: const Icon(Icons.edit, size: 20),
+                    onPressed: onEditScore,
+                  ),
               ],
             ),
           ],
