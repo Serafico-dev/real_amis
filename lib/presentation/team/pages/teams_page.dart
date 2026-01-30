@@ -14,7 +14,7 @@ import 'package:real_amis/domain/entities/score/score_entity.dart';
 import 'package:real_amis/domain/entities/team/team_entity.dart';
 import 'package:real_amis/presentation/auth/providers/app_user_provider.dart';
 import 'package:real_amis/presentation/league/providers/league_notifier.dart';
-import 'package:real_amis/presentation/score/pages/update_score.dart'; 
+import 'package:real_amis/presentation/score/pages/update_score.dart';
 import 'package:real_amis/presentation/score/providers/score_notifier.dart';
 import 'package:real_amis/presentation/team/pages/add_new_team.dart';
 import 'package:real_amis/presentation/team/pages/edit_team.dart';
