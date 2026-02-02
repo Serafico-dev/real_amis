@@ -2,7 +2,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
 import 'package:real_amis/data/models/event/event_model.dart';
 
-/// Provider sicuro della box Hive
 final eventBoxProvider = Provider<Box>((ref) {
   const boxName = 'eventsBox';
   if (!Hive.isBoxOpen(boxName)) {
@@ -13,18 +12,15 @@ final eventBoxProvider = Provider<Box>((ref) {
   return Hive.box(boxName);
 });
 
-/// Interfaccia per il local data source degli eventi
 abstract interface class EventLocalDataSource {
   void uploadLocalEvents({required List<EventModel> events});
   List<EventModel> loadEvents();
 }
 
-/// Provider del local data source
 final eventLocalDataSourceProvider = Provider<EventLocalDataSource>((ref) {
   return EventLocalDataSourceImpl(ref.read(eventBoxProvider));
 });
 
-/// Implementazione concreta del local data source
 class EventLocalDataSourceImpl implements EventLocalDataSource {
   final Box box;
 

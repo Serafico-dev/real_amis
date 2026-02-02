@@ -2,7 +2,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
 import 'package:real_amis/data/models/team/team_model.dart';
 
-/// Provider sicuro della box Hive per le squadre
 final teamBoxProvider = Provider<Box>((ref) {
   const boxName = 'teamsBox';
   if (!Hive.isBoxOpen(boxName)) {
@@ -13,18 +12,15 @@ final teamBoxProvider = Provider<Box>((ref) {
   return Hive.box(boxName);
 });
 
-/// Interfaccia per il local data source delle squadre
 abstract interface class TeamLocalDataSource {
   void uploadLocalTeams({required List<TeamModel> teams});
   List<TeamModel> loadTeams();
 }
 
-/// Provider del local data source delle squadre
 final teamLocalDataSourceProvider = Provider<TeamLocalDataSource>((ref) {
   return TeamLocalDataSourceImpl(ref.read(teamBoxProvider));
 });
 
-/// Implementazione concreta del local data source delle squadre
 class TeamLocalDataSourceImpl implements TeamLocalDataSource {
   final Box box;
 

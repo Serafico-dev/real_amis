@@ -2,7 +2,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
 import 'package:real_amis/data/models/match/match_model.dart';
 
-/// Provider sicuro della box Hive per le partite
 final matchBoxProvider = Provider<Box>((ref) {
   const boxName = 'matchesBox';
   if (!Hive.isBoxOpen(boxName)) {
@@ -13,18 +12,15 @@ final matchBoxProvider = Provider<Box>((ref) {
   return Hive.box(boxName);
 });
 
-/// Interfaccia per il local data source delle partite
 abstract interface class MatchLocalDataSource {
   void uploadLocalMatches({required List<MatchModel> matches});
   List<MatchModel> loadMatches();
 }
 
-/// Provider del local data source delle partite
 final matchLocalDataSourceProvider = Provider<MatchLocalDataSource>((ref) {
   return MatchLocalDataSourceImpl(ref.read(matchBoxProvider));
 });
 
-/// Implementazione concreta del local data source delle partite
 class MatchLocalDataSourceImpl implements MatchLocalDataSource {
   final Box box;
 

@@ -83,7 +83,6 @@ class _TeamsPageState extends ConsumerState<TeamsPage> {
           backgroundColor: isDark ? AppColors.bgDark : AppColors.bgLight,
           appBar: AppBarNoNav(
             actions: [
-              // Solo admin può aggiungere squadre
               AdminOnly(
                 child: IconButton(
                   tooltip: 'Aggiungi squadra',
@@ -99,7 +98,6 @@ class _TeamsPageState extends ConsumerState<TeamsPage> {
           ),
           body: Column(
             children: [
-              // Selezione campionato
               leaguesAsync.when(
                 data: (leagues) {
                   if (leagues.isEmpty) return const SizedBox.shrink();

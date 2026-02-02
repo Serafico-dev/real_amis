@@ -7,7 +7,7 @@ import 'package:real_amis/presentation/match/widgets/match_summary.dart';
 
 class MatchesList extends StatelessWidget {
   final List<MatchEntity> matches;
-  final List<EventEntity> allEvents; // Tutti gli eventi di tutte le partite
+  final List<EventEntity> allEvents;
   final bool isDark;
 
   const MatchesList({

@@ -2,7 +2,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
 import 'package:real_amis/data/models/league/league_model.dart';
 
-/// Provider sicuro della box Hive per i campionati
 final leagueBoxProvider = Provider<Box>((ref) {
   const boxName = 'leaguesBox';
   if (!Hive.isBoxOpen(boxName)) {
@@ -13,18 +12,15 @@ final leagueBoxProvider = Provider<Box>((ref) {
   return Hive.box(boxName);
 });
 
-/// Interfaccia per il local data source dei campionati
 abstract interface class LeagueLocalDataSource {
   void uploadLocalLeagues({required List<LeagueModel> leagues});
   List<LeagueModel> loadLeagues();
 }
 
-/// Provider del local data source dei campionati
 final leagueLocalDataSourceProvider = Provider<LeagueLocalDataSource>((ref) {
   return LeagueLocalDataSourceImpl(ref.read(leagueBoxProvider));
 });
 
-/// Implementazione concreta del local data source
 class LeagueLocalDataSourceImpl implements LeagueLocalDataSource {
   final Box box;
 

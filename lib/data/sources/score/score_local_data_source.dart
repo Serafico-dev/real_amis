@@ -2,7 +2,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
 import 'package:real_amis/data/models/score/score_model.dart';
 
-/// Provider sicuro della box Hive per i punteggi
 final scoreBoxProvider = Provider<Box>((ref) {
   const boxName = 'scoresBox';
   if (!Hive.isBoxOpen(boxName)) {
@@ -13,19 +12,16 @@ final scoreBoxProvider = Provider<Box>((ref) {
   return Hive.box(boxName);
 });
 
-/// Interfaccia per il local data source dei punteggi
 abstract interface class ScoreLocalDataSource {
   void uploadLocalScores({required List<ScoreModel> scores});
   List<ScoreModel> loadScores();
   List<ScoreModel> loadScoresByLeague({required String leagueId});
 }
 
-/// Provider del local data source dei punteggi
 final scoreLocalDataSourceProvider = Provider<ScoreLocalDataSource>((ref) {
   return ScoreLocalDataSourceImpl(ref.read(scoreBoxProvider));
 });
 
-/// Implementazione concreta del local data source dei punteggi
 class ScoreLocalDataSourceImpl implements ScoreLocalDataSource {
   final Box box;
 
