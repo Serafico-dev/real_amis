@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:real_amis/domain/entities/auth/user_entity.dart';
 import 'package:real_amis/data/sources/auth/auth_supabase_data_source.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 sealed class AppUserState {}
 
@@ -38,6 +39,16 @@ class AppUserNotifier extends StateNotifier<AsyncValue<AppUserState>> {
 
   Future<void> _loadUser() async {
     try {
+      final existingSession = authDataSource.currentUserSession;
+      if (existingSession != null) {
+        try {
+          await Supabase.instance.client.auth.refreshSession();
+        } catch (_) {
+          setLoggedOut();
+          return;
+        }
+      }
+
       final user = await authDataSource.getCurrentUserData();
       if (user != null) {
         setLoggedIn(user);

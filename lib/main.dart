@@ -73,3 +73,11 @@ class MainApp extends ConsumerWidget {
     );
   }
 }
+
+/*
+  TODO:
+  - Inviare notifiche per partita imminente
+  - Notifica ad ogni evento?
+  - Implementare scelta giocatori convocati alla creazione di una partita con contatore presenze
+  - Implementare scelta giocatori real amis per eventi e contatore relativo (goal, cartellini)
+*/

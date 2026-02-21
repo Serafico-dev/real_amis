@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:real_amis/core/errors/exceptions.dart';
 import 'package:real_amis/core/providers/supabase_client_provider.dart';
-import 'package:real_amis/core/utils/secure_storage.dart';
+import 'package:real_amis/core/storage/secure_storage.dart';
 import 'package:real_amis/data/models/auth/user_model.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -99,6 +99,11 @@ class AuthSupabaseDataSourceImpl implements AuthSupabaseDataSource {
 
       if (response.user == null) {
         throw ServerException('User is null!');
+      }
+
+      final session = supabaseClient.auth.currentSession;
+      if (session != null) {
+        await secureStorage.saveSession(jsonEncode(session.toJson()));
       }
 
       final userData = await supabaseClient

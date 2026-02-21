@@ -6,6 +6,8 @@ import 'package:path_provider/path_provider.dart';
 import 'package:real_amis/core/configs/locale/local_language.dart';
 import 'package:real_amis/core/notifications/birthday_notification_service.dart';
 import 'package:real_amis/core/secrets/app_secrets.dart';
+import 'package:real_amis/core/storage/secure_local_storage.dart';
+import 'package:real_amis/core/storage/secure_storage.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
@@ -42,7 +44,15 @@ Future<void> initDependencies() async {
   );
   await birthdayService.init();
 
-  await Supabase.initialize(url: AppSecrets.url, anonKey: AppSecrets.anonKey);
+  final secureStorage = SecureStorage();
+  await Supabase.initialize(
+    url: AppSecrets.url,
+    anonKey: AppSecrets.anonKey,
+    authOptions: FlutterAuthClientOptions(
+      localStorage: SecureLocalStorage(secureStorage),
+      authFlowType: AuthFlowType.pkce,
+    ),
+  );
 
   final appDocDir = await getApplicationDocumentsDirectory();
   Hive.init(appDocDir.path);
