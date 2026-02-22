@@ -17,6 +17,8 @@ class UpdateMatch implements UseCase<MatchEntity, UpdateMatchParams> {
       awayTeamId: params.awayTeamId,
       matchDay: params.matchDay,
       leagueId: params.leagueId,
+      calledUpIds: params.calledUpIds,
+      played: params.played,
     );
   }
 }
@@ -28,6 +30,8 @@ class UpdateMatchParams {
   final String? awayTeamId;
   final String? matchDay;
   final String? leagueId;
+  final List<String> calledUpIds;
+  final bool? played;
 
   UpdateMatchParams({
     required this.match,
@@ -36,5 +40,7 @@ class UpdateMatchParams {
     this.awayTeamId,
     this.matchDay,
     this.leagueId,
+    this.calledUpIds = const [],
+    this.played,
   });
 }

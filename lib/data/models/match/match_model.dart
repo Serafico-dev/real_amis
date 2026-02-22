@@ -15,6 +15,8 @@ class MatchModel extends MatchEntity {
     super.awayTeam,
     required super.leagueId,
     super.league,
+    super.calledUpIds = const [],
+    super.played,
   });
 
   Map<String, dynamic> toJson() {
@@ -26,6 +28,8 @@ class MatchModel extends MatchEntity {
       'away_team_id': awayTeamId,
       'match_day': matchDay ?? '',
       'league_id': leagueId,
+      'called_up_ids': calledUpIds,
+      'played': played,
     };
   }
 
@@ -52,6 +56,12 @@ class MatchModel extends MatchEntity {
       league: map['League'] != null
           ? LeagueModel.fromJson(map['League'] as Map<String, dynamic>)
           : null,
+      calledUpIds:
+          (map['called_up_ids'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          [],
+      played: map['played'] as bool? ?? false,
     );
   }
 
@@ -66,6 +76,8 @@ class MatchModel extends MatchEntity {
     TeamModel? awayTeam,
     String? leagueId,
     LeagueEntity? league,
+    List<String>? calledUpIds,
+    bool? played,
   }) {
     return MatchModel(
       id: id ?? this.id,
@@ -78,6 +90,8 @@ class MatchModel extends MatchEntity {
       awayTeam: awayTeam ?? this.awayTeam,
       leagueId: leagueId ?? this.leagueId,
       league: league ?? this.league,
+      calledUpIds: calledUpIds ?? this.calledUpIds,
+      played: played ?? this.played,
     );
   }
 }

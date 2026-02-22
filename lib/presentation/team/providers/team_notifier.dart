@@ -6,8 +6,8 @@ import 'package:real_amis/core/usecase/usecase.dart';
 import 'package:real_amis/domain/entities/team/team_entity.dart';
 import 'package:real_amis/domain/usecases/team/update_team.dart';
 import 'package:real_amis/domain/usecases/team/upload_team.dart';
-import 'package:real_amis/presentation/auth/providers/app_user_notifier.dart';
 import 'package:real_amis/presentation/auth/providers/app_user_provider.dart';
+import 'package:real_amis/presentation/auth/providers/app_user_state.dart';
 import 'package:real_amis/presentation/team/providers/team_provider.dart';
 
 final teamNotifierProvider =

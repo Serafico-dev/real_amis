@@ -1,11 +1,14 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
+import 'package:real_amis/data/sources/player/player_supabase_data_source.dart';
 import 'package:real_amis/domain/entities/event/event_entity.dart';
+import 'package:real_amis/domain/entities/event/event_type.dart';
 import 'package:real_amis/domain/usecases/event/get_events_by_match.dart';
 import 'package:real_amis/domain/usecases/event/update_event.dart';
 import 'package:real_amis/domain/usecases/event/upload_event.dart';
 import 'package:real_amis/core/usecase/usecase.dart';
 import 'package:real_amis/presentation/event/providers/event_provider.dart';
+import 'package:real_amis/presentation/player/providers/player_notifier.dart';
 
 final eventNotifierProvider =
     StateNotifierProvider.family<
@@ -47,7 +50,19 @@ class EventNotifier extends StateNotifier<AsyncValue<List<EventEntity>>> {
     final res = await ref.read(uploadEventProvider)(params);
     res.fold(
       (failure) => state = AsyncError(failure.message, StackTrace.current),
-      (_) async => fetchEventsByMatch(),
+      (_) async {
+        if (params.playerId != null) {
+          final playerDataSource = ref.read(playerSupabaseDataSourceProvider);
+          await _applyStatDelta(
+            playerDataSource,
+            params.playerId!,
+            params.eventType,
+            delta: 1,
+          );
+          await ref.read(playerNotifierProvider.notifier).fetchAllPlayers();
+        }
+        fetchEventsByMatch();
+      },
     );
   }
 
@@ -66,12 +81,47 @@ class EventNotifier extends StateNotifier<AsyncValue<List<EventEntity>>> {
     );
   }
 
-  Future<void> deleteEvent(String eventId) async {
+  Future<void> deleteEvent(
+    String eventId, {
+    String? playerId,
+    EventType? eventType,
+  }) async {
     state = const AsyncLoading();
     final res = await ref.read(deleteEventProvider)(eventId);
     res.fold(
       (failure) => state = AsyncError(failure.message, StackTrace.current),
-      (_) async => fetchEventsByMatch(),
+      (_) async {
+        if (playerId != null && eventType != null) {
+          final playerDataSource = ref.read(playerSupabaseDataSourceProvider);
+          await _applyStatDelta(
+            playerDataSource,
+            playerId,
+            eventType,
+            delta: -1,
+          );
+          await ref.read(playerNotifierProvider.notifier).fetchAllPlayers();
+        }
+        fetchEventsByMatch();
+      },
     );
+  }
+
+  Future<void> _applyStatDelta(
+    PlayerSupabaseDataSource ds,
+    String playerId,
+    EventType eventType, {
+    required int delta,
+  }) async {
+    switch (eventType) {
+      case EventType.goal:
+        await ds.incrementPlayerStats(playerId: playerId, goalsDelta: delta);
+      case EventType.giallo:
+        await ds.incrementPlayerStats(
+          playerId: playerId,
+          yellowCardsDelta: delta,
+        );
+      case EventType.rosso:
+        await ds.incrementPlayerStats(playerId: playerId, redCardsDelta: delta);
+    }
   }
 }

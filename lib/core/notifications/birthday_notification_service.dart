@@ -35,7 +35,7 @@ class BirthdayNotificationService {
         ?.createNotificationChannel(androidChannel);
   }
 
-  int _notificationId(String playerId) => playerId.hashCode;
+  int _notificationId(String playerId) => playerId.hashCode.abs();
 
   Future<void> scheduleBirthday({
     required String playerId,
@@ -63,9 +63,14 @@ class BirthdayNotificationService {
           importance: Importance.high,
           priority: Priority.high,
         ),
+        iOS: DarwinNotificationDetails(
+          presentAlert: true,
+          presentBadge: true,
+          presentSound: true,
+        ),
       ),
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-      matchDateTimeComponents: DateTimeComponents.dateAndTime,
+      matchDateTimeComponents: DateTimeComponents.dayOfMonthAndTime,
     );
   }
 

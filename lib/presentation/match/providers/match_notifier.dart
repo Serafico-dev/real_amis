@@ -1,12 +1,14 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
+import 'package:real_amis/data/sources/player/player_supabase_data_source.dart';
 import 'package:real_amis/domain/entities/match/match_entity.dart';
 import 'package:real_amis/domain/usecases/match/update_match.dart';
 import 'package:real_amis/domain/usecases/match/upload_match.dart';
 import 'package:real_amis/core/usecase/usecase.dart';
-import 'package:real_amis/presentation/auth/providers/app_user_notifier.dart';
 import 'package:real_amis/presentation/auth/providers/app_user_provider.dart';
+import 'package:real_amis/presentation/auth/providers/app_user_state.dart';
 import 'package:real_amis/presentation/match/providers/match_provider.dart';
+import 'package:real_amis/presentation/player/providers/player_notifier.dart';
 
 final matchNotifierProvider =
     StateNotifierProvider<MatchNotifier, AsyncValue<List<MatchEntity>>>(
@@ -64,5 +66,38 @@ class MatchNotifier extends StateNotifier<AsyncValue<List<MatchEntity>>> {
       (failure) => state = AsyncError(failure.message, StackTrace.current),
       (_) async => fetchAllMatches(),
     );
+  }
+
+  Future<void> markAsPlayed(MatchEntity match) async {
+    if (match.calledUpIds.isEmpty) return;
+
+    final playerDataSource = ref.read(playerSupabaseDataSourceProvider);
+
+    await Future.wait(
+      match.calledUpIds.map(
+        (id) => playerDataSource.incrementPlayerStats(
+          playerId: id,
+          attendancesDelta: 1,
+        ),
+      ),
+    );
+
+    await ref.read(updateMatchProvider)(
+      UpdateMatchParams(
+        match: match,
+        matchDate: match.matchDate,
+        homeTeamId: match.homeTeamId,
+        awayTeamId: match.awayTeamId,
+        matchDay: match.matchDay,
+        leagueId: match.leagueId!,
+        calledUpIds: match.calledUpIds,
+        played: true,
+      ),
+    );
+
+    await Future.wait([
+      fetchAllMatches(),
+      ref.read(playerNotifierProvider.notifier).fetchAllPlayers(),
+    ]);
   }
 }

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:real_amis/core/utils/show_snackbar.dart';
-import 'package:real_amis/presentation/auth/providers/app_user_notifier.dart';
 import 'package:real_amis/presentation/auth/providers/app_user_provider.dart';
+import 'package:real_amis/presentation/auth/providers/app_user_state.dart';
 
 class AdminOnly extends ConsumerWidget {
   final Widget child;

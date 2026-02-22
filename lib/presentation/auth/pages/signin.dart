@@ -7,8 +7,8 @@ import 'package:real_amis/core/configs/theme/app_colors.dart';
 import 'package:real_amis/core/utils/show_snackbar.dart';
 import 'package:real_amis/presentation/auth/pages/forgot_password.dart';
 import 'package:real_amis/presentation/auth/pages/signup.dart';
-import 'package:real_amis/presentation/auth/providers/app_user_notifier.dart';
 import 'package:real_amis/presentation/auth/providers/app_user_provider.dart';
+import 'package:real_amis/presentation/auth/providers/app_user_state.dart';
 import 'package:real_amis/presentation/main/pages/main_page.dart';
 
 class SigninPage extends ConsumerStatefulWidget {

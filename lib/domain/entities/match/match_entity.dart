@@ -12,6 +12,8 @@ class MatchEntity {
   final TeamEntity? awayTeam;
   final String? leagueId;
   final LeagueEntity? league;
+  final List<String> calledUpIds;
+  final bool played;
 
   MatchEntity({
     required this.id,
@@ -24,6 +26,8 @@ class MatchEntity {
     this.awayTeam,
     this.leagueId,
     this.league,
+    this.calledUpIds = const [],
+    this.played = false,
   });
 
   @override

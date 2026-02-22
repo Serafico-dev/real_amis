@@ -9,10 +9,10 @@ import 'package:real_amis/core/utils/show_snackbar.dart';
 import 'package:real_amis/domain/entities/player/player_entity.dart';
 import 'package:real_amis/domain/entities/player/player_role.dart';
 import 'package:real_amis/presentation/auth/providers/app_user_provider.dart';
+import 'package:real_amis/presentation/auth/providers/app_user_state.dart';
 import 'package:real_amis/presentation/player/pages/add_new_player.dart';
 import 'package:real_amis/presentation/player/widgets/player_card.dart';
 import 'package:real_amis/presentation/player/providers/player_notifier.dart';
-import 'package:real_amis/presentation/auth/providers/app_user_notifier.dart';
 
 class PlayersPage extends ConsumerStatefulWidget {
   const PlayersPage({super.key});

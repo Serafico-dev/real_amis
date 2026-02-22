@@ -1,25 +1,10 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:real_amis/domain/entities/auth/user_entity.dart';
 import 'package:real_amis/data/sources/auth/auth_supabase_data_source.dart';
+import 'package:real_amis/presentation/auth/providers/app_user_state.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-
-sealed class AppUserState {}
-
-final class AppUserInitial extends AppUserState {}
-
-final class AppUserLoggedIn extends AppUserState {
-  final UserEntity user;
-  AppUserLoggedIn(this.user);
-}
-
-final class AppUserLoggedOut extends AppUserState {}
-
-extension AppUserStateX on AppUserState {
-  bool get isLoggedIn => this is AppUserLoggedIn;
-  UserEntity? get user =>
-      this is AppUserLoggedIn ? (this as AppUserLoggedIn).user : null;
-}
 
 class AppUserNotifier extends StateNotifier<AsyncValue<AppUserState>> {
   final AuthSupabaseDataSource authDataSource;
@@ -40,22 +25,34 @@ class AppUserNotifier extends StateNotifier<AsyncValue<AppUserState>> {
   Future<void> _loadUser() async {
     try {
       final existingSession = authDataSource.currentUserSession;
+      debugPrint(
+        '[AppUserNotifier] _loadUser() → currentSession: ${existingSession != null ? 'presente (user: ${existingSession.user.email})' : 'null'}',
+      );
+
       if (existingSession != null) {
         try {
+          debugPrint('[AppUserNotifier] tentativo refreshSession...');
           await Supabase.instance.client.auth.refreshSession();
-        } catch (_) {
+          debugPrint('[AppUserNotifier] refreshSession completato');
+        } catch (e) {
+          debugPrint('[AppUserNotifier] refreshSession fallito: $e → logout');
           setLoggedOut();
           return;
         }
       }
 
       final user = await authDataSource.getCurrentUserData();
+      debugPrint(
+        '[AppUserNotifier] getCurrentUserData() → ${user != null ? 'utente: ${user.email}' : 'null'}',
+      );
+
       if (user != null) {
         setLoggedIn(user);
       } else {
         setLoggedOut();
       }
     } catch (e, st) {
+      debugPrint('[AppUserNotifier] _loadUser() errore: $e');
       state = AsyncValue.error(e, st);
     }
   }

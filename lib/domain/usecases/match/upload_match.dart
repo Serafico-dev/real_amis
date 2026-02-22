@@ -16,6 +16,8 @@ class UploadMatch implements UseCase<MatchEntity, UploadMatchParams> {
       awayTeamId: params.awayTeamId,
       matchDay: params.matchDay,
       leagueId: params.leagueId,
+      calledUpIds: params.calledUpIds,
+      played: params.played ?? false,
     );
   }
 }
@@ -26,6 +28,8 @@ class UploadMatchParams {
   final String awayTeamId;
   final String? matchDay;
   final String leagueId;
+  final List<String> calledUpIds;
+  final bool? played;
 
   UploadMatchParams({
     required this.matchDate,
@@ -33,5 +37,7 @@ class UploadMatchParams {
     required this.awayTeamId,
     this.matchDay,
     required this.leagueId,
+    this.calledUpIds = const [],
+    this.played,
   });
 }

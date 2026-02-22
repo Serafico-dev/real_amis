@@ -4,8 +4,8 @@ import 'package:flutter_localization/flutter_localization.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:real_amis/core/configs/theme/app_theme.dart';
 import 'package:real_amis/init_dependencies.dart';
-import 'package:real_amis/presentation/auth/providers/app_user_notifier.dart';
 import 'package:real_amis/presentation/auth/providers/app_user_provider.dart';
+import 'package:real_amis/presentation/auth/providers/app_user_state.dart';
 import 'package:real_amis/presentation/splash/pages/splash.dart';
 import 'package:real_amis/presentation/splash/pages/splash_logged_in.dart';
 import 'package:real_amis/presentation/choose_mode/providers/theme_provider.dart';
@@ -78,6 +78,4 @@ class MainApp extends ConsumerWidget {
   TODO:
   - Inviare notifiche per partita imminente
   - Notifica ad ogni evento?
-  - Implementare scelta giocatori convocati alla creazione di una partita con contatore presenze
-  - Implementare scelta giocatori real amis per eventi e contatore relativo (goal, cartellini)
 */

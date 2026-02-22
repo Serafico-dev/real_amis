@@ -8,8 +8,8 @@ import 'package:real_amis/common/widgets/confirmDialog/styled_confirm_dialog.dar
 import 'package:real_amis/core/configs/theme/app_colors.dart';
 import 'package:real_amis/presentation/auth/pages/change_password.dart';
 import 'package:real_amis/presentation/auth/pages/signin.dart';
-import 'package:real_amis/presentation/auth/providers/app_user_notifier.dart';
 import 'package:real_amis/presentation/auth/providers/app_user_provider.dart';
+import 'package:real_amis/presentation/auth/providers/app_user_state.dart';
 import 'package:real_amis/presentation/choose_mode/providers/theme_provider.dart';
 import 'package:real_amis/presentation/settings/pages/terms_privacy_page.dart';
 import 'package:real_amis/presentation/settings/widgets/settings_tile.dart';

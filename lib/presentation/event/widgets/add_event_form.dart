@@ -5,12 +5,15 @@ import 'package:real_amis/common/widgets/button/basic_app_button.dart';
 import 'package:real_amis/common/widgets/textFields/number_field_required.dart';
 import 'package:real_amis/common/widgets/textFields/text_field_required.dart';
 import 'package:real_amis/core/configs/theme/app_colors.dart';
+import 'package:real_amis/core/secrets/app_secrets.dart';
 import 'package:real_amis/core/utils/show_snackbar.dart';
 import 'package:real_amis/domain/entities/event/event_type.dart';
 import 'package:real_amis/domain/entities/match/match_entity.dart';
+import 'package:real_amis/domain/entities/player/player_entity.dart';
 import 'package:real_amis/domain/usecases/event/upload_event.dart';
 import 'package:real_amis/presentation/event/providers/event_notifier.dart';
 import 'package:real_amis/presentation/event/widgets/team_selector.dart';
+import 'package:real_amis/presentation/player/providers/player_notifier.dart';
 
 class AddEventForm extends ConsumerStatefulWidget {
   final MatchEntity match;
@@ -24,9 +27,24 @@ class _AddEventFormState extends ConsumerState<AddEventForm> {
   final _formKey = GlobalKey<FormState>();
   String teamSide = 'home';
   final playerController = TextEditingController();
+  PlayerEntity? selectedPlayer;
   final minuteController = TextEditingController();
   EventType selectedType = EventType.goal;
   bool _submitting = false;
+
+  bool get _isRealAmisTeam {
+    final teamId = teamSide == 'home'
+        ? widget.match.homeTeamId
+        : widget.match.awayTeamId;
+    return teamId == AppSecrets.realAmisTeamId;
+  }
+
+  List<PlayerEntity> _getCalledUpPlayers(List<PlayerEntity> allPlayers) {
+    return allPlayers
+        .where((p) => widget.match.calledUpIds.contains(p.id))
+        .toList()
+      ..sort((a, b) => a.fullName.compareTo(b.fullName));
+  }
 
   @override
   void dispose() {
@@ -41,6 +59,19 @@ class _AddEventFormState extends ConsumerState<AddEventForm> {
     final isHome = teamSide == 'home';
     final teamId = isHome ? widget.match.homeTeamId : widget.match.awayTeamId;
 
+    if (_isRealAmisTeam && selectedPlayer == null) {
+      showSnackBar(context, 'Seleziona un giocatore');
+      return;
+    }
+    if (!_isRealAmisTeam && playerController.text.trim().isEmpty) {
+      showSnackBar(context, 'Inserisci il nome del giocatore');
+      return;
+    }
+
+    final playerName = _isRealAmisTeam
+        ? selectedPlayer!.fullName
+        : playerController.text.trim();
+
     setState(() => _submitting = true);
 
     try {
@@ -50,16 +81,17 @@ class _AddEventFormState extends ConsumerState<AddEventForm> {
             UploadEventParams(
               matchId: widget.match.id,
               teamId: teamId,
-              player: playerController.text.trim(),
+              player: playerName,
               minutes: int.parse(minuteController.text.trim()),
               eventType: selectedType,
+              playerId: _isRealAmisTeam ? selectedPlayer!.id : null,
             ),
           );
 
       if (!mounted) return;
       showSnackBar(
         context,
-        'Evento aggiunto: ${selectedType.value} di ${playerController.text.trim()} - ${teamSide == 'home' ? widget.match.homeTeam?.name : widget.match.awayTeam?.name} (${minuteController.text.trim()}\')',
+        'Evento aggiunto: ${selectedType.value} di $playerName (${minuteController.text.trim()}\')',
       );
       Navigator.of(context).pop('created');
     } catch (e) {
@@ -85,6 +117,8 @@ class _AddEventFormState extends ConsumerState<AddEventForm> {
     final inputBorderColor = isDarkMode
         ? AppColors.inputBorderDark
         : AppColors.inputBorderLight;
+    final allPlayers = ref.watch(playerNotifierProvider).value ?? [];
+    final calledUpPlayers = _getCalledUpPlayers(allPlayers);
 
     return SingleChildScrollView(
       physics: const AlwaysScrollableScrollPhysics(),
@@ -97,18 +131,56 @@ class _AddEventFormState extends ConsumerState<AddEventForm> {
             TeamSelector(
               match: widget.match,
               teamSide: teamSide,
-              onChanged: (v) => setState(() => teamSide = v),
+              onChanged: (v) => setState(() {
+                teamSide = v;
+                selectedPlayer = null;
+                playerController.clear();
+              }),
             ),
             const SizedBox(height: 12),
             Form(
               key: _formKey,
               child: Column(
                 children: [
-                  TextFieldRequired(
-                    controller: playerController,
-                    labelText: 'Giocatore',
-                    hintText: 'Nome giocatore',
-                  ),
+                  if (_isRealAmisTeam)
+                    DropdownButtonFormField<PlayerEntity>(
+                      initialValue: selectedPlayer,
+                      items: calledUpPlayers
+                          .map(
+                            (p) => DropdownMenuItem(
+                              value: p,
+                              child: Text(
+                                p.fullName,
+                                style: TextStyle(color: textColor),
+                              ),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: (p) => setState(() => selectedPlayer = p),
+                      decoration: InputDecoration(
+                        labelText: 'Giocatore',
+                        labelStyle: TextStyle(color: secondaryTextColor),
+                        filled: true,
+                        fillColor: inputFillColor,
+                        enabledBorder: OutlineInputBorder(
+                          borderSide: BorderSide(color: inputBorderColor),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderSide: BorderSide(color: AppColors.primary),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      validator: (_) => selectedPlayer == null
+                          ? 'Seleziona un giocatore'
+                          : null,
+                    )
+                  else
+                    TextFieldRequired(
+                      controller: playerController,
+                      labelText: 'Giocatore',
+                      hintText: 'Nome giocatore',
+                    ),
                   const SizedBox(height: 12),
                   NumberFieldRequired(
                     controller: minuteController,
@@ -130,8 +202,7 @@ class _AddEventFormState extends ConsumerState<AddEventForm> {
                         )
                         .toList(),
                     onChanged: (v) {
-                      if (v == null) return;
-                      setState(() => selectedType = v);
+                      if (v != null) setState(() => selectedType = v);
                     },
                     decoration: InputDecoration(
                       labelText: 'Tipo evento',

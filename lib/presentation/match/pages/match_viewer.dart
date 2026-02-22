@@ -110,6 +110,51 @@ class _MatchViewerPageState extends ConsumerState<MatchViewerPage> {
               },
             ),
           ),
+          AdminOnly(
+            child: IconButton(
+              icon: Icon(
+                Icons.check_circle_outline,
+                color: isDark ? AppColors.iconDark : AppColors.iconLight,
+                size: 25,
+              ),
+              tooltip: 'Segna come giocata',
+              onPressed: () async {
+                final matches = matchState.value ?? [];
+                final match = _getCurrentMatch(matches);
+                if (match == null) return;
+                if (match.calledUpIds.isEmpty) {
+                  showSnackBar(context, 'Nessun convocato per questa partita');
+                  return;
+                }
+                final confirm = await showDialog<bool>( 
+                  context: context,
+                  builder: (_) => AlertDialog(
+                    title: const Text('Segna come giocata'),
+                    content: Text(
+                      'Verranno incrementate le presenze di ${match.calledUpIds.length} giocatori. Continuare?',
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, false),
+                        child: const Text('Annulla'),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, true),
+                        child: const Text('Conferma'),
+                      ),
+                    ],
+                  ),
+                );
+                if (confirm != true || !mounted) return;
+                await ref
+                    .read(matchNotifierProvider.notifier)
+                    .markAsPlayed(match);
+                if (context.mounted) {
+                  showSnackBar(context, 'Presenze aggiornate!');
+                }
+              },
+            ),
+          ),
         ],
       ),
       body: matchState.when(

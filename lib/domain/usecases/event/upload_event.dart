@@ -27,6 +27,7 @@ class UploadEventParams {
   final String player;
   final int minutes;
   final EventType eventType;
+  final String? playerId;
 
   UploadEventParams({
     required this.matchId,
@@ -34,5 +35,6 @@ class UploadEventParams {
     required this.player,
     required this.minutes,
     required this.eventType,
+    this.playerId,
   });
 }

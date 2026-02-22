@@ -56,7 +56,7 @@ class MatchSummary extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         MatchScoreRow(match: match, events: events),
-        if (showFullTime && match.matchDate.isBefore(DateTime.now()))
+        if (showFullTime && match.played)
           const Padding(
             padding: EdgeInsets.only(top: 8),
             child: FullTimeLabel(),

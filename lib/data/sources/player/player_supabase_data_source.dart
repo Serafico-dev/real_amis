@@ -16,6 +16,13 @@ abstract interface class PlayerSupabaseDataSource {
   Future<PlayerModel> updatePlayer(PlayerModel player);
   Future<String> updatePlayerImage({File? image, required PlayerModel player});
   Future<PlayerModel> deletePlayer({required String playerId});
+  Future<void> incrementPlayerStats({
+    required String playerId,
+    int attendancesDelta = 0,
+    int goalsDelta = 0,
+    int yellowCardsDelta = 0,
+    int redCardsDelta = 0,
+  });
 }
 
 final playerSupabaseDataSourceProvider = Provider<PlayerSupabaseDataSource>((
@@ -65,7 +72,10 @@ class PlayerSupabaseDataSourceImpl implements PlayerSupabaseDataSource {
   @override
   Future<List<PlayerModel>> getAllPlayers() async {
     try {
-      final players = await supabaseClient.from('players').select();
+      final players = await supabaseClient
+          .from('players')
+          .select()
+          .order('full_name', ascending: true);
       return players.map((player) => PlayerModel.fromJson(player)).toList();
     } on PostgrestException catch (e) {
       throw ServerException(e.message);
@@ -127,6 +137,39 @@ class PlayerSupabaseDataSourceImpl implements PlayerSupabaseDataSource {
           .eq('id', playerId)
           .select();
       return PlayerModel.fromJson(playerData.first);
+    } on PostgrestException catch (e) {
+      throw ServerException(e.message);
+    } catch (e) {
+      throw ServerException(e.toString());
+    }
+  }
+
+  @override
+  Future<void> incrementPlayerStats({
+    required String playerId,
+    int attendancesDelta = 0,
+    int goalsDelta = 0,
+    int yellowCardsDelta = 0,
+    int redCardsDelta = 0,
+  }) async {
+    try {
+      final data = await supabaseClient
+          .from('players')
+          .select('attendances, goals, yellow_cards, red_cards')
+          .eq('id', playerId)
+          .single();
+
+      await supabaseClient
+          .from('players')
+          .update({
+            'attendances':
+                (data['attendances'] as int? ?? 0) + attendancesDelta,
+            'goals': (data['goals'] as int? ?? 0) + goalsDelta,
+            'yellow_cards':
+                (data['yellow_cards'] as int? ?? 0) + yellowCardsDelta,
+            'red_cards': (data['red_cards'] as int? ?? 0) + redCardsDelta,
+          })
+          .eq('id', playerId);
     } on PostgrestException catch (e) {
       throw ServerException(e.message);
     } catch (e) {

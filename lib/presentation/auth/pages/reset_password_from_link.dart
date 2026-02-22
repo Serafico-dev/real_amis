@@ -6,8 +6,8 @@ import 'package:real_amis/common/widgets/button/basic_app_button.dart';
 import 'package:real_amis/common/widgets/loader/loader.dart';
 import 'package:real_amis/core/configs/theme/app_colors.dart';
 import 'package:real_amis/core/utils/show_snackbar.dart';
-import 'package:real_amis/presentation/auth/providers/app_user_notifier.dart';
 import 'package:real_amis/presentation/auth/providers/app_user_provider.dart';
+import 'package:real_amis/presentation/auth/providers/app_user_state.dart';
 
 class ResetPasswordFromLinkPage extends ConsumerStatefulWidget {
   const ResetPasswordFromLinkPage({super.key});

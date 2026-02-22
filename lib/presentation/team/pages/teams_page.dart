@@ -2,7 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:real_amis/presentation/auth/providers/app_user_notifier.dart';
+import 'package:real_amis/presentation/auth/providers/app_user_state.dart';
 import 'package:uuid/uuid.dart';
 
 import 'package:real_amis/common/helpers/is_dark_mode.dart';

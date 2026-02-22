@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:real_amis/core/storage/secure_storage.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -7,21 +8,40 @@ class SecureLocalStorage extends LocalStorage {
   SecureLocalStorage(this._secureStorage);
 
   @override
-  Future<void> initialize() async {}
-
-  @override
-  Future<String?> accessToken() => _secureStorage.readToken();
-
-  @override
-  Future<bool> hasAccessToken() async {
-    final token = await _secureStorage.readToken();
-    return token != null;
+  Future<void> initialize() async {
+    debugPrint('[SecureLocalStorage] initialize() chiamato');
   }
 
   @override
-  Future<void> persistSession(String persistSessionString) =>
-      _secureStorage.saveSession(persistSessionString);
+  Future<String?> accessToken() async {
+    final session = await _secureStorage.readSession();
+    debugPrint(
+      '[SecureLocalStorage] accessToken() → ${session != null ? 'sessione trovata' : 'nessuna sessione'}',
+    );
+    return session;
+  }
 
   @override
-  Future<void> removePersistedSession() => _secureStorage.clearAll();
+  Future<bool> hasAccessToken() async {
+    final session = await _secureStorage.readSession();
+    final has = session != null;
+    debugPrint('[SecureLocalStorage] hasAccessToken() → $has');
+    return has;
+  }
+
+  @override
+  Future<void> persistSession(String persistSessionString) async {
+    debugPrint(
+      '[SecureLocalStorage] persistSession() → salvataggio sessione (${persistSessionString.length} chars)',
+    );
+    await _secureStorage.saveSession(persistSessionString);
+  }
+
+  @override
+  Future<void> removePersistedSession() async {
+    debugPrint(
+      '[SecureLocalStorage] removePersistedSession() → pulizia storage',
+    );
+    await _secureStorage.clearAll();
+  }
 }

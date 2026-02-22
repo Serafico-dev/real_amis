@@ -39,6 +39,12 @@ Future<void> initDependencies() async {
   );
   await flutterLocalNotificationsPlugin.initialize(settings: settings);
 
+  await flutterLocalNotificationsPlugin
+      .resolvePlatformSpecificImplementation<
+        IOSFlutterLocalNotificationsPlugin
+      >()
+      ?.requestPermissions(alert: true, badge: true, sound: true);
+
   final birthdayService = BirthdayNotificationService(
     flutterLocalNotificationsPlugin,
   );

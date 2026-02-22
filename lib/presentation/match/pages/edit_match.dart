@@ -6,10 +6,13 @@ import 'package:real_amis/core/configs/theme/app_colors.dart';
 import 'package:real_amis/core/utils/show_snackbar.dart';
 import 'package:real_amis/domain/entities/league/league_entity.dart';
 import 'package:real_amis/domain/entities/match/match_entity.dart';
+import 'package:real_amis/domain/entities/player/player_entity.dart';
+import 'package:real_amis/domain/entities/player/player_role.dart';
 import 'package:real_amis/domain/entities/team/team_entity.dart';
 import 'package:real_amis/domain/usecases/match/update_match.dart';
 import 'package:real_amis/presentation/match/widgets/match_form_section.dart';
 import 'package:real_amis/presentation/match/widgets/teams_dropdown_section.dart';
+import 'package:real_amis/presentation/player/providers/player_notifier.dart';
 import 'package:real_amis/presentation/team/providers/team_notifier.dart';
 import 'package:real_amis/presentation/league/providers/league_notifier.dart';
 import 'package:real_amis/presentation/match/providers/match_notifier.dart';
@@ -30,10 +33,10 @@ class _EditMatchPageState extends ConsumerState<EditMatchPage> {
   TeamEntity? homeTeam;
   TeamEntity? awayTeam;
   LeagueEntity? selectedLeague;
+  late Set<String> _calledUpIds;
 
   final matchDayController = TextEditingController();
   final formKey = GlobalKey<FormState>();
-
   List<TeamEntity> filteredTeams = [];
 
   @override
@@ -42,12 +45,13 @@ class _EditMatchPageState extends ConsumerState<EditMatchPage> {
     selectedDate = widget.match.matchDate;
     homeTeam = widget.match.homeTeam;
     awayTeam = widget.match.awayTeam;
-
     matchDayController.text = widget.match.matchDay ?? '';
+    _calledUpIds = Set<String>.from(widget.match.calledUpIds);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(teamNotifierProvider.notifier).fetchAllTeams();
       ref.read(leagueNotifierProvider.notifier).fetchAllLeagues();
+      ref.read(playerNotifierProvider.notifier).fetchAllPlayers();
     });
   }
 
@@ -63,12 +67,11 @@ class _EditMatchPageState extends ConsumerState<EditMatchPage> {
       return;
     }
 
-    List<TeamEntity> leagueTeams = league.teamIds.isEmpty
+    final leagueTeams = league.teamIds.isEmpty
         ? List<TeamEntity>.from(allTeams)
         : allTeams.where((t) => league.teamIds.contains(t.id)).toList();
 
-    Map<String, TeamEntity> teamMap = {for (var t in leagueTeams) t.id: t};
-
+    final teamMap = <String, TeamEntity>{for (var t in leagueTeams) t.id: t};
     if (homeTeam != null) teamMap[homeTeam!.id] = homeTeam!;
     if (awayTeam != null) teamMap[awayTeam!.id] = awayTeam!;
 
@@ -109,6 +112,7 @@ class _EditMatchPageState extends ConsumerState<EditMatchPage> {
                   ? matchDayController.text.toUpperCase().trim()
                   : widget.match.matchDay,
               leagueId: selectedLeague!.id,
+              calledUpIds: _calledUpIds.toList(),
             ),
           );
 
@@ -121,11 +125,69 @@ class _EditMatchPageState extends ConsumerState<EditMatchPage> {
     }
   }
 
+  Widget _buildCalledUpSection(List<PlayerEntity> allPlayers, bool isDark) {
+    final activePlayers = allPlayers.where((p) => p.active).toList()
+      ..sort((a, b) => a.fullName.compareTo(b.fullName));
+
+    if (activePlayers.isEmpty) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 8),
+        Text(
+          'Convocati (${_calledUpIds.length})',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 16,
+            color: isDark
+                ? AppColors.textDarkPrimary
+                : AppColors.textLightPrimary,
+          ),
+        ),
+        const SizedBox(height: 4),
+        ...activePlayers.map(
+          (player) => CheckboxListTile(
+            dense: true,
+            contentPadding: EdgeInsets.zero,
+            title: Text(
+              player.fullName,
+              style: TextStyle(
+                color: isDark
+                    ? AppColors.textDarkPrimary
+                    : AppColors.textLightPrimary,
+              ),
+            ),
+            subtitle: Text(
+              player.role.value,
+              style: TextStyle(
+                fontSize: 12,
+                color: isDark
+                    ? AppColors.textDarkSecondary
+                    : AppColors.textLightSecondary,
+              ),
+            ),
+            value: _calledUpIds.contains(player.id),
+            activeColor: isDark ? AppColors.tertiary : AppColors.primary,
+            onChanged: (checked) => setState(() {
+              if (checked == true) {
+                _calledUpIds.add(player.id);
+              } else {
+                _calledUpIds.remove(player.id);
+              }
+            }),
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = context.isDarkMode;
     final allTeams = ref.watch(teamNotifierProvider).value ?? [];
     final allLeagues = ref.watch(leagueNotifierProvider).value ?? [];
+    final allPlayers = ref.watch(playerNotifierProvider).value ?? [];
 
     if (selectedLeague == null && allLeagues.isNotEmpty) {
       selectedLeague = allLeagues.firstWhere(
@@ -159,6 +221,7 @@ class _EditMatchPageState extends ConsumerState<EditMatchPage> {
               padding: const EdgeInsets.all(16),
               physics: const AlwaysScrollableScrollPhysics(),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   if (selectedLeague != null)
                     SizedBox(
@@ -196,6 +259,9 @@ class _EditMatchPageState extends ConsumerState<EditMatchPage> {
                     match: widget.match,
                     showDeleteButton: true,
                   ),
+                  const Divider(height: 32),
+                  _buildCalledUpSection(allPlayers, isDark),
+                  const SizedBox(height: 24),
                 ],
               ),
             ),

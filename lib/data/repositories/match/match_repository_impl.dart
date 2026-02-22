@@ -43,6 +43,8 @@ class MatchRepositoryImpl implements MatchRepository {
       leagueId: model.leagueId,
       homeTeam: model.homeTeam,
       awayTeam: model.awayTeam,
+      calledUpIds: model.calledUpIds,
+      played: model.played,
     );
   }
 
@@ -51,10 +53,10 @@ class MatchRepositoryImpl implements MatchRepository {
     required DateTime matchDate,
     required String homeTeamId,
     required String awayTeamId,
-    int? homeTeamScore,
-    int? awayTeamScore,
     String? matchDay,
     required String leagueId,
+    List<String> calledUpIds = const [],
+    bool played = false,
   }) async {
     try {
       if (!await connectionChecker.isConnected) {
@@ -62,19 +64,20 @@ class MatchRepositoryImpl implements MatchRepository {
       }
 
       final matchModel = MatchModel(
-        id: Uuid().v1(),
+        id: const Uuid().v1(),
         updatedAt: DateTime.now(),
         matchDate: matchDate,
         homeTeamId: homeTeamId,
         awayTeamId: awayTeamId,
         matchDay: matchDay,
         leagueId: leagueId,
+        calledUpIds: calledUpIds,
+        played: played,
       );
 
       final uploadedMatch = await matchSupabaseDataSource.uploadMatch(
         matchModel,
       );
-
       return right(_toEntity(uploadedMatch));
     } on ServerException catch (e) {
       return left(Failure(e.message));
@@ -91,7 +94,6 @@ class MatchRepositoryImpl implements MatchRepository {
         matches = await matchSupabaseDataSource.getAllMatches();
         matchLocalDataSource.uploadLocalMatches(matches: matches);
       }
-
       return right(matches.map(_toEntity).toList());
     } on ServerException catch (e) {
       return left(Failure(e.message));
@@ -108,6 +110,8 @@ class MatchRepositoryImpl implements MatchRepository {
     TeamModel? homeTeam,
     TeamModel? awayTeam,
     String? leagueId,
+    List<String>? calledUpIds,
+    bool? played,
   }) async {
     try {
       if (!await connectionChecker.isConnected) {
@@ -124,12 +128,13 @@ class MatchRepositoryImpl implements MatchRepository {
         homeTeam: homeTeam ?? match.homeTeam,
         awayTeam: awayTeam ?? match.awayTeam,
         leagueId: leagueId ?? match.leagueId,
+        calledUpIds: calledUpIds ?? match.calledUpIds,
+        played: played ?? match.played,
       );
 
       final updatedMatch = await matchSupabaseDataSource.updateMatch(
         matchModel,
       );
-
       return right(_toEntity(updatedMatch));
     } on ServerException catch (e) {
       return left(Failure(e.message));
@@ -148,7 +153,6 @@ class MatchRepositoryImpl implements MatchRepository {
       final deletedMatch = await matchSupabaseDataSource.deleteMatch(
         matchId: matchId,
       );
-
       return right(_toEntity(deletedMatch));
     } on ServerException catch (e) {
       return left(Failure(e.message));
