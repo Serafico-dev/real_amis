@@ -70,7 +70,7 @@ class BirthdayNotificationService {
         ),
       ),
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-      matchDateTimeComponents: DateTimeComponents.dayOfMonthAndTime,
+      matchDateTimeComponents: DateTimeComponents.dateAndTime,
     );
   }
 
