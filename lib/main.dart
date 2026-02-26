@@ -78,4 +78,6 @@ class MainApp extends ConsumerWidget {
   TODO:
   - Inviare notifiche per partita imminente
   - Notifica ad ogni evento?
+  - Persistenza login
+  - Rendere editabile tutta la pagina storia
 */
