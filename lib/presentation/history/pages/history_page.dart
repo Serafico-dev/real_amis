@@ -1,79 +1,26 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:real_amis/common/widgets/appBar/app_bar_no_nav.dart';
+import 'package:real_amis/common/widgets/confirmDialog/styled_confirm_dialog.dart';
 import 'package:real_amis/core/configs/assets/app_vectors.dart';
 import 'package:real_amis/core/configs/theme/app_colors.dart';
+import 'package:real_amis/core/utils/admin_only.dart';
+import 'package:real_amis/domain/entities/history/club_section_entity.dart';
+import 'package:real_amis/domain/entities/history/club_timeline_entity.dart';
+import 'package:real_amis/presentation/history/providers/club_history_provider.dart';
 
-class HistoryPage extends StatelessWidget {
+class HistoryPage extends ConsumerWidget {
   const HistoryPage({super.key});
 
   static MaterialPageRoute route() =>
       MaterialPageRoute(builder: (_) => const HistoryPage());
 
-  static const _clubText =
-      'Benvenuti nel mondo del Real Amis! 🟢⚪🔴\n\n'
-      'Nato nel 2020 a Romano Canavese, il club è stato fondato da un gruppo di amici con tanta passione per il calcio. '
-      'Il nostro obiettivo? Giocare con entusiasmo, divertirci insieme e portare avanti lo spirito sportivo in ogni partita. '
-      'Oggi il Real Amis è un punto di riferimento per gli appassionati di calcio dilettantistico della zona.';
-
-  static const _logoText =
-      'Il nostro logo racconta chi siamo: giovane, dinamico e legato al territorio. '
-      'I colori del club rappresentano amicizia, determinazione e voglia di crescere. '
-      'Non è solo un simbolo sul campo, ma anche un segno di appartenenza per tifosi e giocatori!';
-
-  static const _valuesText =
-      'Amicizia, rispetto, impegno e passione sono i valori che guidano ogni nostro allenamento e partita. '
-      'Per noi, vincere è bello, ma divertirsi e stare insieme è ancora più importante.';
-
-  static const _communityText =
-      'Siamo molto attivi sui social, specialmente Instagram, dove condividiamo risultati, formazioni e momenti di squadra. '
-      'La nostra community segue ogni passo della squadra e ci sostiene in ogni partita!';
-
-  final List<Map<String, String>> _timeline = const [
-    {
-      'year': '2020',
-      'event':
-          'Fondazione del Real Amis e prima iscrizione al campionato Amatori ACSI.',
-      'image': AppVectors.logo,
-    },
-    {
-      'year': '2021',
-      'event':
-          'Prima stagione completa: crescita del team e prime soddisfazioni.',
-      'image': AppVectors.logo,
-    },
-    {
-      'year': '2022',
-      'event':
-          'Partecipazione attiva sui social e ampliamento della community.',
-      'image': AppVectors.logo,
-    },
-    {
-      'year': '2023',
-      'event':
-          'Consolidamento nel campionato e ampliamento delle attività con i tifosi.',
-      'image': AppVectors.logo,
-    },
-    {
-      'year': '2024',
-      'event': 'Vittoria del campionato e ampliamento club',
-      'image': AppVectors.logo,
-    },
-    {
-      'year': '2025',
-      'event': 'Seconda vittoria di fila del campionato e promozione.',
-      'image': AppVectors.logo,
-    },
-    {
-      'year': '2026',
-      'event': 'Sguardo verso il futuro',
-      'image': AppVectors.logo,
-    },
-  ];
-
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final bgColor = isDarkMode ? AppColors.bgDark : AppColors.bgLight;
+    final sectionsAsync = ref.watch(clubSectionsProvider);
+    final timelineAsync = ref.watch(clubTimelineProvider);
 
     return Scaffold(
       backgroundColor: bgColor,
@@ -83,14 +30,28 @@ class HistoryPage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            _HistorySection(title: 'Il club', text: _clubText),
-            _HistorySection(
-              title: 'Il logo',
-              text: _logoText,
-              imageAsset: AppVectors.logo,
+            sectionsAsync.when(
+              data: (sections) => Column(
+                children: sections
+                    .map(
+                      (s) => _HistorySection(
+                        section: s,
+                        imageAsset: s.sectionKey == 'logo'
+                            ? AppVectors.logo
+                            : null,
+                        onEdit: (updated) async {
+                          await ref
+                              .read(clubHistoryRepositoryProvider)
+                              .updateSection(updated);
+                          ref.invalidate(clubSectionsProvider);
+                        },
+                      ),
+                    )
+                    .toList(),
+              ),
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (e, _) => Text('Errore: $e'),
             ),
-            _HistorySection(title: 'I valori', text: _valuesText),
-            _HistorySection(title: 'Comunità e social', text: _communityText),
             const SizedBox(height: 20),
             Text(
               'Timeline delle stagioni',
@@ -104,29 +65,107 @@ class HistoryPage extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 12),
-            _TimelineItem(timelineItem: _timeline),
-
+            timelineAsync.when(
+              data: (items) => Column(
+                children: [
+                  _TimelineWidget(items: items),
+                  AdminOnly(
+                    child: Padding(
+                      padding: const EdgeInsets.only(top: 12),
+                      child: OutlinedButton.icon(
+                        icon: const Icon(Icons.add),
+                        label: const Text('Aggiungi stagione'),
+                        onPressed: () => _showTimelineEditDialog(
+                          context,
+                          ref,
+                          null,
+                          items.length,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (e, _) => Text('Errore: $e'),
+            ),
             const SizedBox(height: 24),
           ],
         ),
       ),
     );
   }
+
+  void _showTimelineEditDialog(
+    BuildContext context,
+    WidgetRef ref,
+    ClubTimelineEntity? existing,
+    int nextOrder,
+  ) {
+    final yearCtrl = TextEditingController(text: existing?.year ?? '');
+    final eventCtrl = TextEditingController(
+      text: existing?.eventDescription ?? '',
+    );
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(existing == null ? 'Nuova stagione' : 'Modifica stagione'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: yearCtrl,
+              decoration: const InputDecoration(labelText: 'Anno'),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: eventCtrl,
+              decoration: const InputDecoration(labelText: 'Evento'),
+              maxLines: 3,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Annulla'),
+          ),
+          FilledButton(
+            onPressed: () async {
+              final item = ClubTimelineEntity(
+                id: existing?.id ?? '',
+                year: yearCtrl.text.trim(),
+                eventDescription: eventCtrl.text.trim(),
+                sortOrder: existing?.sortOrder ?? nextOrder,
+              );
+              await ref
+                  .read(clubHistoryRepositoryProvider)
+                  .upsertTimelineItem(item);
+              ref.invalidate(clubTimelineProvider);
+              if (ctx.mounted) Navigator.pop(ctx);
+            },
+            child: const Text('Salva'),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
-class _HistorySection extends StatelessWidget {
-  final String title;
-  final String text;
+class _HistorySection extends ConsumerWidget {
+  final ClubSectionEntity section;
   final String? imageAsset;
+  final Future<void> Function(ClubSectionEntity) onEdit;
 
   const _HistorySection({
-    required this.title,
-    required this.text,
+    required this.section,
+    required this.onEdit,
     this.imageAsset,
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final cardColor = isDarkMode ? AppColors.cardDark : AppColors.cardLight;
     final titleColor = isDarkMode
@@ -146,18 +185,31 @@ class _HistorySection extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Text(
-              title,
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: titleColor,
-              ),
-              textAlign: TextAlign.center,
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Expanded(
+                  child: Text(
+                    section.title,
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: titleColor,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+                AdminOnly(
+                  child: IconButton(
+                    icon: const Icon(Icons.edit, size: 18),
+                    onPressed: () => _showEditDialog(context, ref),
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 12),
             Text(
-              text,
+              section.content,
               style: TextStyle(color: textColor, fontSize: 14, height: 1.5),
               textAlign: TextAlign.center,
             ),
@@ -170,15 +222,64 @@ class _HistorySection extends StatelessWidget {
       ),
     );
   }
+
+  void _showEditDialog(BuildContext context, WidgetRef ref) {
+    final titleCtrl = TextEditingController(text: section.title);
+    final contentCtrl = TextEditingController(text: section.content);
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Modifica sezione'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: titleCtrl,
+                decoration: const InputDecoration(labelText: 'Titolo'),
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                controller: contentCtrl,
+                decoration: const InputDecoration(labelText: 'Testo'),
+                maxLines: 6,
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Annulla'),
+          ),
+          FilledButton(
+            onPressed: () async {
+              await onEdit(
+                ClubSectionEntity(
+                  id: section.id,
+                  sectionKey: section.sectionKey,
+                  title: titleCtrl.text.trim(),
+                  content: contentCtrl.text.trim(),
+                ),
+              );
+              if (ctx.mounted) Navigator.pop(ctx);
+            },
+            child: const Text('Salva'),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
-class _TimelineItem extends StatelessWidget {
-  final List<Map<String, String>> timelineItem;
+class _TimelineWidget extends ConsumerWidget {
+  final List<ClubTimelineEntity> items;
 
-  const _TimelineItem({required this.timelineItem});
+  const _TimelineWidget({required this.items});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final lineColor = isDarkMode
         ? AppColors.textDarkSecondary.withValues(alpha: 0.5)
@@ -186,7 +287,7 @@ class _TimelineItem extends StatelessWidget {
     final indicatorColor = isDarkMode ? AppColors.logoGold : AppColors.logoRed;
 
     return Column(
-      children: timelineItem.asMap().entries.map((entry) {
+      children: items.asMap().entries.map((entry) {
         final index = entry.key;
         final item = entry.value;
         final isLeft = index % 2 == 0;
@@ -199,26 +300,35 @@ class _TimelineItem extends StatelessWidget {
               bottom: 0,
               child: Container(width: 4, color: lineColor),
             ),
-
             Padding(
-              padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 0),
+              padding: const EdgeInsets.symmetric(vertical: 24),
               child: Row(
                 children: [
                   Expanded(
                     child: isLeft
-                        ? _buildTimelineCard(item, indicatorColor, isDarkMode)
+                        ? _buildCard(
+                            context,
+                            ref,
+                            item,
+                            indicatorColor,
+                            isDarkMode,
+                          )
                         : const SizedBox(),
                   ),
-
                   Expanded(
                     child: isLeft
                         ? const SizedBox()
-                        : _buildTimelineCard(item, indicatorColor, isDarkMode),
+                        : _buildCard(
+                            context,
+                            ref,
+                            item,
+                            indicatorColor,
+                            isDarkMode,
+                          ),
                   ),
                 ],
               ),
             ),
-
             Positioned(
               left: MediaQuery.of(context).size.width / 2 - 8,
               top: 32,
@@ -237,8 +347,10 @@ class _TimelineItem extends StatelessWidget {
     );
   }
 
-  Widget _buildTimelineCard(
-    Map<String, String> item,
+  Widget _buildCard(
+    BuildContext context,
+    WidgetRef ref,
+    ClubTimelineEntity item,
     Color indicatorColor,
     bool isDarkMode,
   ) {
@@ -256,25 +368,114 @@ class _TimelineItem extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              item['year']!,
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
-                color: indicatorColor,
-              ),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    item.year,
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      color: indicatorColor,
+                    ),
+                  ),
+                ),
+                AdminOnly(
+                  child: InkWell(
+                    onTap: () => _showEditTimelineDialog(context, ref, item),
+                    child: const Icon(Icons.edit, size: 14),
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 6),
             Text(
-              item['event']!,
+              item.eventDescription,
               style: TextStyle(fontSize: 14, color: textColor, height: 1.4),
             ),
-            if (item['image'] != null) ...[
-              const SizedBox(height: 8),
-              Image.asset(item['image']!, height: 100, fit: BoxFit.cover),
-            ],
           ],
         ),
+      ),
+    );
+  }
+
+  void _showEditTimelineDialog(
+    BuildContext context,
+    WidgetRef ref,
+    ClubTimelineEntity item,
+  ) {
+    final yearCtrl = TextEditingController(text: item.year);
+    final eventCtrl = TextEditingController(text: item.eventDescription);
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Modifica stagione'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: yearCtrl,
+              decoration: const InputDecoration(labelText: 'Anno'),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: eventCtrl,
+              decoration: const InputDecoration(labelText: 'Evento'),
+              maxLines: 3,
+            ),
+          ],
+        ),
+        actions: [
+          Row(
+            children: [
+              TextButton(
+                style: TextButton.styleFrom(foregroundColor: Colors.red),
+                onPressed: () async {
+                  Navigator.pop(ctx);
+                  final confirm = await showDialog<bool>(
+                    context: context,
+                    builder: (_) => const StyledConfirmDialog(
+                      title: 'Elimina stagione',
+                      message: 'Sei sicuro di voler eliminare questa stagione?',
+                      confirmLabel: 'Elimina',
+                    ),
+                  );
+                  if (confirm == true) {
+                    await ref
+                        .read(clubHistoryRepositoryProvider)
+                        .deleteTimelineItem(item.id);
+                    ref.invalidate(clubTimelineProvider);
+                  }
+                },
+                child: const Text('Elimina'),
+              ),
+              const Spacer(),
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('Annulla'),
+              ),
+              const SizedBox(width: 8),
+              FilledButton(
+                onPressed: () async {
+                  await ref
+                      .read(clubHistoryRepositoryProvider)
+                      .upsertTimelineItem(
+                        ClubTimelineEntity(
+                          id: item.id,
+                          year: yearCtrl.text.trim(),
+                          eventDescription: eventCtrl.text.trim(),
+                          sortOrder: item.sortOrder,
+                        ),
+                      );
+                  ref.invalidate(clubTimelineProvider);
+                  if (ctx.mounted) Navigator.pop(ctx);
+                },
+                child: const Text('Salva'),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

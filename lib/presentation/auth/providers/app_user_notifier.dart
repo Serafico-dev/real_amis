@@ -9,8 +9,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 class AppUserNotifier extends StateNotifier<AsyncValue<AppUserState>> {
   final AuthSupabaseDataSource authDataSource;
 
-  AppUserNotifier(this.authDataSource)
-    : super(AsyncValue.data(AppUserLoggedOut())) {
+  AppUserNotifier(this.authDataSource) : super(const AsyncValue.loading()) {
     _loadUser();
   }
 

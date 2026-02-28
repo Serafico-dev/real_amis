@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:real_amis/common/helpers/is_dark_mode.dart';
 import 'package:real_amis/core/configs/assets/app_vectors.dart';
 import 'package:real_amis/core/configs/theme/app_colors.dart';
+import 'package:real_amis/presentation/auth/providers/app_user_provider.dart';
+import 'package:real_amis/presentation/auth/providers/app_user_state.dart';
 import 'package:real_amis/presentation/main/pages/main_page.dart';
 
 class SplashLoggedInPage extends ConsumerStatefulWidget {
@@ -60,6 +62,13 @@ class _SplashLoggedInPageState extends ConsumerState<SplashLoggedInPage>
   Future<void> _navigateAfterDelay() async {
     await Future.delayed(_splashDuration);
     if (!mounted) return;
-    Navigator.pushReplacement(context, MainPage.route());
+
+    final userAsync = ref.read(appUserProvider);
+    final isLoggedIn = userAsync.value is AppUserLoggedIn;
+
+    if (!mounted) return;
+    if (isLoggedIn) {
+      Navigator.pushReplacement(context, MainPage.route());
+    }
   }
 }
