@@ -14,7 +14,7 @@ class ClubHistoryRepositoryImpl implements ClubHistoryRepository {
     final data = await _supabase
         .from('club_history')
         .select()
-        .order('section_key');
+        .order('sort_order', ascending: true);
     return (data as List)
         .map(
           (e) => ClubSectionEntity(
@@ -22,9 +22,39 @@ class ClubHistoryRepositoryImpl implements ClubHistoryRepository {
             sectionKey: e['section_key'],
             title: e['title'],
             content: e['content'],
+            sortOrder: e['sort_order'],
+            isFixed: e['is_fixed'],
           ),
         )
         .toList();
+  }
+
+  @override
+  Future<void> addSection(String title, String content, int sortOrder) async {
+    await _supabase.from('club_history').insert({
+      'section_key': const Uuid().v4(),
+      'title': title,
+      'content': content,
+      'sort_order': sortOrder,
+      'is_fixed': false,
+    });
+  }
+
+  @override
+  Future<void> deleteSection(String id) async {
+    await _supabase.from('club_history').delete().eq('id', id);
+  }
+
+  @override
+  Future<void> reorderSections(List<ClubSectionEntity> sections) async {
+    await Future.wait(
+      sections.asMap().entries.map(
+        (entry) => _supabase
+            .from('club_history')
+            .update({'sort_order': entry.key})
+            .eq('id', entry.value.id),
+      ),
+    );
   }
 
   @override

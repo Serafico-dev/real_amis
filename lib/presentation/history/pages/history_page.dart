@@ -31,10 +31,17 @@ class HistoryPage extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             sectionsAsync.when(
-              data: (sections) => Column(
-                children: sections
-                    .map(
+              data: (sections) {
+                final fixedSections = sections.where((s) => s.isFixed).toList();
+                final dynamicSections = sections
+                    .where((s) => !s.isFixed)
+                    .toList();
+
+                return Column(
+                  children: [
+                    ...fixedSections.map(
                       (s) => _HistorySection(
+                        key: ValueKey(s.id),
                         section: s,
                         imageAsset: s.sectionKey == 'logo'
                             ? AppVectors.logo
@@ -46,12 +53,51 @@ class HistoryPage extends ConsumerWidget {
                           ref.invalidate(clubSectionsProvider);
                         },
                       ),
-                    )
-                    .toList(),
-              ),
+                    ),
+
+                    _ReorderableSections(
+                      sections: dynamicSections,
+                      onEdit: (updated) async {
+                        await ref
+                            .read(clubHistoryRepositoryProvider)
+                            .updateSection(updated);
+                        ref.invalidate(clubSectionsProvider);
+                      },
+                      onDelete: (id) async {
+                        await ref
+                            .read(clubHistoryRepositoryProvider)
+                            .deleteSection(id);
+                        ref.invalidate(clubSectionsProvider);
+                      },
+                      onReorder: (reordered) async {
+                        await ref
+                            .read(clubHistoryRepositoryProvider)
+                            .reorderSections(reordered);
+                        ref.invalidate(clubSectionsProvider);
+                      },
+                    ),
+
+                    AdminOnly(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        child: OutlinedButton.icon(
+                          icon: const Icon(Icons.add),
+                          label: const Text('Aggiungi sezione'),
+                          onPressed: () => _showAddSectionDialog(
+                            context,
+                            ref,
+                            dynamicSections.length,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              },
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (e, _) => Text('Errore: $e'),
             ),
+
             const SizedBox(height: 20),
             Text(
               'Timeline delle stagioni',
@@ -92,6 +138,60 @@ class HistoryPage extends ConsumerWidget {
             const SizedBox(height: 24),
           ],
         ),
+      ),
+    );
+  }
+
+  void _showAddSectionDialog(
+    BuildContext context,
+    WidgetRef ref,
+    int nextOrder,
+  ) {
+    final titleCtrl = TextEditingController();
+    final contentCtrl = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Nuova sezione'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: titleCtrl,
+                decoration: const InputDecoration(labelText: 'Titolo'),
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                controller: contentCtrl,
+                decoration: const InputDecoration(labelText: 'Testo'),
+                maxLines: 6,
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Annulla'),
+          ),
+          FilledButton(
+            onPressed: () async {
+              if (titleCtrl.text.trim().isEmpty) return;
+              await ref
+                  .read(clubHistoryRepositoryProvider)
+                  .addSection(
+                    titleCtrl.text.trim(),
+                    contentCtrl.text.trim(),
+                    nextOrder,
+                  );
+              ref.invalidate(clubSectionsProvider);
+              if (ctx.mounted) Navigator.pop(ctx);
+            },
+            child: const Text('Salva'),
+          ),
+        ],
       ),
     );
   }
@@ -153,15 +253,68 @@ class HistoryPage extends ConsumerWidget {
   }
 }
 
+class _ReorderableSections extends ConsumerWidget {
+  final List<ClubSectionEntity> sections;
+  final Future<void> Function(ClubSectionEntity) onEdit;
+  final Future<void> Function(String id) onDelete;
+  final Future<void> Function(List<ClubSectionEntity>) onReorder;
+
+  const _ReorderableSections({
+    required this.sections,
+    required this.onEdit,
+    required this.onDelete,
+    required this.onReorder,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    if (sections.isEmpty) return const SizedBox.shrink();
+
+    return ReorderableListView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      buildDefaultDragHandles: false,
+      itemCount: sections.length,
+      itemBuilder: (context, index) {
+        final s = sections[index];
+        return _HistorySection(
+          key: ValueKey(s.id),
+          section: s,
+          dragIndex: index,
+          onEdit: onEdit,
+          onDelete: onDelete,
+        );
+      },
+      onReorder: (oldIndex, newIndex) {
+        if (newIndex > oldIndex) newIndex--;
+        final reordered = List<ClubSectionEntity>.from(sections);
+        final item = reordered.removeAt(oldIndex);
+        reordered.insert(newIndex, item);
+        onReorder(reordered);
+      },
+      proxyDecorator: (child, index, animation) => Material(
+        elevation: 6,
+        borderRadius: BorderRadius.circular(12),
+        child: child,
+      ),
+    );
+  }
+}
+
 class _HistorySection extends ConsumerWidget {
   final ClubSectionEntity section;
   final String? imageAsset;
   final Future<void> Function(ClubSectionEntity) onEdit;
+  final Future<void> Function(String id)? onDelete;
+  final int? dragIndex;
 
   const _HistorySection({
+    super.key,
     required this.section,
     required this.onEdit,
+    this.onDelete,
     this.imageAsset,
+    this.dragIndex,
   });
 
   @override
@@ -186,8 +339,24 @@ class _HistorySection extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Row(
-              mainAxisAlignment: MainAxisAlignment.center,
               children: [
+                if (dragIndex != null)
+                  AdminOnly(
+                    child: ReorderableDragStartListener(
+                      index: dragIndex!,
+                      child: Padding(
+                        padding: const EdgeInsets.only(right: 4),
+                        child: Icon(
+                          Icons.drag_handle,
+                          size: 20,
+                          color: isDarkMode
+                              ? AppColors.textDarkSecondary
+                              : AppColors.textLightSecondary,
+                        ),
+                      ),
+                    ),
+                  ),
+
                 Expanded(
                   child: Text(
                     section.title,
@@ -199,6 +368,7 @@ class _HistorySection extends ConsumerWidget {
                     textAlign: TextAlign.center,
                   ),
                 ),
+
                 AdminOnly(
                   child: IconButton(
                     icon: const Icon(Icons.edit, size: 18),
@@ -249,23 +419,49 @@ class _HistorySection extends ConsumerWidget {
           ),
         ),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Annulla'),
-          ),
-          FilledButton(
-            onPressed: () async {
-              await onEdit(
-                ClubSectionEntity(
-                  id: section.id,
-                  sectionKey: section.sectionKey,
-                  title: titleCtrl.text.trim(),
-                  content: contentCtrl.text.trim(),
+          Row(
+            children: [
+              if (onDelete != null)
+                TextButton(
+                  style: TextButton.styleFrom(foregroundColor: Colors.red),
+                  onPressed: () async {
+                    Navigator.pop(ctx);
+                    final confirm = await showDialog<bool>(
+                      context: context,
+                      builder: (_) => const StyledConfirmDialog(
+                        title: 'Elimina sezione',
+                        message:
+                            'Sei sicuro di voler eliminare questa sezione?',
+                        confirmLabel: 'Elimina',
+                      ),
+                    );
+                    if (confirm == true) await onDelete!(section.id);
+                  },
+                  child: const Text('Elimina'),
                 ),
-              );
-              if (ctx.mounted) Navigator.pop(ctx);
-            },
-            child: const Text('Salva'),
+              const Spacer(),
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('Annulla'),
+              ),
+              const SizedBox(width: 8),
+              FilledButton(
+                onPressed: () async {
+                  await onEdit(
+                    ClubSectionEntity(
+                      id: section.id,
+                      sectionKey: section.sectionKey,
+                      title: titleCtrl.text.trim(),
+                      content: contentCtrl.text.trim(),
+                      sortOrder: section.sortOrder,
+                      isFixed: section.isFixed,
+                    ),
+                  );
+                  if (ctx.mounted) Navigator.pop(ctx);
+                },
+                child: const Text('Salva'),
+              ),
+            ],
           ),
         ],
       ),
