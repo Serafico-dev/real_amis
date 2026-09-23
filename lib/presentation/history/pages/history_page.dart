@@ -285,7 +285,7 @@ class _ReorderableSections extends ConsumerWidget {
           onDelete: onDelete,
         );
       },
-      onReorder: (oldIndex, newIndex) {
+      onReorderItem: (oldIndex, newIndex) {
         if (newIndex > oldIndex) newIndex--;
         final reordered = List<ClubSectionEntity>.from(sections);
         final item = reordered.removeAt(oldIndex);
