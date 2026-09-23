@@ -53,7 +53,7 @@ Future<void> initDependencies() async {
   final secureStorage = SecureStorage();
   await Supabase.initialize(
     url: AppSecrets.url,
-    anonKey: AppSecrets.anonKey,
+    publishableKey: AppSecrets.anonKey,
     authOptions: FlutterAuthClientOptions(
       localStorage: SecureLocalStorage(secureStorage),
       authFlowType: AuthFlowType.pkce,
