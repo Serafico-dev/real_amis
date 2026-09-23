@@ -199,10 +199,24 @@ class AuthSupabaseDataSourceImpl implements AuthSupabaseDataSource {
   @override
   Future<void> deleteAccount({required String id}) async {
     try {
-      await supabaseClient.auth.admin.deleteUser(id);
+      final response = await supabaseClient.functions.invoke(
+        'delete-account',
+      );
+
+      if (response.status != 200) {
+        final body = response.data;
+        final message = body is Map && body['error'] != null
+            ? body['error'].toString()
+            : 'Impossibile eliminare l\'account (status ${response.status})';
+        throw ServerException(message);
+      }
+
+      await supabaseClient.auth.signOut(scope: SignOutScope.global);
       await secureStorage.clearAll();
     } on AuthException catch (e) {
       throw ServerException(e.message);
+    } on FunctionException catch (e) {
+      throw ServerException(e.details?.toString() ?? e.toString());
     } catch (e) {
       throw ServerException(e.toString());
     }

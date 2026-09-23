@@ -53,7 +53,7 @@ class TeamRepositoryImpl implements TeamRepository {
       }
 
       var teamModel = TeamModel(
-        id: Uuid().v1(),
+        id: Uuid().v4(),
         updatedAt: DateTime.now(),
         name: name,
         imageUrl: '',

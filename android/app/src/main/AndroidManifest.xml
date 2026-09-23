@@ -1,6 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <application
-        android:label="real_amis"
+        android:label="Real Amis"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

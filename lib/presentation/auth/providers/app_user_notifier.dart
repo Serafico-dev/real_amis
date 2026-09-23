@@ -92,6 +92,26 @@ class AppUserNotifier extends StateNotifier<AsyncValue<AppUserState>> {
     }
   }
 
+  Future<DeleteAccountResult> deleteAccount() async {
+    final session = authDataSource.currentUserSession;
+    if (session == null) {
+      return DeleteAccountResult(
+        success: false,
+        message: 'Utente non autenticato',
+      );
+    }
+
+    state = const AsyncValue.loading();
+    try {
+      await authDataSource.deleteAccount(id: session.user.id);
+      setLoggedOut();
+      return DeleteAccountResult(success: true);
+    } catch (e, st) {
+      state = AsyncValue.error(e, st);
+      return DeleteAccountResult(success: false, message: e.toString());
+    }
+  }
+
   Future<void> refreshUser() async {
     try {
       final user = await authDataSource.getCurrentUserData();
@@ -110,7 +130,7 @@ class AppUserNotifier extends StateNotifier<AsyncValue<AppUserState>> {
     try {
       await authDataSource.sendPasswordResetEmail(
         email: email,
-        redirectTo: 'yourapp://reset-password',
+        redirectTo: 'myapp://reset-password',
       );
       state = state;
     } catch (e, st) {
@@ -150,4 +170,10 @@ class ChangePasswordResult {
   final bool success;
   final String? message;
   ChangePasswordResult({required this.success, this.message});
+}
+
+class DeleteAccountResult {
+  final bool success;
+  final String? message;
+  DeleteAccountResult({required this.success, this.message});
 }

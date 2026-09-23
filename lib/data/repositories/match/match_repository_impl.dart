@@ -64,7 +64,7 @@ class MatchRepositoryImpl implements MatchRepository {
       }
 
       final matchModel = MatchModel(
-        id: const Uuid().v1(),
+        id: const Uuid().v4(),
         updatedAt: DateTime.now(),
         matchDate: matchDate,
         homeTeamId: homeTeamId,

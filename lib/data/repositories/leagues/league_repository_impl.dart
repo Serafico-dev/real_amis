@@ -52,7 +52,7 @@ class LeagueRepositoryImpl implements LeagueRepository {
       }
 
       final leagueModel = LeagueModel(
-        id: Uuid().v1(),
+        id: Uuid().v4(),
         name: name,
         year: year,
         teamIds: teamIds ?? [],

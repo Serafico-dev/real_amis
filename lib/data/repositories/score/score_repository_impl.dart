@@ -52,7 +52,7 @@ class ScoreRepositoryImpl implements ScoreRepository {
       }
 
       final scoreModel = ScoreModel(
-        id: Uuid().v1(),
+        id: Uuid().v4(),
         leagueId: leagueId,
         teamId: teamId,
         score: score,

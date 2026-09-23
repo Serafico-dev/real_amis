@@ -1,4 +1,4 @@
-package com.example.real_amis
+package it.realamis.app
 
 import io.flutter.embedding.android.FlutterActivity
 

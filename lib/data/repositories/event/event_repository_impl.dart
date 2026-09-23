@@ -58,7 +58,7 @@ class EventRepositoryImpl implements EventRepository {
         return left(Failure(Constants.noConnectionErrorMessage));
       }
       final eventModel = EventModel(
-        id: Uuid().v1(),
+        id: Uuid().v4(),
         matchId: matchId,
         teamId: teamId,
         player: player,

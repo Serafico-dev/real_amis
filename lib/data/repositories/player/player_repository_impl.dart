@@ -70,7 +70,7 @@ class PlayerRepositoryImpl implements PlayerRepository {
       }
 
       var playerModel = PlayerModel(
-        id: Uuid().v1(),
+        id: Uuid().v4(),
         updatedAt: DateTime.now(),
         userName: userName,
         fullName: fullName,

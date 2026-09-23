@@ -52,6 +52,43 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     ref.read(themeNotifierProvider.notifier).updateTheme(mode);
   }
 
+  Future<void> _onDeleteAccountPressed() async {
+    final confirm = await _showConfirmDialog(
+      title: 'Elimina account',
+      message:
+          'Questa azione è irreversibile: il tuo account e i tuoi dati personali verranno eliminati definitivamente. Vuoi continuare?',
+      confirmLabel: 'Continua',
+    );
+    if (confirm != true || !mounted) return;
+
+    final confirmFinal = await _showConfirmDialog(
+      title: 'Sei davvero sicuro?',
+      message:
+          'Non potrai annullare questa operazione né recuperare l\'account in seguito.',
+      confirmLabel: 'Elimina definitivamente',
+    );
+    if (confirmFinal != true || !mounted) return;
+
+    final result = await ref.read(appUserProvider.notifier).deleteAccount();
+
+    if (!mounted) return;
+
+    if (result.success) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        Navigator.pushAndRemoveUntil(context, SigninPage.route(), (_) => false);
+      });
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            result.message ?? 'Impossibile eliminare l\'account',
+          ),
+        ),
+      );
+    }
+  }
+
   Future<void> _onLogoutPressed() async {
     final confirm = await _showConfirmDialog(
       title: 'Conferma',
@@ -284,6 +321,22 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
             ),
 
             const Divider(height: 50, color: Colors.grey),
+
+            SettingsTile(
+              title: 'Elimina account',
+              titleColor: Colors.red,
+              trailing: IconButton(
+                tooltip: 'Elimina account',
+                onPressed: _onDeleteAccountPressed,
+                icon: const Icon(
+                  Icons.delete_forever_outlined,
+                  size: 26,
+                  color: Colors.red,
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 4),
 
             SettingsTile(
               title: 'Esci',
