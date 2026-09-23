@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
+import 'package:real_amis/core/notifications/match_notification_service.dart';
 import 'package:real_amis/data/sources/player/player_supabase_data_source.dart';
 import 'package:real_amis/domain/entities/match/match_entity.dart';
 import 'package:real_amis/domain/usecases/match/update_match.dart';
@@ -31,8 +32,24 @@ class MatchNotifier extends StateNotifier<AsyncValue<List<MatchEntity>>> {
     final res = await ref.read(getAllMatchesProvider)(NoParams());
     state = res.fold(
       (failure) => AsyncError(failure.message, StackTrace.current),
-      (matches) => AsyncData(matches),
+      (matches) {
+        _scheduleMatchReminders(matches);
+        return AsyncData(matches);
+      },
     );
+  }
+
+  void _scheduleMatchReminders(List<MatchEntity> matches) {
+    final service = ref.read(matchNotificationServiceProvider);
+    for (final match in matches) {
+      service.scheduleMatchReminder(
+        matchId: match.id,
+        matchDate: match.matchDate,
+        played: match.played,
+        homeTeamName: match.homeTeam?.name,
+        awayTeamName: match.awayTeam?.name,
+      );
+    }
   }
 
   Future<void> uploadMatch(UploadMatchParams params) async {
@@ -55,12 +72,23 @@ class MatchNotifier extends StateNotifier<AsyncValue<List<MatchEntity>>> {
             if (m.id == updatedMatch.id) updatedMatch else m,
         ];
         state = AsyncData(updatedList);
+        ref
+            .read(matchNotificationServiceProvider)
+            .scheduleMatchReminder(
+              matchId: updatedMatch.id,
+              matchDate: updatedMatch.matchDate,
+              played: updatedMatch.played,
+              homeTeamName: updatedMatch.homeTeam?.name,
+              awayTeamName: updatedMatch.awayTeam?.name,
+            );
       },
     );
   }
 
   Future<void> deleteMatch(String matchId) async {
     state = const AsyncLoading();
+    ref.read(matchNotificationServiceProvider).cancel(matchId);
+
     final res = await ref.read(deleteMatchProvider)(matchId);
     res.fold(
       (failure) => state = AsyncError(failure.message, StackTrace.current),
