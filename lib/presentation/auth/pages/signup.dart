@@ -4,10 +4,12 @@ import 'package:real_amis/common/helpers/is_dark_mode.dart';
 import 'package:real_amis/common/widgets/appBar/app_bar_no_nav.dart';
 import 'package:real_amis/common/widgets/button/basic_app_button.dart';
 import 'package:real_amis/core/configs/theme/app_colors.dart';
+import 'package:real_amis/core/constants/constants.dart';
 import 'package:real_amis/core/utils/show_snackbar.dart';
 import 'package:real_amis/presentation/auth/pages/signin.dart';
 import 'package:real_amis/presentation/auth/providers/app_user_provider.dart';
 import 'package:real_amis/presentation/main/pages/main_page.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class SignupPage extends ConsumerStatefulWidget {
   const SignupPage({super.key});
@@ -95,6 +97,7 @@ class _SignupPageState extends ConsumerState<SignupPage> {
                         },
                   title: isLoading ? 'Caricamento...' : 'Registrati',
                 ),
+                const _PrivacyPolicyLink(),
               ],
             ),
           ),
@@ -156,6 +159,30 @@ class _PasswordField extends StatelessWidget {
       validator: (v) => v == null || v.trim().length < 6
           ? 'Inserisci una password di almeno 6 caratteri'
           : null,
+    );
+  }
+}
+
+class _PrivacyPolicyLink extends StatelessWidget {
+  const _PrivacyPolicyLink();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 10),
+      child: TextButton(
+        onPressed: () {
+          launchUrl(
+            Uri.parse(Constants.privacyPolicyUrl),
+            mode: LaunchMode.externalApplication,
+          );
+        },
+        child: const Text(
+          'Registrandoti accetti Termini e Privacy Policy',
+          textAlign: TextAlign.center,
+          style: TextStyle(fontSize: 12, color: Colors.grey),
+        ),
+      ),
     );
   }
 }

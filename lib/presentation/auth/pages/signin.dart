@@ -4,12 +4,14 @@ import 'package:real_amis/common/helpers/is_dark_mode.dart';
 import 'package:real_amis/common/widgets/appBar/app_bar_no_nav.dart';
 import 'package:real_amis/common/widgets/button/basic_app_button.dart';
 import 'package:real_amis/core/configs/theme/app_colors.dart';
+import 'package:real_amis/core/constants/constants.dart';
 import 'package:real_amis/core/utils/show_snackbar.dart';
 import 'package:real_amis/presentation/auth/pages/forgot_password.dart';
 import 'package:real_amis/presentation/auth/pages/signup.dart';
 import 'package:real_amis/presentation/auth/providers/app_user_provider.dart';
 import 'package:real_amis/presentation/auth/providers/app_user_state.dart';
 import 'package:real_amis/presentation/main/pages/main_page.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class SigninPage extends ConsumerStatefulWidget {
   const SigninPage({super.key});
@@ -108,6 +110,7 @@ class _SigninPageState extends ConsumerState<SigninPage> {
                 ),
                 const SizedBox(height: 10),
                 const _ForgotPasswordButton(),
+                const _PrivacyPolicyLink(),
               ],
             ),
           ),
@@ -204,6 +207,26 @@ class _ForgotPasswordButton extends StatelessWidget {
         }
       },
       child: Text('Password dimenticata?', style: TextStyle(color: color)),
+    );
+  }
+}
+
+class _PrivacyPolicyLink extends StatelessWidget {
+  const _PrivacyPolicyLink();
+
+  @override
+  Widget build(BuildContext context) {
+    return TextButton(
+      onPressed: () {
+        launchUrl(
+          Uri.parse(Constants.privacyPolicyUrl),
+          mode: LaunchMode.externalApplication,
+        );
+      },
+      child: const Text(
+        'Privacy Policy',
+        style: TextStyle(fontSize: 12, color: Colors.grey),
+      ),
     );
   }
 }
