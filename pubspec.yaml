@@ -21,7 +21,7 @@ dependencies:
 
   # Flutter Widgets / UI
   flutter_local_notifications: ^20.0.0
-  flutter_localization: ^0.3.3
+  flutter_localization: ^0.4.1
   flutter_secure_storage: ^10.0.0
   flutter_svg: ^2.2.1
   cached_network_image: ^3.4.1
