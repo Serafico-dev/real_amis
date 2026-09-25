@@ -105,6 +105,8 @@ class _EmailField extends StatelessWidget {
     return TextFormField(
       controller: controller,
       keyboardType: TextInputType.emailAddress,
+      textCapitalization: TextCapitalization.none,
+      autocorrect: false,
       decoration: InputDecoration(
         hintText: 'Email',
         filled: true,

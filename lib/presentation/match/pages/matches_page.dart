@@ -1,3 +1,4 @@
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:real_amis/common/helpers/is_dark_mode.dart';
@@ -5,6 +6,7 @@ import 'package:real_amis/common/widgets/appBar/app_bar_no_nav.dart';
 import 'package:real_amis/common/widgets/loader/loader.dart';
 import 'package:real_amis/core/configs/theme/app_colors.dart';
 import 'package:real_amis/core/utils/admin_only.dart';
+import 'package:real_amis/core/utils/league_selection_preference.dart';
 import 'package:real_amis/core/utils/show_snackbar.dart';
 import 'package:real_amis/domain/entities/league/league_entity.dart';
 import 'package:real_amis/domain/entities/match/match_entity.dart';
@@ -32,10 +34,13 @@ class MatchesPage extends ConsumerStatefulWidget {
 
 class _MatchesPageState extends ConsumerState<MatchesPage> {
   LeagueEntity? selectedLeague;
+  String? _savedLeagueId;
+  bool _prefsLoaded = false;
 
   @override
   void initState() {
     super.initState();
+    _loadSavedLeague();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final user = ref.read(appUserProvider).value?.user;
       if (user != null) {
@@ -51,6 +56,20 @@ class _MatchesPageState extends ConsumerState<MatchesPage> {
     await ref.read(matchNotifierProvider.notifier).fetchAllMatches();
     await ref.read(allEventsNotifierProvider.notifier).fetchAllEvents();
     await Future.delayed(const Duration(milliseconds: 300));
+  }
+
+  Future<void> _loadSavedLeague() async {
+    final savedId = await LeagueSelectionPreference.getSavedLeagueId();
+    if (!mounted) return;
+    setState(() {
+      _savedLeagueId = savedId;
+      _prefsLoaded = true;
+    });
+  }
+
+  void _selectLeague(LeagueEntity league) {
+    setState(() => selectedLeague = league);
+    LeagueSelectionPreference.saveLeagueId(league.id);
   }
 
   List<MatchEntity> _sortedMatches(List<MatchEntity> matches) {
@@ -145,10 +164,18 @@ class _MatchesPageState extends ConsumerState<MatchesPage> {
               leagueState.when(
                 data: (leagues) {
                   if (leagues.isEmpty) return const SizedBox.shrink();
-                  selectedLeague ??= leagues.first;
 
                   final sortedLeagues = List<LeagueEntity>.from(leagues)
                     ..sort((a, b) => b.year.compareTo(a.year));
+
+                  if (selectedLeague == null && _prefsLoaded) {
+                    final saved = _savedLeagueId == null
+                        ? null
+                        : sortedLeagues.firstWhereOrNull(
+                            (l) => l.id == _savedLeagueId,
+                          );
+                    selectedLeague = saved ?? sortedLeagues.first;
+                  }
 
                   return SizedBox(
                     height: 50,
@@ -163,8 +190,7 @@ class _MatchesPageState extends ConsumerState<MatchesPage> {
                         return ChoiceChip(
                           label: Text('${league.name} - ${league.year}'),
                           selected: isSelected,
-                          onSelected: (_) =>
-                              setState(() => selectedLeague = league),
+                          onSelected: (_) => _selectLeague(league),
                           backgroundColor: isDark
                               ? AppColors.cardDark.withValues(alpha: 0.15)
                               : AppColors.cardLight.withValues(alpha: 0.15),

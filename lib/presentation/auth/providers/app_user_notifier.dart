@@ -132,7 +132,7 @@ class AppUserNotifier extends StateNotifier<AsyncValue<AppUserState>> {
         email: email,
         redirectTo: 'myapp://reset-password',
       );
-      state = state;
+      setLoggedOut();
     } catch (e, st) {
       state = AsyncValue.error(e, st);
     }

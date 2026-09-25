@@ -9,6 +9,7 @@ import 'package:real_amis/common/helpers/is_dark_mode.dart';
 import 'package:real_amis/common/widgets/appBar/app_bar_no_nav.dart';
 import 'package:real_amis/core/configs/theme/app_colors.dart';
 import 'package:real_amis/core/utils/admin_only.dart';
+import 'package:real_amis/core/utils/league_selection_preference.dart';
 import 'package:real_amis/domain/entities/league/league_entity.dart';
 import 'package:real_amis/domain/entities/score/score_entity.dart';
 import 'package:real_amis/domain/entities/team/team_entity.dart';
@@ -32,11 +33,29 @@ class TeamsPage extends ConsumerStatefulWidget {
 
 class _TeamsPageState extends ConsumerState<TeamsPage> {
   LeagueEntity? selectedLeague;
+  String? _savedLeagueId;
+  bool _prefsLoaded = false;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) => _refresh());
+    _loadSavedLeague();
+  }
+
+  Future<void> _loadSavedLeague() async {
+    final savedId = await LeagueSelectionPreference.getSavedLeagueId();
+    if (!mounted) return;
+    setState(() {
+      _savedLeagueId = savedId;
+      _prefsLoaded = true;
+    });
+  }
+
+  Future<void> _selectLeague(LeagueEntity league) async {
+    setState(() => selectedLeague = league);
+    _refresh();
+    await LeagueSelectionPreference.saveLeagueId(league.id);
   }
 
   Future<void> _refresh() async {
@@ -101,10 +120,18 @@ class _TeamsPageState extends ConsumerState<TeamsPage> {
               leaguesAsync.when(
                 data: (leagues) {
                   if (leagues.isEmpty) return const SizedBox.shrink();
-                  selectedLeague ??= leagues.first;
 
                   final sortedLeagues = List<LeagueEntity>.from(leagues)
                     ..sort((a, b) => b.year.compareTo(a.year));
+
+                  if (selectedLeague == null && _prefsLoaded) {
+                    final saved = _savedLeagueId == null
+                        ? null
+                        : sortedLeagues.firstWhereOrNull(
+                            (l) => l.id == _savedLeagueId,
+                          );
+                    selectedLeague = saved ?? sortedLeagues.first;
+                  }
 
                   return SizedBox(
                     height: 50,
@@ -120,10 +147,7 @@ class _TeamsPageState extends ConsumerState<TeamsPage> {
                         return ChoiceChip(
                           label: Text('${league.name} - ${league.year}'),
                           selected: isSelected,
-                          onSelected: (_) {
-                            setState(() => selectedLeague = league);
-                            _refresh();
-                          },
+                          onSelected: (_) => _selectLeague(league),
                           backgroundColor: isDark
                               ? AppColors.cardDark.withValues(alpha: 0.15)
                               : AppColors.cardLight.withValues(alpha: 0.15),
