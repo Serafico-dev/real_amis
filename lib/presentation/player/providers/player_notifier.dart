@@ -7,8 +7,6 @@ import 'package:real_amis/domain/entities/player/player_role.dart';
 import 'package:real_amis/domain/usecases/player/update_player.dart';
 import 'package:real_amis/domain/usecases/player/upload_player.dart';
 import 'package:real_amis/core/usecase/usecase.dart';
-import 'package:real_amis/presentation/auth/providers/app_user_provider.dart';
-import 'package:real_amis/presentation/auth/providers/app_user_state.dart';
 import 'package:real_amis/presentation/player/providers/player_provider.dart';
 
 final playerNotifierProvider =
@@ -25,12 +23,6 @@ class PlayerNotifier extends StateNotifier<AsyncValue<List<PlayerEntity>>> {
 
   Future<void> fetchAllPlayers() async {
     state = const AsyncLoading();
-    final user = ref.read(appUserProvider).value?.user;
-    if (user == null) {
-      state = const AsyncData([]);
-      return;
-    }
-
     final res = await ref.read(getAllPlayersProvider)(NoParams());
     state = res.fold(
       (failure) => AsyncError(failure.message, StackTrace.current),

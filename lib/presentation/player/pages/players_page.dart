@@ -8,8 +8,6 @@ import 'package:real_amis/core/utils/admin_only.dart';
 import 'package:real_amis/core/utils/show_snackbar.dart';
 import 'package:real_amis/domain/entities/player/player_entity.dart';
 import 'package:real_amis/domain/entities/player/player_role.dart';
-import 'package:real_amis/presentation/auth/providers/app_user_provider.dart';
-import 'package:real_amis/presentation/auth/providers/app_user_state.dart';
 import 'package:real_amis/presentation/player/pages/add_new_player.dart';
 import 'package:real_amis/presentation/player/widgets/player_card.dart';
 import 'package:real_amis/presentation/player/providers/player_notifier.dart';
@@ -81,24 +79,9 @@ class _PlayersPageState extends ConsumerState<PlayersPage>
   @override
   Widget build(BuildContext context) {
     final isDarkMode = context.isDarkMode;
-    final userAsync = ref.watch(appUserProvider);
+    final playerState = ref.watch(playerNotifierProvider);
 
-    return userAsync.when(
-      loading: () =>
-          const Scaffold(body: Center(child: CircularProgressIndicator())),
-      error: (_, _) =>
-          const Scaffold(body: Center(child: Text('Errore utente'))),
-      data: (userState) {
-        final user = userState.user;
-        if (user == null) {
-          return const Scaffold(
-            body: Center(child: Text('Utente non loggato')),
-          );
-        }
-
-        final playerState = ref.watch(playerNotifierProvider);
-
-        return Scaffold(
+    return Scaffold(
           appBar: AppBarNoNav(
             actions: [
               AdminOnly(
@@ -215,8 +198,6 @@ class _PlayersPageState extends ConsumerState<PlayersPage>
               return const SizedBox.shrink();
             },
           ),
-        );
-      },
     );
   }
 

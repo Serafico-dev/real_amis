@@ -6,8 +6,6 @@ import 'package:real_amis/domain/entities/match/match_entity.dart';
 import 'package:real_amis/domain/usecases/match/update_match.dart';
 import 'package:real_amis/domain/usecases/match/upload_match.dart';
 import 'package:real_amis/core/usecase/usecase.dart';
-import 'package:real_amis/presentation/auth/providers/app_user_provider.dart';
-import 'package:real_amis/presentation/auth/providers/app_user_state.dart';
 import 'package:real_amis/presentation/match/providers/match_provider.dart';
 import 'package:real_amis/presentation/player/providers/player_notifier.dart';
 
@@ -23,12 +21,6 @@ class MatchNotifier extends StateNotifier<AsyncValue<List<MatchEntity>>> {
 
   Future<void> fetchAllMatches() async {
     state = const AsyncLoading();
-    final user = ref.read(appUserProvider).value?.user;
-    if (user == null) {
-      state = const AsyncData([]);
-      return;
-    }
-
     final res = await ref.read(getAllMatchesProvider)(NoParams());
     state = res.fold(
       (failure) => AsyncError(failure.message, StackTrace.current),

@@ -6,8 +6,6 @@ import 'package:real_amis/core/usecase/usecase.dart';
 import 'package:real_amis/domain/entities/team/team_entity.dart';
 import 'package:real_amis/domain/usecases/team/update_team.dart';
 import 'package:real_amis/domain/usecases/team/upload_team.dart';
-import 'package:real_amis/presentation/auth/providers/app_user_provider.dart';
-import 'package:real_amis/presentation/auth/providers/app_user_state.dart';
 import 'package:real_amis/presentation/team/providers/team_provider.dart';
 
 final teamNotifierProvider =
@@ -18,26 +16,12 @@ final teamNotifierProvider =
 class TeamNotifier extends StateNotifier<AsyncValue<List<TeamEntity>>> {
   final Ref ref;
 
-  TeamNotifier(this.ref) : super(const AsyncValue.data([])) {
-    ref.listen<AsyncValue<AppUserState>>(appUserProvider, (prev, next) {
-      next.whenData((userState) {
-        final user = userState.user;
-        if (user != null) {
-          fetchAllTeams();
-        } else {
-          state = const AsyncValue.data([]);
-        }
-      });
-    });
+  TeamNotifier(this.ref) : super(const AsyncValue.loading()) {
+    fetchAllTeams();
   }
 
   Future<void> fetchAllTeams() async {
     state = const AsyncValue.loading();
-    final user = ref.read(appUserProvider).value?.user;
-    if (user == null) {
-      state = const AsyncValue.data([]);
-      return;
-    }
 
     final res = await ref.read(getAllTeamsProvider)(NoParams());
     state = res.fold(

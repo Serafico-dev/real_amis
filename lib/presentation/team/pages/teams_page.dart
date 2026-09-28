@@ -9,11 +9,11 @@ import 'package:real_amis/common/helpers/is_dark_mode.dart';
 import 'package:real_amis/common/widgets/appBar/app_bar_no_nav.dart';
 import 'package:real_amis/core/configs/theme/app_colors.dart';
 import 'package:real_amis/core/utils/admin_only.dart';
+import 'package:real_amis/presentation/auth/providers/app_user_provider.dart';
 import 'package:real_amis/core/utils/league_selection_preference.dart';
 import 'package:real_amis/domain/entities/league/league_entity.dart';
 import 'package:real_amis/domain/entities/score/score_entity.dart';
 import 'package:real_amis/domain/entities/team/team_entity.dart';
-import 'package:real_amis/presentation/auth/providers/app_user_provider.dart';
 import 'package:real_amis/presentation/league/providers/league_notifier.dart';
 import 'package:real_amis/presentation/score/pages/update_score.dart';
 import 'package:real_amis/presentation/score/providers/score_notifier.dart';
@@ -59,9 +59,6 @@ class _TeamsPageState extends ConsumerState<TeamsPage> {
   }
 
   Future<void> _refresh() async {
-    final user = ref.read(appUserProvider).value?.user;
-    if (user == null) return;
-
     await ref.read(teamNotifierProvider.notifier).fetchAllTeams();
     if (selectedLeague != null) {
       await ref
@@ -79,249 +76,220 @@ class _TeamsPageState extends ConsumerState<TeamsPage> {
   @override
   Widget build(BuildContext context) {
     final isDark = context.isDarkMode;
-    final userAsync = ref.watch(appUserProvider);
+    final leaguesAsync = ref.watch(leagueNotifierProvider);
+    final teamsAsync = ref.watch(teamNotifierProvider);
+    final scoresAsync = ref.watch(scoreNotifierProvider);
+    final isAdmin = ref.watch(appUserProvider).value?.user?.isAdmin ?? false;
 
-    return userAsync.when(
-      loading: () =>
-          const Scaffold(body: Center(child: CircularProgressIndicator())),
-      error: (_, _) =>
-          const Scaffold(body: Center(child: Text('Errore utente'))),
-      data: (userState) {
-        final user = userState.user;
-        if (user == null) {
-          return const Scaffold(
-            body: Center(child: Text('Utente non loggato')),
-          );
-        }
+    return Scaffold(
+      backgroundColor: isDark ? AppColors.bgDark : AppColors.bgLight,
+      appBar: AppBarNoNav(
+        actions: [
+          AdminOnly(
+            child: IconButton(
+              tooltip: 'Aggiungi squadra',
+              icon: const Icon(Icons.add, size: 30),
+              onPressed: () async {
+                await Navigator.push(context, AddNewTeamPage.route());
+                if (!mounted) return;
+                _refresh();
+              },
+            ),
+          ),
+        ],
+      ),
+      body: Column(
+        children: [
+          leaguesAsync.when(
+            data: (leagues) {
+              if (leagues.isEmpty) return const SizedBox.shrink();
 
-        final leaguesAsync = ref.watch(leagueNotifierProvider);
-        final teamsAsync = ref.watch(teamNotifierProvider);
-        final scoresAsync = ref.watch(scoreNotifierProvider);
+              final sortedLeagues = List<LeagueEntity>.from(leagues)
+                ..sort((a, b) => b.year.compareTo(a.year));
 
-        return Scaffold(
-          backgroundColor: isDark ? AppColors.bgDark : AppColors.bgLight,
-          appBar: AppBarNoNav(
-            actions: [
-              AdminOnly(
-                child: IconButton(
-                  tooltip: 'Aggiungi squadra',
-                  icon: const Icon(Icons.add, size: 30),
-                  onPressed: () async {
-                    await Navigator.push(context, AddNewTeamPage.route());
-                    if (!mounted) return;
-                    _refresh();
+              if (selectedLeague == null && _prefsLoaded) {
+                final saved = _savedLeagueId == null
+                    ? null
+                    : sortedLeagues.firstWhereOrNull(
+                        (l) => l.id == _savedLeagueId,
+                      );
+                selectedLeague = saved ?? sortedLeagues.first;
+              }
+
+              return SizedBox(
+                height: 50,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  separatorBuilder: (_, _) => const SizedBox(width: 8),
+                  itemCount: sortedLeagues.length,
+                  itemBuilder: (context, index) {
+                    final league = sortedLeagues[index];
+                    final isSelected = league.id == selectedLeague?.id;
+
+                    return ChoiceChip(
+                      label: Text('${league.name} - ${league.year}'),
+                      selected: isSelected,
+                      onSelected: (_) => _selectLeague(league),
+                      backgroundColor: isDark
+                          ? AppColors.cardDark.withValues(alpha: 0.15)
+                          : AppColors.cardLight.withValues(alpha: 0.15),
+                      selectedColor: isDark
+                          ? AppColors.tertiary.withValues(alpha: 0.35)
+                          : AppColors.primary.withValues(alpha: 0.25),
+                      labelStyle: TextStyle(
+                        color: isSelected
+                            ? (isDark
+                                  ? AppColors.textDarkPrimary
+                                  : AppColors.textLightPrimary)
+                            : (isDark
+                                  ? AppColors.textDarkSecondary
+                                  : AppColors.textLightSecondary),
+                        fontWeight: FontWeight.w500,
+                      ),
+                      side: BorderSide(
+                        color: isSelected
+                            ? (isDark ? AppColors.tertiary : AppColors.primary)
+                            : (isDark
+                                  ? AppColors.textDarkSecondary.withValues(
+                                      alpha: 0.3,
+                                    )
+                                  : AppColors.textLightSecondary.withValues(
+                                      alpha: 0.3,
+                                    )),
+                        width: 1,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                    );
                   },
                 ),
-              ),
-            ],
+              );
+            },
+            loading: () =>
+                const SizedBox(height: 50, child: LinearProgressIndicator()),
+            error: (err, _) => Center(child: Text('Errore: $err')),
           ),
-          body: Column(
-            children: [
-              leaguesAsync.when(
-                data: (leagues) {
-                  if (leagues.isEmpty) return const SizedBox.shrink();
+          const SizedBox(height: 8),
+          Expanded(
+            child: teamsAsync.when(
+              data: (teams) {
+                return scoresAsync.when(
+                  data: (scores) {
+                    if (selectedLeague == null) {
+                      return const SizedBox.shrink();
+                    }
 
-                  final sortedLeagues = List<LeagueEntity>.from(leagues)
-                    ..sort((a, b) => b.year.compareTo(a.year));
+                    final sortedTeams =
+                        List<TeamEntity>.from(teams)
+                            .where(
+                              (t) => selectedLeague!.teamIds.contains(t.id),
+                            )
+                            .toList()
+                          ..sort((a, b) {
+                            final scoreA = _scoreForTeam(a.id, scores);
+                            final scoreB = _scoreForTeam(b.id, scores);
+                            final scoreCompare = scoreB.compareTo(scoreA);
+                            if (scoreCompare != 0) return scoreCompare;
+                            return a.name.toLowerCase().compareTo(
+                              b.name.toLowerCase(),
+                            );
+                          });
 
-                  if (selectedLeague == null && _prefsLoaded) {
-                    final saved = _savedLeagueId == null
-                        ? null
-                        : sortedLeagues.firstWhereOrNull(
-                            (l) => l.id == _savedLeagueId,
-                          );
-                    selectedLeague = saved ?? sortedLeagues.first;
-                  }
+                    if (sortedTeams.isEmpty) {
+                      return const Center(
+                        child: Text('Nessuna squadra trovata'),
+                      );
+                    }
 
-                  return SizedBox(
-                    height: 50,
-                    child: ListView.separated(
-                      scrollDirection: Axis.horizontal,
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      separatorBuilder: (_, _) => const SizedBox(width: 8),
-                      itemCount: sortedLeagues.length,
-                      itemBuilder: (context, index) {
-                        final league = sortedLeagues[index];
-                        final isSelected = league.id == selectedLeague?.id;
-
-                        return ChoiceChip(
-                          label: Text('${league.name} - ${league.year}'),
-                          selected: isSelected,
-                          onSelected: (_) => _selectLeague(league),
-                          backgroundColor: isDark
-                              ? AppColors.cardDark.withValues(alpha: 0.15)
-                              : AppColors.cardLight.withValues(alpha: 0.15),
-                          selectedColor: isDark
-                              ? AppColors.tertiary.withValues(alpha: 0.35)
-                              : AppColors.primary.withValues(alpha: 0.25),
-                          labelStyle: TextStyle(
-                            color: isSelected
-                                ? (isDark
-                                      ? AppColors.textDarkPrimary
-                                      : AppColors.textLightPrimary)
-                                : (isDark
-                                      ? AppColors.textDarkSecondary
-                                      : AppColors.textLightSecondary),
-                            fontWeight: FontWeight.w500,
-                          ),
-                          side: BorderSide(
-                            color: isSelected
-                                ? (isDark
-                                      ? AppColors.tertiary
-                                      : AppColors.primary)
-                                : (isDark
-                                      ? AppColors.textDarkSecondary.withValues(
-                                          alpha: 0.3,
-                                        )
-                                      : AppColors.textLightSecondary.withValues(
-                                          alpha: 0.3,
-                                        )),
-                            width: 1,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          padding: const EdgeInsets.symmetric(horizontal: 12),
-                        );
-                      },
-                    ),
-                  );
-                },
-                loading: () => const SizedBox(
-                  height: 50,
-                  child: LinearProgressIndicator(),
-                ),
-                error: (err, _) => Center(child: Text('Errore: $err')),
-              ),
-              const SizedBox(height: 8),
-              Expanded(
-                child: teamsAsync.when(
-                  data: (teams) {
-                    return scoresAsync.when(
-                      data: (scores) {
-                        if (selectedLeague == null) {
-                          return const SizedBox.shrink();
-                        }
-
-                        final sortedTeams =
-                            List<TeamEntity>.from(teams)
-                                .where(
-                                  (t) => selectedLeague!.teamIds.contains(t.id),
-                                )
-                                .toList()
-                              ..sort((a, b) {
-                                final scoreA = _scoreForTeam(a.id, scores);
-                                final scoreB = _scoreForTeam(b.id, scores);
-                                final scoreCompare = scoreB.compareTo(scoreA);
-                                if (scoreCompare != 0) return scoreCompare;
-                                return a.name.toLowerCase().compareTo(
-                                  b.name.toLowerCase(),
-                                );
-                              });
-
-                        if (sortedTeams.isEmpty) {
-                          return const Center(
-                            child: Text('Nessuna squadra trovata'),
-                          );
-                        }
-
-                        return RefreshIndicator(
-                          onRefresh: _refresh,
-                          child: ListView.builder(
-                            padding: const EdgeInsets.all(16),
-                            itemCount: sortedTeams.length,
-                            itemBuilder: (context, index) {
-                              final team = sortedTeams[index];
-                              final scoreEntity =
-                                  scores.firstWhereOrNull(
-                                    (s) =>
-                                        s.teamId == team.id &&
-                                        s.leagueId == selectedLeague!.id,
-                                  ) ??
-                                  ScoreEntity(
-                                    id: const Uuid().v4(),
-                                    teamId: team.id,
-                                    leagueId: selectedLeague!.id,
-                                    score: 0,
-                                  );
-
-                              return _TeamRow(
-                                team: team,
-                                score: scoreEntity.score,
-                                index: index,
-                                onTap: user.isAdmin
-                                    ? () async {
-                                        await Navigator.push(
-                                          context,
-                                          EditTeamPage.route(team),
-                                        );
-                                        _refresh();
-                                      }
-                                    : null,
-                                onEditScore: user.isAdmin
-                                    ? () async {
-                                        final result =
-                                            await Navigator.push<ScoreEntity?>(
-                                              context,
-                                              UpdateScorePage.route(
-                                                scoreEntity: scoreEntity,
-                                                teamId: team.id,
-                                                leagueId: selectedLeague!.id,
-                                              ),
-                                            );
-
-                                        if (!mounted || result == null) return;
-
-                                        final scoresNotifier = ref.read(
-                                          scoreNotifierProvider.notifier,
-                                        );
-                                        final allScores =
-                                            ref
-                                                .read(scoreNotifierProvider)
-                                                .value ??
-                                            [];
-
-                                        final exists = allScores.any(
-                                          (s) => s.id == result.id,
-                                        );
-                                        if (exists) {
-                                          await scoresNotifier.updateScore(
-                                            result,
-                                          );
-                                        } else {
-                                          await scoresNotifier.uploadScore(
-                                            result,
-                                          );
-                                        }
-
-                                        await scoresNotifier
-                                            .fetchScoresByLeague(
-                                              selectedLeague!.id,
-                                            );
-                                      }
-                                    : null,
+                    return RefreshIndicator(
+                      onRefresh: _refresh,
+                      child: ListView.builder(
+                        padding: const EdgeInsets.all(16),
+                        itemCount: sortedTeams.length,
+                        itemBuilder: (context, index) {
+                          final team = sortedTeams[index];
+                          final scoreEntity =
+                              scores.firstWhereOrNull(
+                                (s) =>
+                                    s.teamId == team.id &&
+                                    s.leagueId == selectedLeague!.id,
+                              ) ??
+                              ScoreEntity(
+                                id: const Uuid().v4(),
+                                teamId: team.id,
+                                leagueId: selectedLeague!.id,
+                                score: 0,
                               );
-                            },
-                          ),
-                        );
-                      },
-                      loading: () =>
-                          const Center(child: CircularProgressIndicator()),
-                      error: (_, _) => const Center(
-                        child: Text('Errore caricamento punteggi'),
+
+                          return _TeamRow(
+                            team: team,
+                            score: scoreEntity.score,
+                            index: index,
+                            onTap: isAdmin
+                                ? () async {
+                                    await Navigator.push(
+                                      context,
+                                      EditTeamPage.route(team),
+                                    );
+                                    _refresh();
+                                  }
+                                : null,
+                            onEditScore: isAdmin
+                                ? () async {
+                                    final result =
+                                        await Navigator.push<ScoreEntity?>(
+                                          context,
+                                          UpdateScorePage.route(
+                                            scoreEntity: scoreEntity,
+                                            teamId: team.id,
+                                            leagueId: selectedLeague!.id,
+                                          ),
+                                        );
+
+                                    if (!mounted || result == null) return;
+
+                                    final scoresNotifier = ref.read(
+                                      scoreNotifierProvider.notifier,
+                                    );
+                                    final allScores =
+                                        ref.read(scoreNotifierProvider).value ??
+                                        [];
+
+                                    final exists = allScores.any(
+                                      (s) => s.id == result.id,
+                                    );
+                                    if (exists) {
+                                      await scoresNotifier.updateScore(result);
+                                    } else {
+                                      await scoresNotifier.uploadScore(result);
+                                    }
+
+                                    await scoresNotifier.fetchScoresByLeague(
+                                      selectedLeague!.id,
+                                    );
+                                  }
+                                : null,
+                          );
+                        },
                       ),
                     );
                   },
                   loading: () =>
                       const Center(child: CircularProgressIndicator()),
                   error: (_, _) =>
-                      const Center(child: Text('Errore caricamento squadre')),
-                ),
-              ),
-            ],
+                      const Center(child: Text('Errore caricamento punteggi')),
+                );
+              },
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (_, _) =>
+                  const Center(child: Text('Errore caricamento squadre')),
+            ),
           ),
-        );
-      },
+        ],
+      ),
     );
   }
 }
@@ -403,11 +371,14 @@ class _TeamRow extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 8),
-                if (onEditScore != null)
-                  IconButton(
-                    icon: const Icon(Icons.edit, size: 20),
-                    onPressed: onEditScore,
-                  ),
+                AdminOnly(
+                  child: onEditScore == null
+                      ? const SizedBox.shrink()
+                      : IconButton(
+                          icon: const Icon(Icons.edit, size: 20),
+                          onPressed: onEditScore,
+                        ),
+                ),
               ],
             ),
           ],

@@ -10,8 +10,6 @@ import 'package:real_amis/core/utils/league_selection_preference.dart';
 import 'package:real_amis/core/utils/show_snackbar.dart';
 import 'package:real_amis/domain/entities/league/league_entity.dart';
 import 'package:real_amis/domain/entities/match/match_entity.dart';
-import 'package:real_amis/presentation/auth/providers/app_user_provider.dart';
-import 'package:real_amis/presentation/auth/providers/app_user_state.dart';
 import 'package:real_amis/presentation/event/providers/all_events_notifier.dart';
 import 'package:real_amis/presentation/league/pages/leagues_page.dart';
 import 'package:real_amis/presentation/league/providers/league_notifier.dart';
@@ -42,13 +40,11 @@ class _MatchesPageState extends ConsumerState<MatchesPage> {
     super.initState();
     _loadSavedLeague();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final user = ref.read(appUserProvider).value?.user;
-      if (user != null) {
-        Future.wait([
-          ref.read(matchNotifierProvider.notifier).fetchAllMatches(),
-          ref.read(leagueNotifierProvider.notifier).fetchAllLeagues(),
-        ]);
-      }
+      Future.wait([
+        ref.read(matchNotifierProvider.notifier).fetchAllMatches(),
+        ref.read(leagueNotifierProvider.notifier).fetchAllLeagues(),
+        ref.read(allEventsNotifierProvider.notifier).fetchAllEvents(),
+      ]);
     });
   }
 
@@ -81,26 +77,11 @@ class _MatchesPageState extends ConsumerState<MatchesPage> {
   @override
   Widget build(BuildContext context) {
     final isDark = context.isDarkMode;
-    final userAsync = ref.watch(appUserProvider);
+    final leagueState = ref.watch(leagueNotifierProvider);
+    final matchState = ref.watch(matchNotifierProvider);
+    final eventsState = ref.watch(allEventsNotifierProvider);
 
-    return userAsync.when(
-      loading: () =>
-          const Scaffold(body: Center(child: CircularProgressIndicator())),
-      error: (_, _) =>
-          const Scaffold(body: Center(child: Text('Errore utente'))),
-      data: (userState) {
-        final user = userState.user;
-        if (user == null) {
-          return const Scaffold(
-            body: Center(child: Text('Utente non loggato')),
-          );
-        }
-
-        final leagueState = ref.watch(leagueNotifierProvider);
-        final matchState = ref.watch(matchNotifierProvider);
-        final eventsState = ref.watch(allEventsNotifierProvider);
-
-        return Scaffold(
+    return Scaffold(
           appBar: AppBarNoNav(
             actions: [
               AdminOnly(
@@ -276,7 +257,5 @@ class _MatchesPageState extends ConsumerState<MatchesPage> {
             ],
           ),
         );
-      },
-    );
   }
 }

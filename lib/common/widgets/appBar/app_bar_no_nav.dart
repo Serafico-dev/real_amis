@@ -30,7 +30,17 @@ class AppBarNoNav extends StatelessWidget implements PreferredSizeWidget {
             ? AppColors.textDarkPrimary
             : AppColors.textLightPrimary,
       ),
-      leading: null,
+      leading: Navigator.canPop(context)
+          ? IconButton(
+              icon: Icon(
+                Icons.arrow_back,
+                color: context.isDarkMode
+                    ? AppColors.iconDark
+                    : AppColors.iconLight,
+              ),
+              onPressed: () => Navigator.pop(context),
+            )
+          : null,
       automaticallyImplyLeading: false,
       actions: actions,
       iconTheme: IconThemeData(

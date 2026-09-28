@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:real_amis/common/helpers/is_dark_mode.dart';
 import 'package:real_amis/core/configs/assets/app_vectors.dart';
 import 'package:real_amis/core/configs/theme/app_colors.dart';
 import 'package:real_amis/presentation/choose_mode/pages/choose_mode.dart';
+import 'package:real_amis/presentation/main/pages/main_page.dart';
 
 class SplashPage extends ConsumerStatefulWidget {
   const SplashPage({super.key});
@@ -20,6 +22,7 @@ class _SplashPageState extends ConsumerState<SplashPage>
   static const _logoWidth = 250.0;
   static const _fadeDuration = Duration(milliseconds: 800);
   static const _splashDuration = Duration(seconds: 2);
+  static const _onboardingCompletedKey = 'initial_onboarding_completed';
 
   late final AnimationController _controller;
   late final Animation<double> _opacityAnimation;
@@ -60,6 +63,18 @@ class _SplashPageState extends ConsumerState<SplashPage>
   Future<void> _navigateAfterDelay() async {
     await Future.delayed(_splashDuration);
     if (!mounted) return;
-    Navigator.pushReplacement(context, ChooseModePage.route());
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.reload();
+    final onboardingCompleted =
+        prefs.getBool(_onboardingCompletedKey) ?? false;
+
+    if (!mounted) return;
+
+    final route = onboardingCompleted
+        ? MainPage.route()
+        : ChooseModePage.route();
+
+    Navigator.pushReplacement(context, route);
   }
 }

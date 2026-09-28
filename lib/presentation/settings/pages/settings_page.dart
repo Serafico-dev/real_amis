@@ -11,6 +11,7 @@ import 'package:real_amis/presentation/auth/pages/signin.dart';
 import 'package:real_amis/presentation/auth/providers/app_user_provider.dart';
 import 'package:real_amis/presentation/auth/providers/app_user_state.dart';
 import 'package:real_amis/presentation/choose_mode/providers/theme_provider.dart';
+import 'package:real_amis/presentation/main/pages/main_page.dart';
 import 'package:real_amis/presentation/settings/pages/terms_privacy_page.dart';
 import 'package:real_amis/presentation/settings/widgets/settings_tile.dart';
 
@@ -76,14 +77,12 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     if (result.success) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
-        Navigator.pushAndRemoveUntil(context, SigninPage.route(), (_) => false);
+        Navigator.pushAndRemoveUntil(context, MainPage.route(), (_) => false);
       });
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            result.message ?? 'Impossibile eliminare l\'account',
-          ),
+          content: Text(result.message ?? 'Impossibile eliminare l\'account'),
         ),
       );
     }
@@ -101,9 +100,76 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
 
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
-        Navigator.pushAndRemoveUntil(context, SigninPage.route(), (_) => false);
+        Navigator.pushAndRemoveUntil(context, MainPage.route(), (_) => false);
       });
     }
+  }
+
+  Widget _buildAccountSection({
+    required bool isLoggedIn,
+    required String? userEmail,
+    required Color textColor,
+    required Color subtitleColor,
+  }) {
+    if (!isLoggedIn) {
+      return Card(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Non hai effettuato l\'accesso',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 15,
+                  color: textColor,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'Puoi consultare rosa, partite, risultati e statistiche '
+                'liberamente. Accedi solo se devi gestire i contenuti come '
+                'amministratore del club.',
+                style: TextStyle(fontSize: 13, color: subtitleColor),
+              ),
+              const SizedBox(height: 14),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.push(context, SigninPage.route()),
+                  child: const Text('Accedi o registrati'),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SettingsTile(
+          title: 'Email',
+          subtitle: userEmail,
+          titleColor: textColor,
+          subtitleColor: subtitleColor,
+        ),
+        const SizedBox(height: 4),
+        SettingsTile(
+          title: 'Cambia password',
+          titleColor: textColor,
+          trailing: IconButton(
+            tooltip: 'Cambia password',
+            onPressed: () =>
+                Navigator.push(context, ChangePasswordPage.route()),
+            icon: Icon(Icons.lock_open, size: 26, color: textColor),
+          ),
+        ),
+      ],
+    );
   }
 
   @override
@@ -119,9 +185,13 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
 
     final userState = ref.watch(appUserProvider);
 
+    final isLoggedIn = userState.maybeWhen(
+      data: (state) => state is AppUserLoggedIn,
+      orElse: () => false,
+    );
     final userEmail = userState.maybeWhen(
       data: (state) => state is AppUserLoggedIn ? state.user.email : null,
-      orElse: () => 'Non disponibile',
+      orElse: () => null,
     );
 
     return Scaffold(
@@ -144,24 +214,11 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
               ),
             ),
 
-            SettingsTile(
-              title: 'Email',
-              subtitle: userEmail,
-              titleColor: textColor,
+            _buildAccountSection(
+              isLoggedIn: isLoggedIn,
+              userEmail: userEmail,
+              textColor: textColor,
               subtitleColor: subtitleColor,
-            ),
-
-            const SizedBox(height: 4),
-
-            SettingsTile(
-              title: 'Cambia password',
-              titleColor: textColor,
-              trailing: IconButton(
-                tooltip: 'Cambia password',
-                onPressed: () =>
-                    Navigator.push(context, ChangePasswordPage.route()),
-                icon: Icon(Icons.lock_open, size: 26, color: textColor),
-              ),
             ),
 
             Padding(
@@ -320,33 +377,35 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
               ),
             ),
 
-            const Divider(height: 50, color: Colors.grey),
+            if (isLoggedIn) ...[
+              const Divider(height: 50, color: Colors.grey),
 
-            SettingsTile(
-              title: 'Elimina account',
-              titleColor: Colors.red,
-              trailing: IconButton(
-                tooltip: 'Elimina account',
-                onPressed: _onDeleteAccountPressed,
-                icon: const Icon(
-                  Icons.delete_forever_outlined,
-                  size: 26,
-                  color: Colors.red,
+              SettingsTile(
+                title: 'Elimina account',
+                titleColor: Colors.red,
+                trailing: IconButton(
+                  tooltip: 'Elimina account',
+                  onPressed: _onDeleteAccountPressed,
+                  icon: const Icon(
+                    Icons.delete_forever_outlined,
+                    size: 26,
+                    color: Colors.red,
+                  ),
                 ),
               ),
-            ),
 
-            const SizedBox(height: 4),
+              const SizedBox(height: 4),
 
-            SettingsTile(
-              title: 'Esci',
-              titleColor: textColor,
-              trailing: IconButton(
-                tooltip: 'Disconnettiti',
-                onPressed: _onLogoutPressed,
-                icon: Icon(Icons.exit_to_app, size: 28, color: textColor),
+              SettingsTile(
+                title: 'Esci',
+                titleColor: textColor,
+                trailing: IconButton(
+                  tooltip: 'Disconnettiti',
+                  onPressed: _onLogoutPressed,
+                  icon: Icon(Icons.exit_to_app, size: 28, color: textColor),
+                ),
               ),
-            ),
+            ],
 
             const SizedBox(height: 24),
           ],

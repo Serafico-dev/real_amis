@@ -1,11 +1,12 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:real_amis/common/widgets/button/basic_app_button.dart';
 import 'package:real_amis/core/configs/assets/app_vectors.dart';
 import 'package:real_amis/core/configs/theme/app_colors.dart';
-import 'package:real_amis/presentation/auth/pages/signin.dart';
 import 'package:real_amis/presentation/choose_mode/providers/theme_provider.dart';
+import 'package:real_amis/presentation/main/pages/main_page.dart';
 
 class ChooseModePage extends ConsumerWidget {
   const ChooseModePage({super.key});
@@ -67,7 +68,23 @@ class ChooseModePage extends ConsumerWidget {
             ),
             const SizedBox(height: 50),
             BasicAppButton(
-              onPressed: () => Navigator.push(context, SigninPage.route()),
+              onPressed: () async {
+                final prefs = await SharedPreferences.getInstance();
+                final saved = await prefs.setBool(
+                  'initial_onboarding_completed',
+                  true,
+                );
+                await prefs.reload();
+
+                // Non procedere se il flag non è stato effettivamente persistito.
+                if (!saved ||
+                    prefs.getBool('initial_onboarding_completed') != true) {
+                  return;
+                }
+
+                if (!context.mounted) return;
+                Navigator.pushReplacement(context, MainPage.route());
+              },
               title: 'Prosegui',
             ),
           ],
