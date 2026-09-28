@@ -44,9 +44,9 @@ class PlayerSupabaseDataSourceImpl implements PlayerSupabaseDataSource {
           .select();
       return PlayerModel.fromJson(playerData.first);
     } on PostgrestException catch (e) {
-      throw ServerException(e.message);
+      throw ServerException.fromMessage(e.message);
     } catch (e) {
-      throw ServerException(e.toString());
+      throw ServerException.fromError(e);
     }
   }
 
@@ -63,9 +63,9 @@ class PlayerSupabaseDataSourceImpl implements PlayerSupabaseDataSource {
           .from('player_image')
           .getPublicUrl(player.id);
     } on StorageException catch (e) {
-      throw ServerException(e.message);
+      throw ServerException.fromMessage(e.message);
     } catch (e) {
-      throw ServerException(e.toString());
+      throw ServerException.fromError(e);
     }
   }
 
@@ -78,9 +78,9 @@ class PlayerSupabaseDataSourceImpl implements PlayerSupabaseDataSource {
           .order('full_name', ascending: true);
       return players.map((player) => PlayerModel.fromJson(player)).toList();
     } on PostgrestException catch (e) {
-      throw ServerException(e.message);
+      throw ServerException.fromMessage(e.message);
     } catch (e) {
-      throw ServerException(e.toString());
+      throw ServerException.fromError(e);
     }
   }
 
@@ -94,9 +94,9 @@ class PlayerSupabaseDataSourceImpl implements PlayerSupabaseDataSource {
           .select();
       return PlayerModel.fromJson(playerData.first);
     } on PostgrestException catch (e) {
-      throw ServerException(e.message);
+      throw ServerException.fromMessage(e.message);
     } catch (e) {
-      throw ServerException(e.toString());
+      throw ServerException.fromError(e);
     }
   }
 
@@ -121,9 +121,9 @@ class PlayerSupabaseDataSourceImpl implements PlayerSupabaseDataSource {
         return res.first['image_url'];
       }
     } on StorageException catch (e) {
-      throw ServerException(e.message);
+      throw ServerException.fromMessage(e.message);
     } catch (e) {
-      throw ServerException(e.toString());
+      throw ServerException.fromError(e);
     }
   }
 
@@ -138,9 +138,9 @@ class PlayerSupabaseDataSourceImpl implements PlayerSupabaseDataSource {
           .select();
       return PlayerModel.fromJson(playerData.first);
     } on PostgrestException catch (e) {
-      throw ServerException(e.message);
+      throw ServerException.fromMessage(e.message);
     } catch (e) {
-      throw ServerException(e.toString());
+      throw ServerException.fromError(e);
     }
   }
 
@@ -171,9 +171,9 @@ class PlayerSupabaseDataSourceImpl implements PlayerSupabaseDataSource {
           })
           .eq('id', playerId);
     } on PostgrestException catch (e) {
-      throw ServerException(e.message);
+      throw ServerException.fromMessage(e.message);
     } catch (e) {
-      throw ServerException(e.toString());
+      throw ServerException.fromError(e);
     }
   }
 }

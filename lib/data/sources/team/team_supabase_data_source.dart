@@ -35,9 +35,9 @@ class TeamSupabaseDataSourceImpl implements TeamSupabaseDataSource {
           .select();
       return TeamModel.fromJson(teamData.first);
     } on PostgrestException catch (e) {
-      throw ServerException(e.message);
+      throw ServerException.fromMessage(e.message);
     } catch (e) {
-      throw ServerException(e.toString());
+      throw ServerException.fromError(e);
     }
   }
 
@@ -50,9 +50,9 @@ class TeamSupabaseDataSourceImpl implements TeamSupabaseDataSource {
       await supabaseClient.storage.from('teams').upload(team.id, image);
       return supabaseClient.storage.from('teams').getPublicUrl(team.id);
     } on StorageException catch (e) {
-      throw ServerException(e.message);
+      throw ServerException.fromMessage(e.message);
     } catch (e) {
-      throw ServerException(e.toString());
+      throw ServerException.fromError(e);
     }
   }
 
@@ -62,9 +62,9 @@ class TeamSupabaseDataSourceImpl implements TeamSupabaseDataSource {
       final teams = await supabaseClient.from('teams').select();
       return teams.map((team) => TeamModel.fromJson(team)).toList();
     } on PostgrestException catch (e) {
-      throw ServerException(e.message);
+      throw ServerException.fromMessage(e.message);
     } catch (e) {
-      throw ServerException(e.toString());
+      throw ServerException.fromError(e);
     }
   }
 
@@ -78,9 +78,9 @@ class TeamSupabaseDataSourceImpl implements TeamSupabaseDataSource {
           .select();
       return TeamModel.fromJson(teamData.first);
     } on PostgrestException catch (e) {
-      throw ServerException(e.message);
+      throw ServerException.fromMessage(e.message);
     } catch (e) {
-      throw ServerException(e.toString());
+      throw ServerException.fromError(e);
     }
   }
 
@@ -98,9 +98,9 @@ class TeamSupabaseDataSourceImpl implements TeamSupabaseDataSource {
         return res.first['image_url'];
       }
     } on StorageException catch (e) {
-      throw ServerException(e.message);
+      throw ServerException.fromMessage(e.message);
     } catch (e) {
-      throw ServerException(e.toString());
+      throw ServerException.fromError(e);
     }
   }
 
@@ -115,9 +115,9 @@ class TeamSupabaseDataSourceImpl implements TeamSupabaseDataSource {
           .select();
       return TeamModel.fromJson(teamData.first);
     } on PostgrestException catch (e) {
-      throw ServerException(e.message);
+      throw ServerException.fromMessage(e.message);
     } catch (e) {
-      throw ServerException(e.toString());
+      throw ServerException.fromError(e);
     }
   }
 }

@@ -80,9 +80,9 @@ class AuthSupabaseDataSourceImpl implements AuthSupabaseDataSource {
 
       return UserModel.fromJson({...userData, 'email': response.user!.email});
     } on AuthException catch (e) {
-      throw ServerException(e.message);
+      throw ServerException.fromMessage(e.message);
     } catch (e) {
-      throw ServerException(e.toString());
+      throw ServerException.fromError(e);
     }
   }
 
@@ -114,9 +114,9 @@ class AuthSupabaseDataSourceImpl implements AuthSupabaseDataSource {
 
       return UserModel.fromJson({...userData, 'email': response.user!.email});
     } on AuthException catch (e) {
-      throw ServerException(e.message);
+      throw ServerException.fromMessage(e.message);
     } catch (e) {
-      throw ServerException(e.toString());
+      throw ServerException.fromError(e);
     }
   }
 
@@ -134,7 +134,7 @@ class AuthSupabaseDataSourceImpl implements AuthSupabaseDataSource {
       }
       return null;
     } catch (e) {
-      throw ServerException(e.toString());
+      throw ServerException.fromError(e);
     }
   }
 
@@ -144,9 +144,9 @@ class AuthSupabaseDataSourceImpl implements AuthSupabaseDataSource {
       await supabaseClient.auth.signOut(scope: SignOutScope.global);
       await secureStorage.clearAll();
     } on AuthException catch (e) {
-      throw ServerException(e.message);
+      throw ServerException.fromMessage(e.message);
     } catch (e) {
-      throw ServerException(e.toString());
+      throw ServerException.fromError(e);
     }
   }
 
@@ -161,9 +161,9 @@ class AuthSupabaseDataSourceImpl implements AuthSupabaseDataSource {
         redirectTo: redirectTo,
       );
     } on AuthException catch (e) {
-      throw ServerException(e.message);
+      throw ServerException.fromMessage(e.message);
     } catch (e) {
-      throw ServerException(e.toString());
+      throw ServerException.fromError(e);
     }
   }
 
@@ -174,7 +174,7 @@ class AuthSupabaseDataSourceImpl implements AuthSupabaseDataSource {
         UserAttributes(password: newPassword),
       );
     } on AuthException catch (e) {
-      throw ServerException(e.message);
+      throw ServerException.fromMessage(e.message);
     }
   }
 
@@ -214,11 +214,11 @@ class AuthSupabaseDataSourceImpl implements AuthSupabaseDataSource {
       await supabaseClient.auth.signOut(scope: SignOutScope.global);
       await secureStorage.clearAll();
     } on AuthException catch (e) {
-      throw ServerException(e.message);
+      throw ServerException.fromMessage(e.message);
     } on FunctionException catch (e) {
-      throw ServerException(e.details?.toString() ?? e.toString());
+      throw ServerException.fromMessage(e.details?.toString() ?? e.toString());
     } catch (e) {
-      throw ServerException(e.toString());
+      throw ServerException.fromError(e);
     }
   }
 }

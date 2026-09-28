@@ -31,9 +31,9 @@ class EventSupabaseDataSourceImpl implements EventSupabaseDataSource {
           .select();
       return EventModel.fromJson(eventData.first);
     } on PostgrestException catch (e) {
-      throw ServerException(e.message);
+      throw ServerException.fromMessage(e.message);
     } catch (e) {
-      throw ServerException(e.toString());
+      throw ServerException.fromError(e);
     }
   }
 
@@ -45,9 +45,9 @@ class EventSupabaseDataSourceImpl implements EventSupabaseDataSource {
           .select('*, team:team_id(*)');
       return events.map((event) => EventModel.fromJson(event)).toList();
     } on PostgrestException catch (e) {
-      throw ServerException(e.message);
+      throw ServerException.fromMessage(e.message);
     } catch (e) {
-      throw ServerException(e.toString());
+      throw ServerException.fromError(e);
     }
   }
 
@@ -61,9 +61,9 @@ class EventSupabaseDataSourceImpl implements EventSupabaseDataSource {
           .order('minutes', ascending: true);
       return events.map((m) => EventModel.fromJson(m)).toList();
     } on PostgrestException catch (e) {
-      throw ServerException(e.message);
+      throw ServerException.fromMessage(e.message);
     } catch (e) {
-      throw ServerException(e.toString());
+      throw ServerException.fromError(e);
     }
   }
 
@@ -77,9 +77,9 @@ class EventSupabaseDataSourceImpl implements EventSupabaseDataSource {
           .select();
       return EventModel.fromJson(eventData.first);
     } on PostgrestException catch (e) {
-      throw ServerException(e.message);
+      throw ServerException.fromMessage(e.message);
     } catch (e) {
-      throw ServerException(e.toString());
+      throw ServerException.fromError(e);
     }
   }
 
@@ -94,9 +94,9 @@ class EventSupabaseDataSourceImpl implements EventSupabaseDataSource {
           .select();
       return EventModel.fromJson(eventData.first);
     } on PostgrestException catch (e) {
-      throw ServerException(e.message);
+      throw ServerException.fromMessage(e.message);
     } catch (e) {
-      throw ServerException(e.toString());
+      throw ServerException.fromError(e);
     }
   }
 }

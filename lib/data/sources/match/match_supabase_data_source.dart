@@ -30,9 +30,9 @@ class MatchSupabaseDataSourceImpl implements MatchSupabaseDataSource {
           .select();
       return MatchModel.fromJson(matchData.first);
     } on PostgrestException catch (e) {
-      throw ServerException(e.message);
+      throw ServerException.fromMessage(e.message);
     } catch (e) {
-      throw ServerException(e.toString());
+      throw ServerException.fromError(e);
     }
   }
 
@@ -48,9 +48,9 @@ class MatchSupabaseDataSourceImpl implements MatchSupabaseDataSource {
           .map((match) => MatchModel.fromJson(match as Map<String, dynamic>))
           .toList();
     } on PostgrestException catch (e) {
-      throw ServerException(e.message);
+      throw ServerException.fromMessage(e.message);
     } catch (e) {
-      throw ServerException(e.toString());
+      throw ServerException.fromError(e);
     }
   }
 
@@ -64,9 +64,9 @@ class MatchSupabaseDataSourceImpl implements MatchSupabaseDataSource {
           .select();
       return MatchModel.fromJson(matchData.first);
     } on PostgrestException catch (e) {
-      throw ServerException(e.message);
+      throw ServerException.fromMessage(e.message);
     } catch (e) {
-      throw ServerException(e.toString());
+      throw ServerException.fromError(e);
     }
   }
 
@@ -80,9 +80,9 @@ class MatchSupabaseDataSourceImpl implements MatchSupabaseDataSource {
           .select();
       return MatchModel.fromJson(matchData.first);
     } on PostgrestException catch (e) {
-      throw ServerException(e.message);
+      throw ServerException.fromMessage(e.message);
     } catch (e) {
-      throw ServerException(e.toString());
+      throw ServerException.fromError(e);
     }
   }
 }

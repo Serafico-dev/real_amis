@@ -31,9 +31,9 @@ class ScoreSupabaseDataSourceImpl implements ScoreSupabaseDataSource {
           .select();
       return ScoreModel.fromJson(scoreData.first);
     } on PostgrestException catch (e) {
-      throw ServerException(e.message);
+      throw ServerException.fromMessage(e.message);
     } catch (e) {
-      throw ServerException(e.toString());
+      throw ServerException.fromError(e);
     }
   }
 
@@ -43,9 +43,9 @@ class ScoreSupabaseDataSourceImpl implements ScoreSupabaseDataSource {
       final scores = await supabaseClient.from('scores').select();
       return scores.map((score) => ScoreModel.fromJson(score)).toList();
     } on PostgrestException catch (e) {
-      throw ServerException(e.message);
+      throw ServerException.fromMessage(e.message);
     } catch (e) {
-      throw ServerException(e.toString());
+      throw ServerException.fromError(e);
     }
   }
 
@@ -69,9 +69,9 @@ class ScoreSupabaseDataSourceImpl implements ScoreSupabaseDataSource {
           .select();
       return ScoreModel.fromJson(scoreData.first);
     } on PostgrestException catch (e) {
-      throw ServerException(e.message);
+      throw ServerException.fromMessage(e.message);
     } catch (e) {
-      throw ServerException(e.toString());
+      throw ServerException.fromError(e);
     }
   }
 
@@ -86,9 +86,9 @@ class ScoreSupabaseDataSourceImpl implements ScoreSupabaseDataSource {
           .select();
       return ScoreModel.fromJson(scoreData.first);
     } on PostgrestException catch (e) {
-      throw ServerException(e.message);
+      throw ServerException.fromMessage(e.message);
     } catch (e) {
-      throw ServerException(e.toString());
+      throw ServerException.fromError(e);
     }
   }
 }

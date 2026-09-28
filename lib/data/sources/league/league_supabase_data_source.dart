@@ -34,9 +34,9 @@ class LeagueSupabaseDataSourceImpl implements LeagueSupabaseDataSource {
           .select();
       return LeagueModel.fromJson(leagueData.first);
     } on PostgrestException catch (e) {
-      throw ServerException(e.message);
+      throw ServerException.fromMessage(e.message);
     } catch (e) {
-      throw ServerException(e.toString());
+      throw ServerException.fromError(e);
     }
   }
 
@@ -48,9 +48,9 @@ class LeagueSupabaseDataSourceImpl implements LeagueSupabaseDataSource {
           .map((league) => LeagueModel.fromJson(league))
           .toList();
     } on PostgrestException catch (e) {
-      throw ServerException(e.message);
+      throw ServerException.fromMessage(e.message);
     } catch (e) {
-      throw ServerException(e.toString());
+      throw ServerException.fromError(e);
     }
   }
 
@@ -64,9 +64,9 @@ class LeagueSupabaseDataSourceImpl implements LeagueSupabaseDataSource {
           .select();
       return LeagueModel.fromJson(leagueData.first);
     } on PostgrestException catch (e) {
-      throw ServerException(e.message);
+      throw ServerException.fromMessage(e.message);
     } catch (e) {
-      throw ServerException(e.toString());
+      throw ServerException.fromError(e);
     }
   }
 
@@ -80,9 +80,9 @@ class LeagueSupabaseDataSourceImpl implements LeagueSupabaseDataSource {
           .select();
       return LeagueModel.fromJson(leagueData.first);
     } on PostgrestException catch (e) {
-      throw ServerException(e.message);
+      throw ServerException.fromMessage(e.message);
     } catch (e) {
-      throw ServerException(e.toString());
+      throw ServerException.fromError(e);
     }
   }
 
@@ -95,9 +95,9 @@ class LeagueSupabaseDataSourceImpl implements LeagueSupabaseDataSource {
           .eq('league_id', leagueId);
       return (response as List).map((e) => e['team_id'] as String).toList();
     } on PostgrestException catch (e) {
-      throw ServerException(e.message);
+      throw ServerException.fromMessage(e.message);
     } catch (e) {
-      throw ServerException(e.toString());
+      throw ServerException.fromError(e);
     }
   }
 
@@ -109,9 +109,9 @@ class LeagueSupabaseDataSourceImpl implements LeagueSupabaseDataSource {
         'team_id': teamId,
       });
     } on PostgrestException catch (e) {
-      throw ServerException(e.message);
+      throw ServerException.fromMessage(e.message);
     } catch (e) {
-      throw ServerException(e.toString());
+      throw ServerException.fromError(e);
     }
   }
 
@@ -124,9 +124,9 @@ class LeagueSupabaseDataSourceImpl implements LeagueSupabaseDataSource {
           .eq('league_id', leagueId)
           .eq('team_id', teamId);
     } on PostgrestException catch (e) {
-      throw ServerException(e.message);
+      throw ServerException.fromMessage(e.message);
     } catch (e) {
-      throw ServerException(e.toString());
+      throw ServerException.fromError(e);
     }
   }
 }
