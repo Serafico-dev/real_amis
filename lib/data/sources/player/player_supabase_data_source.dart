@@ -159,15 +159,19 @@ class PlayerSupabaseDataSourceImpl implements PlayerSupabaseDataSource {
           .eq('id', playerId)
           .single();
 
+      // Un contatore non può scendere sotto zero (es. dati storici parziali).
+      int next(String column, int delta) {
+        final value = (data[column] as int? ?? 0) + delta;
+        return value < 0 ? 0 : value;
+      }
+
       await supabaseClient
           .from('players')
           .update({
-            'attendances':
-                (data['attendances'] as int? ?? 0) + attendancesDelta,
-            'goals': (data['goals'] as int? ?? 0) + goalsDelta,
-            'yellow_cards':
-                (data['yellow_cards'] as int? ?? 0) + yellowCardsDelta,
-            'red_cards': (data['red_cards'] as int? ?? 0) + redCardsDelta,
+            'attendances': next('attendances', attendancesDelta),
+            'goals': next('goals', goalsDelta),
+            'yellow_cards': next('yellow_cards', yellowCardsDelta),
+            'red_cards': next('red_cards', redCardsDelta),
           })
           .eq('id', playerId);
     } on PostgrestException catch (e) {

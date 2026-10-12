@@ -55,7 +55,7 @@ class _EditEventFormState extends ConsumerState<EditEventForm> {
     setState(() => _submitting = true);
 
     try {
-      await ref
+      final result = await ref
           .read(eventNotifierProvider(widget.event.matchId).notifier)
           .updateEvent(
             UpdateEventParams(
@@ -68,7 +68,11 @@ class _EditEventFormState extends ConsumerState<EditEventForm> {
           );
 
       if (!mounted) return;
-      showSnackBar(context, 'Evento aggiornato');
+      if (!result.ok) {
+        showSnackBar(context, 'Errore: ${result.error}');
+        return;
+      }
+      showSnackBar(context, result.warning ?? 'Evento aggiornato');
       Navigator.of(context).pop('updated');
     } catch (e) {
       if (!mounted) return;
@@ -122,13 +126,17 @@ class _EditEventFormState extends ConsumerState<EditEventForm> {
     setState(() => _submitting = true);
 
     try {
-      await ref
+      final result = await ref
           .read(eventNotifierProvider(widget.event.matchId).notifier)
-          .deleteEvent(widget.event.id);
+          .deleteEvent(widget.event);
 
       if (!mounted) return;
+      if (!result.ok) {
+        showSnackBar(context, 'Errore: ${result.error}');
+        return;
+      }
       widget.onClose();
-      showSnackBar(context, 'Evento eliminato');
+      showSnackBar(context, result.warning ?? 'Evento eliminato');
     } catch (e) {
       if (!mounted) return;
       showSnackBar(context, 'Errore: $e');
