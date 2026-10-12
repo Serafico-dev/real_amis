@@ -27,7 +27,11 @@ class _AddEventFormState extends ConsumerState<AddEventForm> {
   final _formKey = GlobalKey<FormState>();
   String teamSide = 'home';
   final playerController = TextEditingController();
-  PlayerEntity? selectedPlayer;
+
+  /// Id del giocatore selezionato, oppure [_ownGoalValue] se il gol è un
+  /// autogoal della squadra avversaria.
+  String? selectedPlayerId;
+  static const _ownGoalValue = '__own_goal__';
   final minuteController = TextEditingController();
   EventType selectedType = EventType.goal;
   bool _submitting = false;
@@ -38,6 +42,9 @@ class _AddEventFormState extends ConsumerState<AddEventForm> {
         : widget.match.awayTeamId;
     return teamId == AppSecrets.realAmisTeamId;
   }
+
+  bool get _isOwnGoalSelected =>
+      _isRealAmisTeam && selectedPlayerId == _ownGoalValue;
 
   List<PlayerEntity> _getCalledUpPlayers(List<PlayerEntity> allPlayers) {
     return allPlayers
@@ -59,7 +66,15 @@ class _AddEventFormState extends ConsumerState<AddEventForm> {
     final isHome = teamSide == 'home';
     final teamId = isHome ? widget.match.homeTeamId : widget.match.awayTeamId;
 
-    if (_isRealAmisTeam && selectedPlayer == null) {
+    final isOwnGoalSelected = _isOwnGoalSelected;
+    final calledUpPlayers = _getCalledUpPlayers(
+      ref.read(playerNotifierProvider).value ?? [],
+    );
+    final PlayerEntity? player = _isRealAmisTeam && !isOwnGoalSelected
+        ? calledUpPlayers.where((p) => p.id == selectedPlayerId).firstOrNull
+        : null;
+
+    if (_isRealAmisTeam && !isOwnGoalSelected && player == null) {
       showSnackBar(context, 'Seleziona un giocatore');
       return;
     }
@@ -68,8 +83,10 @@ class _AddEventFormState extends ConsumerState<AddEventForm> {
       return;
     }
 
+    // Per un autogoal non c'è nessun giocatore da associare: nome fisso e
+    // nessun playerId, così le statistiche individuali restano invariate.
     final playerName = _isRealAmisTeam
-        ? selectedPlayer!.fullName
+        ? (isOwnGoalSelected ? ownGoalLabel : player!.fullName)
         : playerController.text.trim();
 
     setState(() => _submitting = true);
@@ -84,14 +101,18 @@ class _AddEventFormState extends ConsumerState<AddEventForm> {
               player: playerName,
               minutes: int.parse(minuteController.text.trim()),
               eventType: selectedType,
-              playerId: _isRealAmisTeam ? selectedPlayer!.id : null,
+              playerId: player?.id,
             ),
           );
 
       if (!mounted) return;
+      final isOwnGoal =
+          selectedType == EventType.goal && isOwnGoalName(playerName);
       showSnackBar(
         context,
-        'Evento aggiunto: ${selectedType.value} di $playerName (${minuteController.text.trim()}\')',
+        isOwnGoal
+            ? 'Autogoal aggiunto (${minuteController.text.trim()}\')'
+            : 'Evento aggiunto: ${selectedType.value} di $playerName (${minuteController.text.trim()}\')',
       );
       Navigator.of(context).pop('created');
     } catch (e) {
@@ -133,7 +154,7 @@ class _AddEventFormState extends ConsumerState<AddEventForm> {
               teamSide: teamSide,
               onChanged: (v) => setState(() {
                 teamSide = v;
-                selectedPlayer = null;
+                selectedPlayerId = null;
                 playerController.clear();
               }),
             ),
@@ -143,20 +164,37 @@ class _AddEventFormState extends ConsumerState<AddEventForm> {
               child: Column(
                 children: [
                   if (_isRealAmisTeam)
-                    DropdownButtonFormField<PlayerEntity>(
-                      initialValue: selectedPlayer,
-                      items: calledUpPlayers
-                          .map(
-                            (p) => DropdownMenuItem(
-                              value: p,
-                              child: Text(
-                                p.fullName,
-                                style: TextStyle(color: textColor),
+                    DropdownButtonFormField<String>(
+                      // La chiave cambia quando la voce "Autogoal" compare o
+                      // scompare, così il campo si ricostruisce senza tenere
+                      // un valore non più presente nell'elenco.
+                      key: ValueKey(
+                        'player-dd-${selectedType == EventType.goal}',
+                      ),
+                      initialValue: selectedPlayerId,
+                      items: <DropdownMenuItem<String>>[
+                        if (selectedType == EventType.goal)
+                          DropdownMenuItem<String>(
+                            value: _ownGoalValue,
+                            child: Text(
+                              '$ownGoalLabel (avversario)',
+                              style: TextStyle(
+                                color: textColor,
+                                fontStyle: FontStyle.italic,
                               ),
                             ),
-                          )
-                          .toList(),
-                      onChanged: (p) => setState(() => selectedPlayer = p),
+                          ),
+                        ...calledUpPlayers.map(
+                          (p) => DropdownMenuItem<String>(
+                            value: p.id,
+                            child: Text(
+                              p.fullName,
+                              style: TextStyle(color: textColor),
+                            ),
+                          ),
+                        ),
+                      ],
+                      onChanged: (id) => setState(() => selectedPlayerId = id),
                       decoration: InputDecoration(
                         labelText: 'Giocatore',
                         labelStyle: TextStyle(color: secondaryTextColor),
@@ -171,16 +209,33 @@ class _AddEventFormState extends ConsumerState<AddEventForm> {
                           borderRadius: BorderRadius.circular(8),
                         ),
                       ),
-                      validator: (_) => selectedPlayer == null
+                      validator: (_) => selectedPlayerId == null
                           ? 'Seleziona un giocatore'
                           : null,
                     )
-                  else
+                  else ...[
                     TextFieldRequired(
                       controller: playerController,
                       labelText: 'Giocatore',
                       hintText: 'Nome giocatore',
                     ),
+                    // Autogoal di un giocatore del Real Amis: il gol va alla
+                    // squadra avversaria selezionata qui sopra.
+                    if (selectedType == EventType.goal)
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: Padding(
+                          padding: const EdgeInsets.only(top: 8),
+                          child: ActionChip(
+                            avatar: const Icon(Icons.sports_soccer, size: 16),
+                            label: const Text(ownGoalLabel),
+                            onPressed: () => setState(
+                              () => playerController.text = ownGoalLabel,
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
                   const SizedBox(height: 12),
                   NumberFieldRequired(
                     controller: minuteController,
@@ -202,7 +257,14 @@ class _AddEventFormState extends ConsumerState<AddEventForm> {
                         )
                         .toList(),
                     onChanged: (v) {
-                      if (v != null) setState(() => selectedType = v);
+                      if (v == null) return;
+                      setState(() {
+                        selectedType = v;
+                        if (v != EventType.goal &&
+                            selectedPlayerId == _ownGoalValue) {
+                          selectedPlayerId = null;
+                        }
+                      });
                     },
                     decoration: InputDecoration(
                       labelText: 'Tipo evento',

@@ -43,5 +43,7 @@ class MainApp extends ConsumerWidget {
 
 /*
   TODO:
-  - Notifica ad ogni evento (richiede notifiche push/realtime, non locali - da valutare separatamente)
+  - Fix eliminazione eventi che devono aggiornare contatori
+  - Fix notifica pre-partita, probabilmente non rispetta fuso orario perché se la partita è alle 15 mi arriva notifica alle 14 che dice: Partita in arrivo fra 3 ore
+  - Trovare e risolvere altri bug
 */

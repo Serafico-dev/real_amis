@@ -20,6 +20,10 @@ class EventEntity {
     this.team,
   });
 
+  /// `true` se l'evento è un autogoal (gol assegnato a [teamId] ma segnato da
+  /// un giocatore della squadra avversaria).
+  bool get isOwnGoal => eventType == EventType.goal && isOwnGoalName(player);
+
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||

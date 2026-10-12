@@ -1,5 +1,17 @@
 enum EventType { goal, giallo, rosso }
 
+/// Valore salvato nel campo `player` di un evento per indicare un autogoal.
+///
+/// L'evento va registrato sulla squadra che *beneficia* del gol (così il
+/// punteggio della partita è corretto) e non è collegato ad alcun giocatore,
+/// quindi non modifica le statistiche individuali.
+const String ownGoalLabel = 'Autogoal';
+
+/// Riconosce un autogoal anche se il nome è stato scritto a mano
+/// (maiuscole/minuscole e spazi non contano).
+bool isOwnGoalName(String name) =>
+    name.trim().toLowerCase() == ownGoalLabel.toLowerCase();
+
 extension EventTypeX on EventType {
   String get value {
     switch (this) {

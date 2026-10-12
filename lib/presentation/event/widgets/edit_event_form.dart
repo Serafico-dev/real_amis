@@ -204,6 +204,19 @@ class _EditEventFormState extends ConsumerState<EditEventForm> {
                 ? 'Inserisci il nome del giocatore'
                 : null,
           ),
+          if (_selectedType == EventType.goal)
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: ActionChip(
+                  avatar: const Icon(Icons.sports_soccer, size: 16),
+                  label: const Text(ownGoalLabel),
+                  onPressed: () =>
+                      setState(() => _playerController.text = ownGoalLabel),
+                ),
+              ),
+            ),
           const SizedBox(height: 12),
           DropdownButtonFormField<EventType>(
             initialValue: _selectedType,

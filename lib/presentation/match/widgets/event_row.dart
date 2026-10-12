@@ -39,7 +39,10 @@ class EventRow extends StatelessWidget {
         event.player,
         textAlign: alignRight ? TextAlign.right : TextAlign.left,
         overflow: TextOverflow.ellipsis,
-        style: TextStyle(color: color),
+        style: TextStyle(
+          color: color,
+          fontStyle: event.isOwnGoal ? FontStyle.italic : null,
+        ),
       ),
     );
 
