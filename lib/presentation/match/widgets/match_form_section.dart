@@ -7,6 +7,7 @@ import 'package:real_amis/common/widgets/loader/loader.dart';
 import 'package:real_amis/common/widgets/textFields/text_field_required.dart';
 import 'package:real_amis/core/configs/theme/app_colors.dart';
 import 'package:real_amis/core/utils/format_data.dart';
+import 'package:real_amis/core/utils/show_snackbar.dart';
 import 'package:real_amis/domain/entities/match/match_entity.dart';
 import 'package:real_amis/presentation/match/providers/match_notifier.dart';
 
@@ -110,9 +111,22 @@ class MatchFormSection extends ConsumerWidget {
                             if (confirmed == true &&
                                 context.mounted &&
                                 match != null) {
-                              await ref
+                              final result = await ref
                                   .read(matchNotifierProvider.notifier)
-                                  .deleteMatch(match!.id);
+                                  .deleteMatch(match!);
+                              if (!context.mounted) return;
+                              if (!result.ok) {
+                                showSnackBar(context, 'Errore: ${result.error}');
+                                return;
+                              }
+                              showSnackBar(
+                                context,
+                                result.warning ?? 'Partita eliminata',
+                              );
+                              // La partita non esiste più: torno alla lista.
+                              Navigator.of(context).popUntil(
+                                (route) => route.isFirst,
+                              );
                             }
                           },
                     title: matchState.isLoading

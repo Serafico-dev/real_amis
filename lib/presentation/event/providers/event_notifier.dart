@@ -6,16 +6,16 @@ import 'package:real_amis/data/sources/player/player_supabase_data_source.dart';
 import 'package:real_amis/domain/entities/event/event_entity.dart';
 import 'package:real_amis/domain/entities/event/event_type.dart';
 import 'package:real_amis/domain/entities/match/match_entity.dart';
-import 'package:real_amis/domain/entities/player/player_entity.dart';
 import 'package:real_amis/domain/usecases/event/get_events_by_match.dart';
 import 'package:real_amis/domain/usecases/event/update_event.dart';
 import 'package:real_amis/domain/usecases/event/upload_event.dart';
 import 'package:real_amis/core/usecase/usecase.dart';
 import 'package:real_amis/presentation/event/providers/event_provider.dart';
+import 'package:real_amis/presentation/event/utils/event_player_resolver.dart';
 import 'package:real_amis/presentation/match/providers/match_notifier.dart';
 import 'package:real_amis/presentation/player/providers/player_notifier.dart';
 
-/// Esito di una modifica/eliminazione di un evento.
+/// Esito di un'aggiunta/modifica/eliminazione di un evento.
 class EventActionResult {
   /// Messaggio d'errore; `null` se l'operazione è riuscita.
   final String? error;
@@ -64,25 +64,34 @@ class EventNotifier extends StateNotifier<AsyncValue<List<EventEntity>>> {
     );
   }
 
-  Future<void> uploadEvent(UploadEventParams params) async {
-    state = const AsyncLoading();
+  Future<EventActionResult> uploadEvent(UploadEventParams params) async {
     final res = await ref.read(uploadEventProvider)(params);
-    res.fold(
-      (failure) => state = AsyncError(failure.message, StackTrace.current),
-      (_) async {
-        if (params.playerId != null) {
-          final playerDataSource = ref.read(playerSupabaseDataSourceProvider);
-          await _applyStatDelta(
-            playerDataSource,
-            params.playerId!,
-            params.eventType,
-            delta: 1,
-          );
-          await ref.read(playerNotifierProvider.notifier).fetchAllPlayers();
-        }
-        fetchEventsByMatch();
-      },
-    );
+
+    final failure = res.fold<Failure?>((f) => f, (_) => null);
+    if (failure != null) {
+      return EventActionResult(error: failure.message);
+    }
+
+    String? warning;
+    final playerId = params.playerId;
+    if (playerId != null) {
+      try {
+        await _applyStatDelta(
+          ref.read(playerSupabaseDataSourceProvider),
+          playerId,
+          params.eventType,
+          delta: 1,
+        );
+        await ref.read(playerNotifierProvider.notifier).fetchAllPlayers();
+      } catch (e) {
+        warning =
+            'Evento aggiunto, ma non sono riuscito ad aggiornare le '
+            'statistiche del giocatore ($e)';
+      }
+    }
+
+    await fetchEventsByMatch();
+    return EventActionResult(warning: warning);
   }
 
   Future<EventActionResult> updateEvent(UpdateEventParams params) async {
@@ -119,7 +128,7 @@ class EventNotifier extends StateNotifier<AsyncValue<List<EventEntity>>> {
 
     // L'evento non c'è più: tolgo la sua "traccia" dalle statistiche.
     String? warning;
-    final playerId = _resolvePlayerId(event);
+    final playerId = await _resolvePlayerId(event);
     if (playerId != null) {
       try {
         await _applyStatDelta(
@@ -148,8 +157,8 @@ class EventNotifier extends StateNotifier<AsyncValue<List<EventEntity>>> {
     EventEntity before,
     EventEntity after,
   ) async {
-    final beforeId = _resolvePlayerId(before);
-    final afterId = _resolvePlayerId(after);
+    final beforeId = await _resolvePlayerId(before);
+    final afterId = await _resolvePlayerId(after);
 
     if (beforeId == afterId && before.eventType == after.eventType) {
       return null;
@@ -175,35 +184,17 @@ class EventNotifier extends StateNotifier<AsyncValue<List<EventEntity>>> {
         _unresolvedPlayerWarning(after, afterId);
   }
 
-  /// Ricava il giocatore del Real Amis a cui è attribuito l'evento.
-  ///
-  /// Gli eventi salvano solo il nome del giocatore, quindi lo cerco tra i
-  /// giocatori; se ci sono omonimi provo a distinguerli con i convocati della
-  /// partita. Restituisce `null` per eventi della squadra avversaria, per gli
-  /// autogoal e per nomi non riconosciuti.
-  String? _resolvePlayerId(EventEntity event) {
-    if (event.teamId != AppSecrets.realAmisTeamId) return null;
-    if (event.isOwnGoal) return null;
-
-    final name = event.player.trim().toLowerCase();
-    final players =
-        ref.read(playerNotifierProvider).value ?? const <PlayerEntity>[];
-    final sameName = players
-        .where((p) => p.fullName.trim().toLowerCase() == name)
-        .toList();
-
-    if (sameName.length == 1) return sameName.first.id;
-    if (sameName.isEmpty) return null;
-
+  /// Giocatore del Real Amis a cui è attribuito l'evento (vedi
+  /// [resolveEventPlayerId]); `null` se non c'è o non è riconoscibile.
+  Future<String?> _resolvePlayerId(EventEntity event) async {
+    final players = await loadPlayersForStats(ref);
     final matches =
         ref.read(matchNotifierProvider).value ?? const <MatchEntity>[];
-    final match = matches.where((m) => m.id == event.matchId).firstOrNull;
-    if (match == null) return null;
-
-    final calledUp = sameName
-        .where((p) => match.calledUpIds.contains(p.id))
-        .toList();
-    return calledUp.length == 1 ? calledUp.first.id : null;
+    return resolveEventPlayerId(
+      event: event,
+      players: players,
+      match: matches.where((m) => m.id == event.matchId).firstOrNull,
+    );
   }
 
   /// Avviso per un evento del Real Amis (non autogoal) il cui giocatore non è

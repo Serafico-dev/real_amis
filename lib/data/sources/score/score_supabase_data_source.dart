@@ -78,7 +78,6 @@ class ScoreSupabaseDataSourceImpl implements ScoreSupabaseDataSource {
   @override
   Future<ScoreModel> deleteScore({required String scoreId}) async {
     try {
-      await supabaseClient.storage.from('scores').remove([scoreId]);
       final scoreData = await supabaseClient
           .from('scores')
           .delete()

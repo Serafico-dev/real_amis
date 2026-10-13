@@ -92,7 +92,7 @@ class _AddEventFormState extends ConsumerState<AddEventForm> {
     setState(() => _submitting = true);
 
     try {
-      await ref
+      final result = await ref
           .read(eventNotifierProvider(widget.match.id).notifier)
           .uploadEvent(
             UploadEventParams(
@@ -106,13 +106,18 @@ class _AddEventFormState extends ConsumerState<AddEventForm> {
           );
 
       if (!mounted) return;
+      if (!result.ok) {
+        showSnackBar(context, 'Errore: ${result.error}');
+        return;
+      }
       final isOwnGoal =
           selectedType == EventType.goal && isOwnGoalName(playerName);
       showSnackBar(
         context,
-        isOwnGoal
-            ? 'Autogoal aggiunto (${minuteController.text.trim()}\')'
-            : 'Evento aggiunto: ${selectedType.value} di $playerName (${minuteController.text.trim()}\')',
+        result.warning ??
+            (isOwnGoal
+                ? 'Autogoal aggiunto (${minuteController.text.trim()}\')'
+                : 'Evento aggiunto: ${selectedType.value} di $playerName (${minuteController.text.trim()}\')'),
       );
       Navigator.of(context).pop('created');
     } catch (e) {

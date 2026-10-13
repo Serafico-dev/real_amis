@@ -86,7 +86,6 @@ class EventSupabaseDataSourceImpl implements EventSupabaseDataSource {
   @override
   Future<EventModel> deleteEvent({required String eventId}) async {
     try {
-      await supabaseClient.storage.from('events').remove([eventId]);
       final eventData = await supabaseClient
           .from('events')
           .delete()

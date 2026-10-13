@@ -86,6 +86,8 @@ class _MatchViewerPageState extends ConsumerState<MatchViewerPage> {
     final isDark = context.isDarkMode;
     final matchState = ref.watch(matchNotifierProvider);
     final eventState = ref.watch(eventNotifierProvider(widget.matchId));
+    final isPlayed =
+        _getCurrentMatch(matchState.value ?? [])?.played ?? false;
 
     return Scaffold(
       appBar: AppBarYesNav(
@@ -113,12 +115,14 @@ class _MatchViewerPageState extends ConsumerState<MatchViewerPage> {
           AdminOnly(
             child: IconButton(
               icon: Icon(
-                Icons.check_circle_outline,
+                isPlayed ? Icons.check_circle : Icons.check_circle_outline,
                 color: isDark ? AppColors.iconDark : AppColors.iconLight,
                 size: 25,
               ),
-              tooltip: 'Segna come giocata',
-              onPressed: () async {
+              tooltip: isPlayed ? 'Partita già giocata' : 'Segna come giocata',
+              onPressed: isPlayed
+                  ? null
+                  : () async {
                 final matches = matchState.value ?? [];
                 final match = _getCurrentMatch(matches);
                 if (match == null) return;
@@ -146,12 +150,16 @@ class _MatchViewerPageState extends ConsumerState<MatchViewerPage> {
                   ),
                 );
                 if (confirm != true || !mounted) return;
-                await ref
+                final result = await ref
                     .read(matchNotifierProvider.notifier)
                     .markAsPlayed(match);
-                if (context.mounted) {
-                  showSnackBar(context, 'Presenze aggiornate!');
-                }
+                if (!context.mounted) return;
+                showSnackBar(
+                  context,
+                  result.ok
+                      ? (result.warning ?? 'Presenze aggiornate!')
+                      : 'Errore: ${result.error}',
+                );
               },
             ),
           ),

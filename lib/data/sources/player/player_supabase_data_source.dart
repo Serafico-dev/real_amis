@@ -130,7 +130,8 @@ class PlayerSupabaseDataSourceImpl implements PlayerSupabaseDataSource {
   @override
   Future<PlayerModel> deletePlayer({required String playerId}) async {
     try {
-      await supabaseClient.storage.from('players').remove([playerId]);
+      // La foto sta nel bucket "player_image" (stesso nome file dell'id).
+      await supabaseClient.storage.from('player_image').remove([playerId]);
       final playerData = await supabaseClient
           .from('players')
           .delete()

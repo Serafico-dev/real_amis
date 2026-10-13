@@ -3,6 +3,23 @@ import 'package:real_amis/data/models/team/team_model.dart';
 import 'package:real_amis/domain/entities/match/match_entity.dart';
 import 'package:real_amis/domain/entities/league/league_entity.dart';
 
+/// Nel DB l'orario di una partita è salvato come "ora scritta a mano" senza
+/// fuso (es. partita alle 15:00 → `15:00:00+00`), e l'app lo mostra così com'è.
+/// Letto da Supabase, però, arriva come istante UTC: se lo si usasse tale e
+/// quale (per esempio per programmare le notifiche) risulterebbe spostato
+/// dell'offset del fuso (+1/+2 ore in Italia). Qui lo riporto a un normale
+/// DateTime locale con la stessa ora scritta, coerente con ciò che si vede.
+DateTime _asLocalWallClock(DateTime date) => date.isUtc
+    ? DateTime(
+        date.year,
+        date.month,
+        date.day,
+        date.hour,
+        date.minute,
+        date.second,
+      )
+    : date;
+
 class MatchModel extends MatchEntity {
   MatchModel({
     required super.id,
@@ -40,7 +57,9 @@ class MatchModel extends MatchEntity {
           ? DateTime.tryParse(map['updated_at'].toString()) ?? DateTime.now()
           : DateTime.now(),
       matchDate: map['match_date'] != null
-          ? DateTime.tryParse(map['match_date'].toString()) ?? DateTime.now()
+          ? _asLocalWallClock(
+              DateTime.tryParse(map['match_date'].toString()) ?? DateTime.now(),
+            )
           : DateTime.now(),
       homeTeamId: map['home_team_id'] as String? ?? '',
       awayTeamId: map['away_team_id'] as String? ?? '',

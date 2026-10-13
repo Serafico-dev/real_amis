@@ -56,8 +56,19 @@ class MatchNotificationService {
 
     if (played) return;
 
-    final reminderTime = matchDate.subtract(reminderOffset);
-    if (reminderTime.isBefore(DateTime.now())) return;
+    // L'orario della partita è "ora italiana" (quella che si vede in app):
+    // lo interpreto nel fuso di tz.local (Europe/Rome) usando ora e minuti
+    // scritti, non il fuso del telefono né un eventuale flag UTC.
+    final kickoff = tz.TZDateTime(
+      tz.local,
+      matchDate.year,
+      matchDate.month,
+      matchDate.day,
+      matchDate.hour,
+      matchDate.minute,
+    );
+    final reminderTime = kickoff.subtract(reminderOffset);
+    if (reminderTime.isBefore(tz.TZDateTime.now(tz.local))) return;
 
     final hasTeamNames = homeTeamName != null && awayTeamName != null;
     final body = hasTeamNames
@@ -68,7 +79,7 @@ class MatchNotificationService {
       id: _notificationId(matchId),
       title: '⚽ Partita in arrivo!',
       body: body,
-      scheduledDate: tz.TZDateTime.from(reminderTime, tz.local),
+      scheduledDate: reminderTime,
       notificationDetails: const NotificationDetails(
         android: AndroidNotificationDetails(
           _channelId,
