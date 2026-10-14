@@ -8,6 +8,7 @@ import 'package:real_amis/core/configs/theme/app_colors.dart';
 import 'package:real_amis/core/utils/accessibility.dart';
 import 'package:real_amis/core/utils/admin_only.dart';
 import 'package:real_amis/core/utils/league_selection_preference.dart';
+import 'package:real_amis/core/utils/match_sort_preference.dart';
 import 'package:real_amis/core/utils/show_snackbar.dart';
 import 'package:real_amis/domain/entities/league/league_entity.dart';
 import 'package:real_amis/domain/entities/match/match_entity.dart';
@@ -42,7 +43,7 @@ class _MatchesPageState extends ConsumerState<MatchesPage> {
   @override
   void initState() {
     super.initState();
-    _loadSavedLeague();
+    _loadSavedPreferences();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Future.wait([
         ref.read(matchNotifierProvider.notifier).fetchAllMatches(),
@@ -58,11 +59,13 @@ class _MatchesPageState extends ConsumerState<MatchesPage> {
     await Future.delayed(const Duration(milliseconds: 300));
   }
 
-  Future<void> _loadSavedLeague() async {
+  Future<void> _loadSavedPreferences() async {
     final savedId = await LeagueSelectionPreference.getSavedLeagueId();
+    final savedAscending = await MatchSortPreference.getAscending();
     if (!mounted) return;
     setState(() {
       _savedLeagueId = savedId;
+      _ascending = savedAscending;
       _prefsLoaded = true;
     });
   }
@@ -246,6 +249,10 @@ class _MatchesPageState extends ConsumerState<MatchesPage> {
               Expanded(
                 child: matchState.when(
                   data: (matches) {
+                    // Aspetto le preferenze salvate (campionato e ordine) per
+                    // non mostrare per un istante la lista sbagliata.
+                    if (!_prefsLoaded) return const Loader();
+
                     final filtered = matches
                         .where(
                           (m) =>
@@ -266,8 +273,10 @@ class _MatchesPageState extends ConsumerState<MatchesPage> {
                         isDark: isDark,
                         nextMatch: _nextMatch(filtered),
                         ascending: _ascending,
-                        onSortChanged: (ascending) =>
-                            setState(() => _ascending = ascending),
+                        onSortChanged: (ascending) {
+                          setState(() => _ascending = ascending);
+                          MatchSortPreference.saveAscending(ascending);
+                        },
                       ),
                     );
                   },
