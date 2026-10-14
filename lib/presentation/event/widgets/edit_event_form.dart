@@ -114,7 +114,10 @@ class _EditEventFormState extends ConsumerState<EditEventForm> {
             ),
             TextButton(
               onPressed: () => Navigator.pop(context, true),
-              child: const Text('Elimina', style: TextStyle(color: Colors.red)),
+              child: Text(
+                'Elimina',
+                style: TextStyle(color: AppColors.danger(isDarkMode: context.isDarkMode)),
+              ),
             ),
           ],
         );
@@ -264,7 +267,12 @@ class _EditEventFormState extends ConsumerState<EditEventForm> {
                       : () => Navigator.of(context).pop(),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: textColor,
-                    side: BorderSide(color: AppColors.secondary),
+                    // Il blu su fondo scuro ha 1,5:1: nel tema scuro uso il teal.
+                    side: BorderSide(
+                      color: context.isDarkMode
+                          ? AppColors.tertiary
+                          : AppColors.secondary,
+                    ),
                   ),
                   child: const Text('Annulla'),
                 ),
@@ -286,10 +294,10 @@ class _EditEventFormState extends ConsumerState<EditEventForm> {
           Center(
             child: TextButton.icon(
               onPressed: _submitting ? null : _deleteEvent,
-              icon: const Icon(Icons.delete, color: Colors.red),
-              label: const Text(
+              icon: Icon(Icons.delete, color: AppColors.danger(isDarkMode: context.isDarkMode)),
+              label: Text(
                 'Elimina evento',
-                style: TextStyle(color: Colors.red),
+                style: TextStyle(color: AppColors.danger(isDarkMode: context.isDarkMode)),
               ),
             ),
           ),

@@ -12,7 +12,12 @@ class TeamScoreColumn extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
+    // Per lo screen reader: "Real Amis: 3 gol" invece di un logo muto e un
+    // numero senza contesto.
+    return Semantics(
+      label: '${team.name}: $score gol',
+      excludeSemantics: true,
+      child: Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         SizedBox(
@@ -39,6 +44,7 @@ class TeamScoreColumn extends StatelessWidget {
           ),
         ),
       ],
+      ),
     );
   }
 }

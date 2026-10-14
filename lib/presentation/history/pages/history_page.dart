@@ -372,6 +372,7 @@ class _HistorySection extends ConsumerWidget {
                 AdminOnly(
                   child: IconButton(
                     icon: const Icon(Icons.edit, size: 18),
+                    tooltip: 'Modifica sezione',
                     onPressed: () => _showEditDialog(context, ref),
                   ),
                 ),

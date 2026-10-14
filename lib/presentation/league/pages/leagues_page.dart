@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:real_amis/common/widgets/appBar/app_bar_yes_nav.dart';
+import 'package:real_amis/common/helpers/is_dark_mode.dart';
 import 'package:real_amis/core/configs/theme/app_colors.dart';
 import 'package:real_amis/domain/entities/league/league_entity.dart';
 import 'package:real_amis/presentation/league/pages/add_new_league.dart';
@@ -37,6 +38,7 @@ class _LeaguesPageState extends ConsumerState<LeaguesPage> {
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
+            tooltip: 'Aggiungi campionato',
             onPressed: () async {
               await Navigator.push(context, AddNewLeaguePage.route());
               if (mounted) _refresh();
@@ -85,7 +87,7 @@ class _LeaguesPageState extends ConsumerState<LeaguesPage> {
         error: (err, _) => Center(
           child: Text(
             'Errore nel caricamento dei campionati',
-            style: const TextStyle(color: AppColors.logoRed),
+            style: TextStyle(color: AppColors.danger(isDarkMode: context.isDarkMode)),
           ),
         ),
       ),

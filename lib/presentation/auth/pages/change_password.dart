@@ -204,6 +204,7 @@ class _PasswordField extends StatelessWidget {
         fillColor: isDark ? AppColors.inputFillDark : AppColors.inputFillLight,
         suffixIcon: IconButton(
           icon: Icon(obscure ? Icons.visibility_off : Icons.visibility),
+          tooltip: obscure ? 'Mostra password' : 'Nascondi password',
           onPressed: onToggleVisibility,
         ),
       ).applyDefaults(Theme.of(context).inputDecorationTheme),

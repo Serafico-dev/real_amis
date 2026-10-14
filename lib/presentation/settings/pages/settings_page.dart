@@ -265,8 +265,11 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                   onSelectionChanged: (selection) =>
                       _onThemeSelected(selection.first),
                   style: ButtonStyle(
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    visualDensity: VisualDensity.compact,
+                    // Altezza minima 48 per essere toccabile con comodità
+                    // (prima ~32 con densità compatta e area ridotta).
+                    tapTargetSize: MaterialTapTargetSize.padded,
+                    visualDensity: VisualDensity.standard,
+                    minimumSize: const WidgetStatePropertyAll(Size(0, 48)),
                     backgroundColor: WidgetStateProperty.resolveWith((states) {
                       final isSelected = states.contains(WidgetState.selected);
                       if (isSelected) {
@@ -382,14 +385,14 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
 
               SettingsTile(
                 title: 'Elimina account',
-                titleColor: Colors.red,
+                titleColor: AppColors.danger(isDarkMode: isDarkMode),
                 trailing: IconButton(
                   tooltip: 'Elimina account',
                   onPressed: _onDeleteAccountPressed,
-                  icon: const Icon(
+                  icon: Icon(
                     Icons.delete_forever_outlined,
                     size: 26,
-                    color: Colors.red,
+                    color: AppColors.danger(isDarkMode: isDarkMode),
                   ),
                 ),
               ),

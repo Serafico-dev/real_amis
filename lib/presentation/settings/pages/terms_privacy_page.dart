@@ -36,9 +36,10 @@ class TermsPrivacyPage extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'Ultimo aggiornamento: 24 settembre 2026',
-                  style: TextStyle(fontSize: 12, color: Colors.grey),
+                  // Colors.grey su fondo chiaro ha solo 2,5:1 di contrasto.
+                  style: TextStyle(fontSize: 13, color: bodyColor),
                 ),
                 const SizedBox(height: 20),
                 _SectionTitle(text: 'Termini e Condizioni', color: titleColor),

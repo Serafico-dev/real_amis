@@ -66,7 +66,11 @@ class _UpdateScorePageState extends State<UpdateScorePage> {
       appBar: AppBarYesNav(
         title: const Text("Aggiorna punteggio"),
         actions: [
-          IconButton(onPressed: _saveScore, icon: const Icon(Icons.done)),
+          IconButton(
+            onPressed: _saveScore,
+            icon: const Icon(Icons.done),
+            tooltip: 'Salva punteggio',
+          ),
         ],
       ),
       body: Padding(

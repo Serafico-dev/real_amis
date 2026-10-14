@@ -33,8 +33,9 @@ class TeamSelector extends StatelessWidget {
         onChanged(selection.first);
       },
       style: ButtonStyle(
-        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        visualDensity: VisualDensity.compact,
+        tapTargetSize: MaterialTapTargetSize.padded,
+        visualDensity: VisualDensity.standard,
+        minimumSize: const WidgetStatePropertyAll(Size(0, 48)),
 
         backgroundColor: WidgetStateProperty.resolveWith((states) {
           final isSelected = states.contains(WidgetState.selected);

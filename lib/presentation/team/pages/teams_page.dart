@@ -8,6 +8,7 @@ import 'package:uuid/uuid.dart';
 import 'package:real_amis/common/helpers/is_dark_mode.dart';
 import 'package:real_amis/common/widgets/appBar/app_bar_no_nav.dart';
 import 'package:real_amis/core/configs/theme/app_colors.dart';
+import 'package:real_amis/core/utils/accessibility.dart';
 import 'package:real_amis/core/utils/admin_only.dart';
 import 'package:real_amis/presentation/auth/providers/app_user_provider.dart';
 import 'package:real_amis/core/utils/league_selection_preference.dart';
@@ -117,7 +118,9 @@ class _TeamsPageState extends ConsumerState<TeamsPage> {
               }
 
               return SizedBox(
-                height: 50,
+                // Altezza proporzionale al testo: con il testo ingrandito i chip
+                // non vengono tagliati.
+                height: scaledByText(context, 50),
                 child: ListView.separated(
                   scrollDirection: Axis.horizontal,
                   padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -376,6 +379,7 @@ class _TeamRow extends StatelessWidget {
                       ? const SizedBox.shrink()
                       : IconButton(
                           icon: const Icon(Icons.edit, size: 20),
+                          tooltip: 'Modifica punteggio',
                           onPressed: onEditScore,
                         ),
                 ),

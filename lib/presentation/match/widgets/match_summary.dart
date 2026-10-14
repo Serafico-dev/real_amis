@@ -14,6 +14,10 @@ class MatchSummary extends StatelessWidget {
   final void Function()? onTap;
   final bool showFullTime;
 
+  /// Disegna un bordo ben visibile attorno alla card (usato per la prossima
+  /// partita da giocare).
+  final bool highlight;
+
   const MatchSummary({
     super.key,
     required this.match,
@@ -21,6 +25,7 @@ class MatchSummary extends StatelessWidget {
     this.backgroundColor,
     this.onTap,
     this.showFullTime = true,
+    this.highlight = false,
   });
 
   @override
@@ -75,6 +80,12 @@ class MatchSummary extends StatelessWidget {
               isEven: true,
             ),
         borderRadius: BorderRadius.circular(10),
+        border: highlight
+            ? Border.all(
+                color: isDark ? AppColors.tertiary : AppColors.primary,
+                width: 2.5,
+              )
+            : null,
       ),
       child: onTap != null
           ? InkWell(

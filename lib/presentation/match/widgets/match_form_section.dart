@@ -98,10 +98,10 @@ class MatchFormSection extends ConsumerWidget {
                                   TextButton(
                                     onPressed: () =>
                                         Navigator.of(context).pop(true),
-                                    child: const Text(
+                                    child: Text(
                                       'Elimina',
                                       style: TextStyle(
-                                        color: AppColors.logoRed,
+                                        color: AppColors.danger(isDarkMode: context.isDarkMode),
                                       ),
                                     ),
                                   ),

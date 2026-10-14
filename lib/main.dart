@@ -36,6 +36,18 @@ class MainApp extends ConsumerWidget {
       supportedLocales: supportedLocales,
       localizationsDelegates: localizationDelegates,
       debugShowCheckedModeBanner: false,
+      // Il testo segue le impostazioni di sistema fino al 200% (soglia WCAG
+      // 1.4.4); oltre, le schermate rischiano di sforare. Rimuovi il limite se
+      // preferisci seguire sempre l'impostazione dell'utente.
+      builder: (context, child) {
+        final mediaQuery = MediaQuery.of(context);
+        return MediaQuery(
+          data: mediaQuery.copyWith(
+            textScaler: mediaQuery.textScaler.clamp(maxScaleFactor: 2.0),
+          ),
+          child: child!,
+        );
+      },
       home: const SplashPage(),
     );
   }

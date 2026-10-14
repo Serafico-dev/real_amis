@@ -103,15 +103,17 @@ class AppTheme {
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          foregroundColor: AppColors.buttonSecondaryDark,
-          side: BorderSide(color: AppColors.buttonSecondaryDark),
+          // Il blu `secondary` su fondo scuro ha 1,5:1: uso il teal.
+          foregroundColor: AppColors.tertiary,
+          side: BorderSide(color: AppColors.tertiary),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
         ),
       ),
       textButtonTheme: TextButtonThemeData(
-        style: TextButton.styleFrom(foregroundColor: AppColors.primary),
+        // Il rosso `primary` su fondo scuro ha 1,95:1: uso il teal.
+        style: TextButton.styleFrom(foregroundColor: AppColors.tertiary),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
@@ -122,7 +124,7 @@ class AppTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: AppColors.primary),
+          borderSide: BorderSide(color: AppColors.tertiary),
         ),
       ),
       textTheme: base.textTheme.copyWith(

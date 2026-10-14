@@ -74,28 +74,68 @@ class MatchNotifier extends StateNotifier<AsyncValue<List<MatchEntity>>> {
     );
   }
 
-  Future<void> updateMatch(UpdateMatchParams params) async {
+  Future<MatchActionResult> updateMatch(UpdateMatchParams params) async {
     final res = await ref.read(updateMatchProvider)(params);
-    res.fold(
-      (failure) => state = AsyncError(failure.message, StackTrace.current),
-      (updatedMatch) {
-        final current = state.value ?? [];
-        final updatedList = [
-          for (final m in current)
-            if (m.id == updatedMatch.id) updatedMatch else m,
-        ];
-        state = AsyncData(updatedList);
-        ref
-            .read(matchNotificationServiceProvider)
-            .scheduleMatchReminder(
-              matchId: updatedMatch.id,
-              matchDate: updatedMatch.matchDate,
-              played: updatedMatch.played,
-              homeTeamName: updatedMatch.homeTeam?.name,
-              awayTeamName: updatedMatch.awayTeam?.name,
-            );
-      },
-    );
+
+    final failure = res.fold<Failure?>((f) => f, (_) => null);
+    if (failure != null) return MatchActionResult(error: failure.message);
+    final updatedMatch = res.fold<MatchEntity?>((_) => null, (m) => m);
+    if (updatedMatch == null) {
+      return const MatchActionResult(error: 'Aggiornamento non riuscito');
+    }
+
+    final current = state.value ?? [];
+    final updatedList = [
+      for (final m in current)
+        if (m.id == updatedMatch.id) updatedMatch else m,
+    ];
+    state = AsyncData(updatedList);
+    ref
+        .read(matchNotificationServiceProvider)
+        .scheduleMatchReminder(
+          matchId: updatedMatch.id,
+          matchDate: updatedMatch.matchDate,
+          played: updatedMatch.played,
+          homeTeamName: updatedMatch.homeTeam?.name,
+          awayTeamName: updatedMatch.awayTeam?.name,
+        );
+
+    final warning = await _syncAttendancesAfterEdit(params.match, updatedMatch);
+    return MatchActionResult(warning: warning);
+  }
+
+  /// Se la partita risulta già giocata, le presenze sono già state conteggiate:
+  /// quando cambia l'elenco dei convocati aggiungo una presenza a chi entra e
+  /// ne tolgo una a chi esce.
+  Future<String?> _syncAttendancesAfterEdit(
+    MatchEntity before,
+    MatchEntity after,
+  ) async {
+    if (!before.played || !after.played) return null;
+
+    final oldIds = before.calledUpIds.toSet();
+    final newIds = after.calledUpIds.toSet();
+    final added = newIds.difference(oldIds);
+    final removed = oldIds.difference(newIds);
+    if (added.isEmpty && removed.isEmpty) return null;
+
+    try {
+      final players = await loadPlayersForStats(ref);
+      final known = players.map((p) => p.id).toSet();
+      final ds = ref.read(playerSupabaseDataSourceProvider);
+
+      await Future.wait([
+        for (final id in added.where(known.contains))
+          ds.incrementPlayerStats(playerId: id, attendancesDelta: 1),
+        for (final id in removed.where(known.contains))
+          ds.incrementPlayerStats(playerId: id, attendancesDelta: -1),
+      ]);
+      await ref.read(playerNotifierProvider.notifier).fetchAllPlayers();
+    } catch (e) {
+      return 'Partita aggiornata, ma non sono riuscito ad aggiornare le '
+          'presenze dei giocatori ($e)';
+    }
+    return null;
   }
 
   /// Elimina una partita riallineando le statistiche dei giocatori: toglie le

@@ -21,7 +21,11 @@ class AppBarYesNav extends StatelessWidget implements PreferredSizeWidget {
           Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Image.asset(AppVectors.logo, height: 48),
+              Image.asset(
+                AppVectors.logo,
+                height: 48,
+                semanticLabel: 'Real Amis',
+              ),
               const SizedBox(height: 6),
             ],
           ),
@@ -31,6 +35,7 @@ class AppBarYesNav extends StatelessWidget implements PreferredSizeWidget {
             : AppColors.textLightPrimary,
       ),
       leading: IconButton(
+        tooltip: MaterialLocalizations.of(context).backButtonTooltip,
         onPressed: () {
           Navigator.pop(context);
         },

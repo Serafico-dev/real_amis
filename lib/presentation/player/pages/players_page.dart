@@ -130,7 +130,11 @@ class _PlayersPageState extends ConsumerState<PlayersPage>
                         Tab(text: 'Leggende'),
                         Tab(text: 'Staff'),
                       ],
-                      indicatorColor: AppColors.accent,
+                      // L'oro su fondo chiaro ha solo 2,2:1: nel tema chiaro
+                      // l'indicatore usa il rosso del brand (8,7:1).
+                      indicatorColor: isDarkMode
+                          ? AppColors.accent
+                          : AppColors.primary,
                       labelColor: isDarkMode
                           ? AppColors.textDarkPrimary
                           : AppColors.textLightPrimary,
@@ -151,6 +155,7 @@ class _PlayersPageState extends ConsumerState<PlayersPage>
                           suffixIcon: _query.isNotEmpty
                               ? IconButton(
                                   icon: const Icon(Icons.clear),
+                                  tooltip: 'Cancella ricerca',
                                   onPressed: () {
                                     _searchController.clear();
                                     setState(() => _query = '');

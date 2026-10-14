@@ -100,7 +100,7 @@ class _EditMatchPageState extends ConsumerState<EditMatchPage> {
     }
 
     try {
-      await ref
+      final result = await ref
           .read(matchNotifierProvider.notifier)
           .updateMatch(
             UpdateMatchParams(
@@ -116,10 +116,16 @@ class _EditMatchPageState extends ConsumerState<EditMatchPage> {
             ),
           );
 
-      if (mounted) {
-        showSnackBar(context, 'Partita aggiornata con successo');
-        Navigator.of(context).pop();
+      if (!mounted) return;
+      if (!result.ok) {
+        showSnackBar(context, 'Errore: ${result.error}');
+        return;
       }
+      showSnackBar(
+        context,
+        result.warning ?? 'Partita aggiornata con successo',
+      );
+      Navigator.of(context).pop();
     } catch (e) {
       if (mounted) showSnackBar(context, 'Errore: $e');
     }
@@ -145,6 +151,20 @@ class _EditMatchPageState extends ConsumerState<EditMatchPage> {
                 : AppColors.textLightPrimary,
           ),
         ),
+        if (widget.match.played)
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Text(
+              'Partita già giocata: se cambi i convocati, le presenze dei '
+              'giocatori vengono aggiornate di conseguenza.',
+              style: TextStyle(
+                fontSize: 13,
+                color: isDark
+                    ? AppColors.textDarkSecondary
+                    : AppColors.textLightSecondary,
+              ),
+            ),
+          ),
         const SizedBox(height: 4),
         ...activePlayers.map(
           (player) => CheckboxListTile(

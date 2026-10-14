@@ -46,22 +46,40 @@ class EventRow extends StatelessWidget {
       ),
     );
 
-    final iconWidget = Icon(
-      icon,
-      size: 18,
-      color: type == EventType.giallo
-          ? Colors.yellow
-          : type == EventType.rosso
-          ? Colors.red
-          : color,
-    );
+    // Il tipo di evento era riconoscibile solo dall'icona/colore: ora ha anche
+    // un'etichetta per gli screen reader.
+    final typeLabel = switch (type) {
+      EventType.goal => event.isOwnGoal ? 'Autogoal' : 'Gol',
+      EventType.giallo => 'Cartellino giallo',
+      EventType.rosso => 'Cartellino rosso',
+    };
+
+    // Il giallo su fondo chiaro ha solo 1,2:1 di contrasto: il cartellino ha un
+    // bordo del colore del testo, così si vede su qualsiasi sfondo.
+    final Widget iconWidget = type == EventType.goal
+        ? Icon(icon, size: 18, color: color, semanticLabel: typeLabel)
+        : Semantics(
+            label: typeLabel,
+            child: Container(
+              width: 15,
+              height: 15,
+              margin: const EdgeInsets.all(1.5),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: type == EventType.giallo ? Colors.yellow : Colors.red,
+                border: Border.all(color: color, width: 1.5),
+              ),
+            ),
+          );
 
     final editButton = AdminOnly(
       child: IconButton(
         icon: Icon(Icons.edit, size: 18, color: color),
+        tooltip: 'Modifica evento',
         onPressed: () => onEdit(event),
+        // L'icona resta piccola, ma l'area toccabile è 48x48 (prima ~18x18).
         padding: EdgeInsets.zero,
-        constraints: const BoxConstraints(),
+        constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
       ),
     );
 

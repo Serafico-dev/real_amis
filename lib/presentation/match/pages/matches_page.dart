@@ -5,6 +5,7 @@ import 'package:real_amis/common/helpers/is_dark_mode.dart';
 import 'package:real_amis/common/widgets/appBar/app_bar_no_nav.dart';
 import 'package:real_amis/common/widgets/loader/loader.dart';
 import 'package:real_amis/core/configs/theme/app_colors.dart';
+import 'package:real_amis/core/utils/accessibility.dart';
 import 'package:real_amis/core/utils/admin_only.dart';
 import 'package:real_amis/core/utils/league_selection_preference.dart';
 import 'package:real_amis/core/utils/show_snackbar.dart';
@@ -34,6 +35,9 @@ class _MatchesPageState extends ConsumerState<MatchesPage> {
   LeagueEntity? selectedLeague;
   String? _savedLeagueId;
   bool _prefsLoaded = false;
+
+  /// `true` = dalla più vecchia alla più recente (calendario della stagione).
+  bool _ascending = true;
 
   @override
   void initState() {
@@ -70,8 +74,24 @@ class _MatchesPageState extends ConsumerState<MatchesPage> {
 
   List<MatchEntity> _sortedMatches(List<MatchEntity> matches) {
     final list = List<MatchEntity>.from(matches);
-    list.sort((a, b) => b.matchDate.compareTo(a.matchDate));
+    list.sort(
+      (a, b) => _ascending
+          ? a.matchDate.compareTo(b.matchDate)
+          : b.matchDate.compareTo(a.matchDate),
+    );
     return list;
+  }
+
+  /// Prossima partita da giocare: la prima non ancora giocata che non sia già
+  /// finita da un po' (3 ore di margine per le partite in corso).
+  MatchEntity? _nextMatch(List<MatchEntity> matches) {
+    final threshold = DateTime.now().subtract(const Duration(hours: 3));
+    final upcoming =
+        matches
+            .where((m) => !m.played && m.matchDate.isAfter(threshold))
+            .toList()
+          ..sort((a, b) => a.matchDate.compareTo(b.matchDate));
+    return upcoming.isEmpty ? null : upcoming.first;
   }
 
   @override
@@ -159,7 +179,9 @@ class _MatchesPageState extends ConsumerState<MatchesPage> {
                   }
 
                   return SizedBox(
-                    height: 50,
+                    // Altezza proporzionale al testo: con il testo ingrandito i chip
+                    // non vengono tagliati.
+                    height: scaledByText(context, 50),
                     child: ListView.separated(
                       scrollDirection: Axis.horizontal,
                       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -217,7 +239,7 @@ class _MatchesPageState extends ConsumerState<MatchesPage> {
                 ),
                 error: (e, _) => Text(
                   'Errore caricamento campionati',
-                  style: TextStyle(color: AppColors.logoRed),
+                  style: TextStyle(color: AppColors.danger(isDarkMode: context.isDarkMode)),
                 ),
               ),
               const SizedBox(height: 8),
@@ -242,6 +264,10 @@ class _MatchesPageState extends ConsumerState<MatchesPage> {
                         matches: sorted,
                         allEvents: allEvents,
                         isDark: isDark,
+                        nextMatch: _nextMatch(filtered),
+                        ascending: _ascending,
+                        onSortChanged: (ascending) =>
+                            setState(() => _ascending = ascending),
                       ),
                     );
                   },

@@ -21,7 +21,11 @@ class AppBarNoNav extends StatelessWidget implements PreferredSizeWidget {
           Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Image.asset(AppVectors.logo, height: 48),
+              Image.asset(
+                AppVectors.logo,
+                height: 48,
+                semanticLabel: 'Real Amis',
+              ),
               const SizedBox(height: 6),
             ],
           ),
@@ -32,6 +36,7 @@ class AppBarNoNav extends StatelessWidget implements PreferredSizeWidget {
       ),
       leading: Navigator.canPop(context)
           ? IconButton(
+              tooltip: MaterialLocalizations.of(context).backButtonTooltip,
               icon: Icon(
                 Icons.arrow_back,
                 color: context.isDarkMode

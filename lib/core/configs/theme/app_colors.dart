@@ -54,6 +54,18 @@ class AppColors {
   static const Color textDarkSecondary = Color(0xFFB5BAC1); // AA
 
   // =========================================================
+  // ERRORI E AZIONI DISTRUTTIVE (testo/icone)
+  // =========================================================
+  // `logoRed` e `Colors.red` non hanno abbastanza contrasto sul tema scuro
+  // (fino a 1,06:1 su un dialog): qui due rossi con contrasto AA su tutti gli
+  // sfondi usati (chiaro >= 6,0:1, scuro >= 5,9:1).
+  static const Color dangerLight = Color(0xFFB00020);
+  static const Color dangerDark = Color(0xFFF2B8B5);
+
+  static Color danger({required bool isDarkMode}) =>
+      isDarkMode ? dangerDark : dangerLight;
+
+  // =========================================================
   // ICONS
   // =========================================================
   static const Color iconLight = textLightPrimary;

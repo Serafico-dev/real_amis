@@ -23,14 +23,28 @@ class ChooseModePage extends ConsumerWidget {
         : AppColors.textLightPrimary;
 
     return Scaffold(
-      body: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 40),
-        child: Column(
+      // Contenuto scorrevole: con il testo ingrandito o in orizzontale non
+      // sfora più lo schermo; negli altri casi resta centrato come prima.
+      body: LayoutBuilder(
+        builder: (context, constraints) => SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 40),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              minHeight: constraints.maxHeight > 80
+                  ? constraints.maxHeight - 80
+                  : 0,
+            ),
+            child: IntrinsicHeight(
+              child: Column(
           children: [
             const Spacer(),
             Align(
               alignment: Alignment.topCenter,
-              child: Image.asset(AppVectors.logo, width: 250),
+              child: Image.asset(
+                AppVectors.logo,
+                width: 250,
+                semanticLabel: 'Real Amis',
+              ),
             ),
             const Spacer(),
             Text(
@@ -88,6 +102,9 @@ class ChooseModePage extends ConsumerWidget {
               title: 'Prosegui',
             ),
           ],
+              ),
+            ),
+          ),
         ),
       ),
     );
@@ -115,14 +132,23 @@ class ThemeModeCircle extends StatelessWidget {
     final circleColor = isDarkMode
         ? AppColors.cardDark.withValues(alpha: 0.5)
         : AppColors.cardLight.withValues(alpha: 0.5);
-    final borderColor = selected ? AppColors.primary : Colors.transparent;
+    // Il rosso del brand su fondo scuro ha solo 1,95:1 di contrasto: nel tema
+    // scuro l'elemento selezionato usa il teal (5,9:1).
+    final accent = isDarkMode ? AppColors.tertiary : AppColors.primary;
+    final borderColor = selected ? accent : Colors.transparent;
     final textColor = selected
-        ? AppColors.primary
+        ? accent
         : isDarkMode
         ? AppColors.textDarkPrimary
         : AppColors.textLightPrimary;
 
-    return Column(
+    return Semantics(
+      button: true,
+      selected: selected,
+      label: 'Tema $label',
+      onTap: onTap,
+      excludeSemantics: true,
+      child: Column(
       children: [
         Material(
           color: Colors.transparent,
@@ -157,12 +183,13 @@ class ThemeModeCircle extends StatelessWidget {
         Text(
           label,
           style: TextStyle(
-            fontWeight: FontWeight.w500,
+            fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
             fontSize: 17,
             color: textColor,
           ),
         ),
       ],
+      ),
     );
   }
 }

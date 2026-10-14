@@ -225,9 +225,17 @@ class _PrivacyPolicyLink extends StatelessWidget {
           mode: LaunchMode.externalApplication,
         );
       },
-      child: const Text(
+      child: Text(
         'Privacy Policy',
-        style: TextStyle(fontSize: 12, color: Colors.grey),
+        // Colors.grey su fondo chiaro ha solo 2,5:1 di contrasto; la
+        // sottolineatura segnala che è un link anche senza il colore.
+        style: TextStyle(
+          fontSize: 14,
+          decoration: TextDecoration.underline,
+          color: context.isDarkMode
+              ? AppColors.textDarkSecondary
+              : AppColors.textLightSecondary,
+        ),
       ),
     );
   }

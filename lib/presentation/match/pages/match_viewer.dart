@@ -100,6 +100,7 @@ class _MatchViewerPageState extends ConsumerState<MatchViewerPage> {
                 color: isDark ? AppColors.iconDark : AppColors.iconLight,
                 size: 25,
               ),
+              tooltip: 'Modifica partita',
               onPressed: () async {
                 final matches = matchState.value ?? [];
                 final match = _getCurrentMatch(matches);
